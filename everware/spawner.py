@@ -90,7 +90,7 @@ class CustomDockerSpawner(DockerSpawner):
         build_log = yield gen.with_timeout(timedelta(30),
                                            self.docker('build',
                                                        path=tmp_dir,
-                                                       tag='bla', #image_name,
+                                                       tag=image_name,
                                                        rm=True))
         self.log.debug("".join(str(line) for line in build_log))
         self.log.info("Built docker image {}".format(image_name))
@@ -99,7 +99,7 @@ class CustomDockerSpawner(DockerSpawner):
         self.log.debug(images)
 
         yield super(CustomDockerSpawner, self).start(
-            image='bla' #image_name
+            image=image_name
         )
 
     def _env_default(self):
