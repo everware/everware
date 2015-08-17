@@ -1,0 +1,96 @@
+{% extends "page.html" %}
+
+{% block login_widget %}
+{% endblock %}
+
+{% block main %}
+{% block login %}
+<div id="login-main">
+<header class="jumbotron masthead">
+    <h1>everware</h1>
+    <p>Run your notebooks in the cloud</p>
+</header>
+
+<div class="container">
+{% if custom_html %}
+{{ custom_html }}
+{% elif login_service %}
+<div class="service-login">
+  <a class='btn btn-github btn-lg' href='oauth_login'>
+    Sign in with {{login_service}}
+  </a>
+</div>
+{% else %}
+<form class="form-horizontal" action="{{login_url}}?next={{next}}" method="post" role="form">
+  <div>
+    {% if login_error %}
+    <p class="login_error">
+      {{login_error}}
+    </p>
+    {% endif %}
+    <div class="form-group">
+        <input
+          type="text"
+          class="form-control"
+          name="repourl"
+          id="repo_input"
+          tabindex="1"
+          placeholder="URL of git repository"
+        />
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label" for="username_input">Username</label>
+      <div class="col-sm-8">
+        <input
+          id="username_input"
+          type="username"
+          autocapitalize="off"
+          autocorrect="off"
+          class="form-control"
+          name="username"
+          val="{{username}}"
+          tabindex="2"
+          autofocus="autofocus"
+        />
+      </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-3 control-label" for='password_input'>Password</label>
+      <div class="col-sm-8">
+        <input
+          type="password"
+          class="form-control"
+          name="password"
+          id="password_input"
+          tabindex="3"
+        />
+      </div>
+    </div>
+    <input
+      type="submit"
+      id="login_submit"
+      class='btn btn-lg btn-primary btn-block'
+      value='Launch'
+      tabindex="4"
+    />
+  </div>
+</form>
+{% endif %}
+</div>
+</div>
+{% endblock login %}
+
+<footer class="footer">
+<div class="container">
+    <div class="col-sm-12">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+    </div>
+</div>
+</footer>
+
+{% endblock %}
+
+{% block script %}
+{{super()}}
+
+{% endblock %}

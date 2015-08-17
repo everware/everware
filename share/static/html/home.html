@@ -1,0 +1,48 @@
+{% extends "page.html" %}
+
+{% block main %}
+
+<div id="login-main">
+<header class="jumbotron masthead">
+    <h1>everware</h1>
+    <p>Run your notebooks in the cloud</p>
+</header>
+
+<form class="form-horizontal" action="/hub/home" method="post" role="form">
+  <div>
+    <div class="form-group">
+        <input
+          type="text"
+          class="form-control"
+          name="repourl"
+          id="repo_input"
+          tabindex="1"
+          placeholder="URL of git repository"
+        />
+    </div>
+    <input
+      type="submit"
+      id="login_submit"
+      class='btn btn-lg btn-primary btn-block'
+      value='Launch'
+      tabindex="4"
+    />
+  </div>
+</form>
+
+<footer class="footer">
+  <div class="footer-inside">
+    <div class="col-sm-10">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+    </div>
+    <p style="float: right;">Logged in as {{user.name}}</p>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+require(["home"]);
+</script>
+{% endblock %}
