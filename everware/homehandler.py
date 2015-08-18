@@ -21,6 +21,7 @@ class HomeHandler(BaseHandler):
         repo_url = data['repourl']
         user = self.get_current_user()
         user.last_repo_url = repo_url
+        self.db.commit()
 
         already_running = False
         if user.spawner:
@@ -28,9 +29,6 @@ class HomeHandler(BaseHandler):
             already_running = (status == None)
         if not already_running:
             yield self.spawn_single_user(user)
-
-        user.last_repo_url = repo_url
-        self.db.commit()
 
         self.redirect(self.hub.server.base_url)
 
