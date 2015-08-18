@@ -1,6 +1,7 @@
 
 from tornado import gen
 from jupyterhub.handlers.pages import web, BaseHandler
+from IPython.html.utils import url_path_join
 
 class HomeHandler(BaseHandler):
     """Render the user's home page."""
@@ -21,6 +22,7 @@ class HomeHandler(BaseHandler):
         repo_url = data['repourl']
         user = self.get_current_user()
         user.last_repo_url = repo_url
+        self.db.commit()
 
         already_running = False
         if user.spawner:
@@ -29,9 +31,6 @@ class HomeHandler(BaseHandler):
         if not already_running:
             yield self.spawn_single_user(user)
 
-        user.last_repo_url = repo_url
-        self.db.commit()
-
-        self.redirect(self.hub.server.base_url)
+        self.redirect(url_path_join(self.hub.server.base_url, user.server.base_url))
 
 
