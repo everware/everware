@@ -38,9 +38,13 @@ In order to test `everware`, you have to:
 ```
  - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
  - Enter you OAuth information into `env.sh` and `source env.sh`
- - Run
+ - Install everware
 ```
     pip3 install -e .
+```
+ - If you are not using `boot2docker`, but run directly on Linux, edit `jupyterhub_config.py` as indicated in the file.
+ - Run
+```
     jupyterhub
 ```
 

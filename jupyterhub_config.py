@@ -23,6 +23,8 @@ c.GitHubOAuthenticator.client_id = os.environ['GITHUB_CLIENT_ID']
 c.GitHubOAuthenticator.client_secret = os.environ['GITHUB_CLIENT_SECRET']
 
 c.Spawner.tls = True
+# Set to False when running docker directly (i.e. on Linux)
+#c.Spawner.tls = False
 c.Spawner.debug = True
 c.Spawner.http_timeout = 32
 c.Spawner.remove_containers = True
