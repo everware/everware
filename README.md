@@ -24,7 +24,7 @@ In order to test `everware`, you can
  - Run
 
 ```
-    $ pip install --user .
+    $ pip3 install --user .
     $ jupyterhub
 ```
 
