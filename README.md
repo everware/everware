@@ -1,5 +1,5 @@
 
-# Everware
+# everware
 
 Everware is an add-on for [JupyterHub](https://github.com/jupyter/jupyterhub).
 It allows users to launch [Jupyter Notebooks](https://github.com/jupyter/notebook.git) into a docker container simply by specifying the url of a git repository.
@@ -13,7 +13,7 @@ See [this blog post](http://betatim.github.io/posts/project-everware-reusable-sc
 The idea for everware originated at the CERN Webfest 2015.
 The original everware team consists of [@OmeGak](https://github.com/omegak), [@ibab](https://github.com/ibab), [@ndawe](https://github.com/ndawe), [@betatim](https://github.com/betatim), [@uzzielperez](https://github.com/uzzielperez), [@anaderi](https://github.com/anaderi), and [@AxelVoitier](https://github.com/AxelVoitier).
 
-# Testing
+## Testing
 
 In order to test `everware`, you can
 
