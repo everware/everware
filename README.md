@@ -11,7 +11,7 @@ If a researcher provides an everware-compatible public git repository, it's poss
 See [this blog post](http://betatim.github.io/posts/project-everware-reusable-science/) for more information about what everware is and how it can be useful.
 
 The idea for everware originated at the CERN Webfest 2015.
-The original everware team consists of @OmeGak, @ibab, @ndawe, @betatim, @uzzielperez, @anaderi, and @AxelVoitier.
+The original everware team consists of [@OmeGak](https://github.com/omegak), [@ibab](https://github.com/ibab), [@ndawe](https://github.com/ndawe), [@betatim](https://github.com/betatim), [@uzzielperez](https://github.com/uzzielperez), [@anaderi](https://github.com/anaderi), and [@AxelVoitier](https://github.com/AxelVoitier).
 
 # Testing
 
