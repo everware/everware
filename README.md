@@ -23,13 +23,13 @@ In order to test `everware`, you have to:
     sudo npm install -g configurable-http-proxy
     git clone https://github.com/jupyter/jupyterhub.git
     cd jupyterhub
-    pip install -r dev-requirements.txt -e .
+    pip3 install -r dev-requirements.txt -e .
 ```
  - Install the newest git version of `dockerspawner`: https://github.com/jupyter/dockerspawner. Double check with their [README.md](https://github.com/jupyter/dockerspawner/blob/master/README.md)
 ```
     git clone https://github.com/jupyter/dockerspawner.git
     cd dockerspawner
-    pip install -e.
+    pip3 install -e .
 ```
  - Clone this repo
 ```
@@ -40,7 +40,7 @@ In order to test `everware`, you have to:
  - Enter you OAuth information into `env.sh` and `source env.sh`
  - Run
 ```
-    pip3 install --user .
+    pip3 install -e .
     jupyterhub
 ```
 
