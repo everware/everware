@@ -1,2 +1,7 @@
+ipython[notebook]
+coveralls
+pytest-cov
+pytest
 jupyterhub
-requests
+dockerspawner
+GitPython==1.0.1

@@ -15,16 +15,32 @@ The original everware team consists of [@OmeGak](https://github.com/omegak), [@i
 
 ## Testing
 
-In order to test `everware`, you can
+In order to test `everware`, you have to:
 
- - Install the newest git version of Jupyterhub: https://github.com/jupyter/jupyterhub
- - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
- - Clone this repo
- - Enter you OAuth information into `env.sh` and source it
- - Run
-
+ - Install the newest git version of `jupyterhub`: https://github.com/jupyter/jupyterhub. Double check with their [README.md](https://github.com/jupyter/jupyterhub/blob/master/README.md)
 ```
-    $ pip3 install --user .
-    $ jupyterhub
+    sudo apt-get install npm nodejs-legacy
+    sudo npm install -g configurable-http-proxy
+    git clone https://github.com/jupyter/jupyterhub.git
+    cd jupyterhub
+    pip install -r dev-requirements.txt -e .
+```
+ - Install the newest git version of `dockerspawner`: https://github.com/jupyter/dockerspawner. Double check with their [README.md](https://github.com/jupyter/dockerspawner/blob/master/README.md)
+```
+    git clone https://github.com/jupyter/dockerspawner.git
+    cd dockerspawner
+    pip install -e.
+```
+ - Clone this repo
+```
+    git clone https://github.com/everware/everware
+    cd everware
+```
+ - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
+ - Enter you OAuth information into `env.sh` and `source env.sh`
+ - Run
+```
+    pip3 install --user .
+    jupyterhub
 ```
 
