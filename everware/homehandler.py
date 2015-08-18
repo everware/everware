@@ -30,6 +30,6 @@ class HomeHandler(BaseHandler):
         if not already_running:
             yield self.spawn_single_user(user)
 
-        self.redirect(self.hub.server.base_url)
+        self.redirect('user/' + user.name)
 
 
