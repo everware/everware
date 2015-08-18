@@ -31,15 +31,14 @@ In order to test `everware`, you have to:
     cd dockerspawner
     pip install -e.
 ```
- - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
  - Clone this repo
 ```
     git clone https://github.com/everware/everware
     cd everware
 ```
- - Enter you OAuth information into `env.sh` and source it
+ - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
+ - Enter you OAuth information into `env.sh` and `source env.sh`
  - Run
-
 ```
     pip3 install --user .
     jupyterhub
