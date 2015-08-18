@@ -2,6 +2,8 @@ import pwd
 from tempfile import mkdtemp
 from datetime import timedelta
 
+from docker.errors import APIError
+
 from dockerspawner import DockerSpawner
 from textwrap import dedent
 from traitlets import (
@@ -17,9 +19,6 @@ import git
 
 class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
-        self.user = kwargs['user']
-        self.repo_url = self.user.last_repo_url
-        self.repo_sha = kwargs.get('last_commit', '')
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
     _git_executor = None
@@ -55,8 +54,11 @@ class CustomDockerSpawner(DockerSpawner):
         """
         return self.executor.submit(self._git, method, *args, **kwargs)
 
-    _escaped_repo_url = None
+    @property
+    def repo_url(self):
+        return self.user.last_repo_url
 
+    _escaped_repo_url = None
     @property
     def escaped_repo_url(self):
         if self._escaped_repo_url is None:
@@ -66,10 +68,29 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def container_name(self):
-        return "{}-{}-{}-{}".format(self.container_prefix,
-                                    self.escaped_name,
-                                    self.escaped_repo_url,
-                                    self.repo_sha)
+        return "{}-{}".format(self.container_prefix,
+                              self.escaped_name)
+
+    @gen.coroutine
+    def get_container(self):
+        if not self.container_id:
+            return None
+
+        self.log.debug("Getting container: %s", self.container_id)
+        try:
+            container = yield self.docker(
+                'inspect_container', self.container_id
+            )
+            self.container_id = container['Id']
+        except APIError as e:
+            if e.response.status_code == 404:
+                self.log.info("Container '%s' is gone", self.container_id)
+                container = None
+                # my container is gone, forget my id
+                self.container_id = ''
+            else:
+                raise
+        return container
 
     @gen.coroutine
     def start(self, image=None):
@@ -87,11 +108,10 @@ class CustomDockerSpawner(DockerSpawner):
                                                 self.repo_sha)
 
         self.log.debug("Building image {}".format(image_name))
-        build_log = yield gen.with_timeout(timedelta(30),
-                                           self.docker('build',
-                                                       path=tmp_dir,
-                                                       tag=image_name,
-                                                       rm=True))
+        build_log = yield self.docker('build',
+                                      path=tmp_dir,
+                                      tag=image_name,
+                                      rm=True)
         self.log.debug("".join(str(line) for line in build_log))
         self.log.info("Built docker image {}".format(image_name))
 
