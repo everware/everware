@@ -23,13 +23,13 @@ In order to test `everware`, you have to:
     sudo npm install -g configurable-http-proxy
     git clone https://github.com/jupyter/jupyterhub.git
     cd jupyterhub
-    pip install -r dev-requirements.txt -e .
+    pip3 install -r dev-requirements.txt -e .
 ```
  - Install the newest git version of `dockerspawner`: https://github.com/jupyter/dockerspawner. Double check with their [README.md](https://github.com/jupyter/dockerspawner/blob/master/README.md)
 ```
     git clone https://github.com/jupyter/dockerspawner.git
     cd dockerspawner
-    pip install -e.
+    pip3 install -e .
 ```
  - Clone this repo
 ```
@@ -38,9 +38,13 @@ In order to test `everware`, you have to:
 ```
  - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
  - Enter you OAuth information into `env.sh` and `source env.sh`
+ - Install everware
+```
+    pip3 install -e .
+```
+ - If you are not using `boot2docker`, but run directly on Linux, edit `jupyterhub_config.py` as indicated in the file.
  - Run
 ```
-    pip3 install --user .
     jupyterhub
 ```
 
