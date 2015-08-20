@@ -12,6 +12,7 @@ class HomeHandler(BaseHandler):
     def get(self):
         html = self.render_template('home.html',
             user=self.get_current_user(),
+            repo_url=self.get_argument('repo_url', ''),
         )
         self.finish(html)
 

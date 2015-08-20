@@ -16,7 +16,11 @@
 {{ custom_html }}
 {% elif login_service %}
 <div class="service-login">
+  {% if repo_url %}
+  <a class='btn btn-github btn-lg' href='oauth_login?repo_url={{repo_url}}'>
+  {% else %}
   <a class='btn btn-github btn-lg' href='oauth_login'>
+  {% endif %}
     Sign in with {{login_service}}
   </a>
 </div>
