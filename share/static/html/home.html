@@ -9,8 +9,8 @@
 </header>
 
 <form class="form-horizontal" action="/hub/home" method="post" role="form" id="repo_url_entry">
-  <div>
-    <div class="form-group">
+  <div id="form_div">
+    <div class="form-group" id="repourl_div">
         <input
           type="text"
           class="form-control"
@@ -48,15 +48,18 @@ require(["home"]);
 function replaceRepoURL(e) {
     var target = e.target || e.srcElement
     var repo_url = target.repo_input.value;
-  
-    if (repo_input.startsWith('git@')) {
-      repo_url = repo_input.replace(':', '/').replace('git@', 'https://');
+
+    if (repo_url.startsWith('git@')) {
+      e.preventDefault();
+
+      repo_url = repo_url.replace(':', '/').replace('git@', 'https://');
       target.repo_input.value = repo_url;
+
       var msg = document.createElement("div");
       msg.innerText = "We changed the repository's URL for you.";
-      var form = target.parentNode;
-      form.insertBefore(msg, target);
-      e.preventDefault();
+      var form_div = document.getElementById('form_div');
+      console.log(form_div);
+      form_div.insertBefore(msg, document.getElementById("repourl_div"));
     }
 }
 
