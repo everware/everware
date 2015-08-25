@@ -8,7 +8,7 @@
     <p>Run your notebooks in the cloud</p>
 </header>
 
-<form class="form-horizontal" action="/hub/home" method="post" role="form">
+<form class="form-horizontal" action="/hub/home" method="post" role="form" id="repo_url_entry">
   <div>
     <div class="form-group">
         <input
@@ -44,5 +44,28 @@
 {% block script %}
 <script type="text/javascript">
 require(["home"]);
+
+function replaceRepoURL(e) {
+    var target = e.target || e.srcElement
+    var repo_url = target.repo_input.value;
+  
+    if (repo_input.startsWith('git@')) {
+      repo_url = repo_input.replace(':', '/').replace('git@', 'https://');
+      target.repo_input.value = repo_url;
+      var msg = document.createElement("div");
+      msg.innerText = "We changed the repository's URL for you.";
+      var form = target.parentNode;
+      form.insertBefore(msg, target);
+      e.preventDefault();
+    }
+}
+
+var form = document.getElementById('repo_url_entry');
+if (form.attachEvent) {
+  form.attachEvent("submit", replaceRepoURL);
+} else {
+  form.addEventListener("submit", replaceRepoURL);
+}
+
 </script>
 {% endblock %}
