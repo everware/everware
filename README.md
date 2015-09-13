@@ -36,7 +36,7 @@ In order to test `everware`, you have to:
     git clone https://github.com/everware/everware
     cd everware
 ```
- - Create a Github OAuth application with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
+ - [Create a Github OAuth application](https://github.com/settings/applications/new) with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
  - Enter you OAuth information into `env.sh` and `source env.sh`
  - Install everware
 ```
