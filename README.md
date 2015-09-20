@@ -13,6 +13,10 @@ See [this blog post](http://betatim.github.io/posts/project-everware-reusable-sc
 The idea for everware originated at the CERN Webfest 2015.
 The original everware team consists of [@OmeGak](https://github.com/omegak), [@ibab](https://github.com/ibab), [@ndawe](https://github.com/ndawe), [@betatim](https://github.com/betatim), [@uzzielperez](https://github.com/uzzielperez), [@anaderi](https://github.com/anaderi), and [@AxelVoitier](https://github.com/AxelVoitier).
 
+## Documentation
+
+Documentation on the different ways to use `everware` and [getting started](https://github.com/everware/everware/wiki/Getting-Started).
+
 ## Testing
 
 In order to test `everware`, you have to:
