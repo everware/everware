@@ -40,7 +40,7 @@ There is one additional rule: no one can merge their own pull requests, someone
 else has to press the button.
 
 [issues]: https://github.com/everware/everware/issues
-[license]: LICENSE.md
+[license]: LICENSE
 [gh-fork]: https://help.github.com/articles/fork-a-repo/
 [gh-pull]: https://help.github.com/articles/using-pull-requests/
 [gh-fork-pull]: https://help.github.com/articles/using-pull-requests/#fork--pull
