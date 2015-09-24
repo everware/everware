@@ -2,6 +2,8 @@ import pwd
 from tempfile import mkdtemp
 from datetime import timedelta
 
+from concurrent.futures import ThreadPoolExecutor
+
 from docker.errors import APIError
 
 from dockerspawner import DockerSpawner
@@ -20,6 +22,21 @@ import git
 class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
         super(CustomDockerSpawner, self).__init__(**kwargs)
+
+    def _docker(self, method, *args, **kwargs):
+        """wrapper for calling docker methods
+
+        to be passed to ThreadPoolExecutor
+        """
+        # methods that return a generator object return instantly
+        # before the work they were meant to do is complete
+        generator_methods = ('build',)
+        m = getattr(self.client, method)
+
+        if method in generator_methods:
+            return list(m(*args, **kwargs))
+        else:
+            return m(*args, **kwargs)
 
     _git_executor = None
     @property
@@ -52,7 +69,7 @@ class CustomDockerSpawner(DockerSpawner):
         
         returns a Future
         """
-        return self.executor.submit(self._git, method, *args, **kwargs)
+        return self.git_executor.submit(self._git, method, *args, **kwargs)
 
     @property
     def repo_url(self):
@@ -113,7 +130,6 @@ class CustomDockerSpawner(DockerSpawner):
                                       tag=image_name,
                                       rm=True)
         self.log.debug("".join(str(line) for line in build_log))
-        self.log.info("Built docker image {}".format(image_name))
 
         images = yield self.docker('images', image_name)
         self.log.debug(images)
