@@ -1,6 +1,8 @@
 
 # everware
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/everware/everware?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 Everware is an add-on for [JupyterHub](https://github.com/jupyter/jupyterhub).
 It allows users to launch [Jupyter Notebooks](https://github.com/jupyter/notebook.git) into a docker container simply by specifying the url of a git repository.
 Everware clones the repository, builds a docker image from a contained `Dockerfile` and launches the user into a running notebook instance inside the container.
