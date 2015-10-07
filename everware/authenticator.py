@@ -39,6 +39,7 @@ class WelcomeHandler(BaseHandler):
     def _render(self, login_error=None, username=None):
         return self.render_template('login.html',
                 next=url_escape(self.get_argument('next', default='')),
+                repo_url=url_escape(self.get_argument('repo_url', default='')),
                 username=username,
                 login_error=login_error,
         )
@@ -76,12 +77,19 @@ class OAuthLoginHandler(BaseHandler):
         
         redirect_uri = self.authenticator.oauth_callback_url or guess_uri
         self.log.info('oauth redirect: %r', redirect_uri)
-        
+
+        repo_url = self.get_argument('repo_url', '')
+
+        state = {'unique': 42}
+        if repo_url:
+            state['repo_url'] = repo_url
+
         self.authorize_redirect(
             redirect_uri=redirect_uri,
             client_id=self.authenticator.client_id,
             scope=[],
-            response_type='code')
+            response_type='code',
+            extra_params={'state': self.create_signed_value('state', repr(state))})
 
 
 class GitHubLoginHandler(OAuthLoginHandler, GitHubMixin):
@@ -95,12 +103,25 @@ class BitbucketLoginHandler(OAuthLoginHandler, BitbucketMixin):
 class GitHubOAuthHandler(BaseHandler):
     @gen.coroutine
     def get(self):
-        # TODO: Check if state argument needs to be checked
+        # Check state argument, should be there and contain a dict
+        # as created in OAuthLoginHandler
+        state = self.get_secure_cookie('state', self.get_argument('state', ''))
+        if state is None:
+            raise web.HTTPError(403)
+
+        state = eval(state)
+        self.log.debug('State dict: %s', state)
+        state.pop('unique')
+
         username = yield self.authenticator.authenticate(self)
         if username:
             user = self.user_from_username(username)
             self.set_login_cookie(user)
-            self.redirect(self.hub.server.base_url)
+            if 'repo_url' in state:
+                self.log.debug("Redirect with %s", state)
+                self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
+            else:
+                self.redirect(self.hub.server.base_url)
         else:
             # todo: custom error page?
             raise web.HTTPError(403)

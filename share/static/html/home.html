@@ -18,6 +18,9 @@
           id="repo_input"
           tabindex="1"
           placeholder="URL of git repository"
+          {% if repo_url %}
+          value="{{repo_url}}"
+          {% endif %}
         />
     </div>
     <input
