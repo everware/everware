@@ -8,12 +8,13 @@ jupyterhub.handlers.pages.HomeHandler.post = everware.HomeHandler.post
 c = get_config()
 
 # spawn with custom docker containers
-c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
+#c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
+c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
 
 # The docker instances need access to the Hub, so the default loopback port doesn't work:
 from IPython.utils.localinterfaces import public_ips
-c.JupyterHub.hub_ip = public_ips()[0]
-c.JupyterHub.hub_api_ip = public_ips()[0]
+c.JupyterHub.hub_ip = '128.142.143.186'#public_ips()[0]
+c.JupyterHub.hub_api_ip = '128.142.143.186'#public_ips()[0]
 
 c.JupyterHub.authenticator_class = 'everware.GitHubOAuthenticator'
 c.Authenticator.whitelist = set()

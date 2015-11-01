@@ -13,6 +13,7 @@ from traitlets import (
     Unicode,
 )
 from tornado import gen
+from tornado.ioloop import IOLoop
 
 from escapism import escape
 
@@ -77,6 +78,10 @@ class CustomDockerSpawner(DockerSpawner):
         """
         return self.git_executor.submit(self._git, method, *args, **kwargs)
 
+    def clear_state(self):
+        state = super(CustomDockerSpawner, self).clear_state()
+        self.container_id = ''
+
     @property
     def repo_url(self):
         return self.user.last_repo_url
@@ -126,6 +131,8 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def start(self, image=None):
         """start the single-user server in a docker container"""
+        tic = IOLoop.current().time()
+
         tmp_dir = mkdtemp(suffix='-everware')
         yield self.git('clone', self.repo_url, tmp_dir)
         # is this blocking?
@@ -147,6 +154,11 @@ class CustomDockerSpawner(DockerSpawner):
                                           rm=True)
             self.log.debug("".join(str(line) for line in build_log))
 
+        # If the build took too long, do not start the container
+        toc = IOLoop.current().time()
+        if toc - tic > self.start_timeout:
+            return
+
         yield super(CustomDockerSpawner, self).start(
             image=image_name
         )
@@ -161,7 +173,7 @@ class CustomDockerSpawner(DockerSpawner):
 
 class CustomSwarmSpawner(CustomDockerSpawner):
     container_ip = '0.0.0.0'
-    start_timeout = 180
+    #start_timeout = 42 #180
 
     def __init__(self, **kwargs):
         super(CustomSwarmSpawner, self).__init__(**kwargs)
@@ -182,8 +194,9 @@ class CustomSwarmSpawner(CustomDockerSpawner):
             image=image
         )
         
-        node_name = yield self.get_container()
-        node_name = node_name['Node']['Name']
-        self.user.server.ip = node_name
-        self.log.info("{} was started on {} ({}:{})".format(
+        container = yield self.get_container()
+        if container is not None:
+            node_name = container['Node']['Name']
+            self.user.server.ip = node_name
+            self.log.info("{} was started on {} ({}:{})".format(
             self.container_name, node_name, self.user.server.ip, self.user.server.port))
