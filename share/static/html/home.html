@@ -5,7 +5,7 @@
 <div id="login-main">
 <header class="jumbotron masthead">
     <h1>everware</h1>
-    <p>Run your notebooks in the cloud</p>
+    <p>Sharing is caring</p>
 </header>
 
 <form class="form-horizontal" action="/hub/home" method="post" role="form" id="repo_url_entry">
@@ -30,12 +30,28 @@
   </div>
 </form>
 
+<div class="container">
+  <div class="row row-centered">
+    <div class="col-sm-6" style="float:none; margin:0 auto">
+      Paste the link to the git repository you want to try out. If you
+      need some inspiration try one of the following repositories:
+      <ul>
+	<li>https://github.com/everware/everware-dimuon-example</li>
+	<li>https://github.com/betatim/everware-demo</li>
+      </ul>
+      Read the documentation
+      to <a href="https://github.com/everware/everware/wiki/Being-everware-compatible">learn
+      how to make your repositories work</a> with everware.
+    </div>
+  </div>
+</div>
+
 <footer class="footer">
   <div class="footer-inside">
-    <div class="col-sm-10">
+    <div class="col-sm-8">
         Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
     </div>
-    <p style="float: right;">Logged in as {{user.name}}</p>
+    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
   </div>
 </footer>
 
