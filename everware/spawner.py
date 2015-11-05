@@ -13,6 +13,7 @@ from traitlets import (
     Unicode,
 )
 from tornado import gen
+from tornado.ioloop import IOLoop
 
 from escapism import escape
 
@@ -34,7 +35,13 @@ class CustomDockerSpawner(DockerSpawner):
         m = getattr(self.client, method)
 
         if method in generator_methods:
-            return list(m(*args, **kwargs))
+            def lister(mm):
+                ret = []
+                for l in mm:
+                    self.log.debug("build %s", l)
+                    ret.append(l)
+                return ret
+            return lister(m(*args, **kwargs))
         else:
             return m(*args, **kwargs)
 
@@ -70,6 +77,10 @@ class CustomDockerSpawner(DockerSpawner):
         returns a Future
         """
         return self.git_executor.submit(self._git, method, *args, **kwargs)
+
+    def clear_state(self):
+        state = super(CustomDockerSpawner, self).clear_state()
+        self.container_id = ''
 
     @property
     def repo_url(self):
@@ -110,8 +121,18 @@ class CustomDockerSpawner(DockerSpawner):
         return container
 
     @gen.coroutine
+    def get_image(self, image_name):
+        images = yield self.docker('images')
+        for img in images:
+            tags = [tag.split(':')[0] for tag in img['RepoTags']]
+            if image_name in tags:
+                return img
+
+    @gen.coroutine
     def start(self, image=None):
         """start the single-user server in a docker container"""
+        tic = IOLoop.current().time()
+
         tmp_dir = mkdtemp(suffix='-everware')
         yield self.git('clone', self.repo_url, tmp_dir)
         # is this blocking?
@@ -124,15 +145,19 @@ class CustomDockerSpawner(DockerSpawner):
                                                 self.escaped_repo_url,
                                                 self.repo_sha)
 
-        self.log.debug("Building image {}".format(image_name))
-        build_log = yield self.docker('build',
-                                      path=tmp_dir,
-                                      tag=image_name,
-                                      rm=True)
-        self.log.debug("".join(str(line) for line in build_log))
+        image = yield self.get_image(image_name)
+        if image is None:
+            self.log.debug("Building image {}".format(image_name))
+            build_log = yield self.docker('build',
+                                          path=tmp_dir,
+                                          tag=image_name,
+                                          rm=True)
+            self.log.debug("".join(str(line) for line in build_log))
 
-        images = yield self.docker('images', image_name)
-        self.log.debug(images)
+        # If the build took too long, do not start the container
+        toc = IOLoop.current().time()
+        if toc - tic > self.start_timeout:
+            return
 
         yield super(CustomDockerSpawner, self).start(
             image=image_name
@@ -144,3 +169,34 @@ class CustomDockerSpawner(DockerSpawner):
         env.update({'JPY_GITHUBURL': self.repo_url})
 
         return env
+
+
+class CustomSwarmSpawner(CustomDockerSpawner):
+    container_ip = '0.0.0.0'
+    #start_timeout = 42 #180
+
+    def __init__(self, **kwargs):
+        super(CustomSwarmSpawner, self).__init__(**kwargs)
+
+    @gen.coroutine
+    def lookup_node_name(self):
+        """Find the name of the swarm node that the container is running on."""
+        containers = yield self.docker('containers', all=True)
+        for container in containers:
+            if container['Id'] == self.container_id:
+                name, = container['Names']
+                node, container_name = name.lstrip("/").split("/")
+                raise gen.Return(node)
+
+    @gen.coroutine
+    def start(self, image=None, extra_create_kwargs=None):
+        yield super(CustomSwarmSpawner, self).start(
+            image=image
+        )
+        
+        container = yield self.get_container()
+        if container is not None:
+            node_name = container['Node']['Name']
+            self.user.server.ip = node_name
+            self.log.info("{} was started on {} ({}:{})".format(
+            self.container_name, node_name, self.user.server.ip, self.user.server.port))
