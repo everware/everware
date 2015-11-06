@@ -96,8 +96,10 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def container_name(self):
-        return "{}-{}".format(self.container_prefix,
-                              self.escaped_name)
+        return "{}-{}-{}-{}".format(self.container_prefix,
+                                    self.escaped_name,
+                                    self.escaped_repo_url,
+                                    self.repo_sha)
 
     @gen.coroutine
     def get_container(self):
