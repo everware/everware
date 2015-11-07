@@ -1,6 +1,8 @@
 
 # everware
 
+**Welcome [#MozFest](https://2015.mozillafestival.org)ers, let us know you stopped by: [Greetings from MozFest](https://github.com/everware/everware/issues/24).**
+
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/everware/everware?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Everware is an add-on for [JupyterHub](https://github.com/jupyter/jupyterhub).
