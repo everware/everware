@@ -84,7 +84,9 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def repo_url(self):
-        return self.user.last_repo_url
+        last_repo_url = getattr(self.user, 'last_repo_url', None)
+        assert last_repo_url is not None, "Empty last_repo_url"
+        return last_repo_url
 
     _escaped_repo_url = None
     @property
@@ -101,26 +103,26 @@ class CustomDockerSpawner(DockerSpawner):
                                     self.escaped_repo_url,
                                     self.repo_sha)
 
-    @gen.coroutine
-    def get_container(self):
-        if not self.container_id:
-            return None
-
-        self.log.debug("Getting container: %s", self.container_id)
-        try:
-            container = yield self.docker(
-                'inspect_container', self.container_id
-            )
-            self.container_id = container['Id']
-        except APIError as e:
-            if e.response.status_code == 404:
-                self.log.info("Container '%s' is gone", self.container_id)
-                container = None
-                # my container is gone, forget my id
-                self.container_id = ''
-            else:
-                raise
-        return container
+#    @gen.coroutine
+#    def get_container(self):
+#        #if not self.container_id:
+#        #    return None
+#
+#        self.log.debug("Getting container: %s", self.container_id)
+#        try:
+#            container = yield self.docker(
+#                'inspect_container', self.container_id
+#            )
+#            self.container_id = container['Id']
+#        except APIError as e:
+#            if e.response.status_code == 404:
+#                self.log.info("Container '%s' is gone", self.container_id)
+#                container = None
+#                # my container is gone, forget my id
+#                self.container_id = ''
+#            else:
+#                raise
+#        return container
 
     @gen.coroutine
     def get_image(self, image_name):
