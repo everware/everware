@@ -1,3 +1,4 @@
+import re
 import pwd
 from tempfile import mkdtemp
 from datetime import timedelta
@@ -35,10 +36,10 @@ class CustomDockerSpawner(DockerSpawner):
         m = getattr(self.client, method)
 
         if method in generator_methods:
+            self.log.info("run docker %s: %s, %s" % (method, args, kwargs))
             def lister(mm):
                 ret = []
                 for l in mm:
-                    self.log.debug("build %s", l)
                     ret.append(l)
                 return ret
             return lister(m(*args, **kwargs))
@@ -92,8 +93,7 @@ class CustomDockerSpawner(DockerSpawner):
     @property
     def escaped_repo_url(self):
         if self._escaped_repo_url is None:
-            trans = str.maketrans(':/-.', "____")
-            self._escaped_repo_url = self.repo_url.translate(trans)
+            self._escaped_repo_url = re.sub("[-:/._]+", "_", self.repo_url)
         return self._escaped_repo_url
 
     @property
@@ -161,8 +161,10 @@ class CustomDockerSpawner(DockerSpawner):
         # If the build took too long, do not start the container
         toc = IOLoop.current().time()
         if toc - tic > self.start_timeout:
+            self.log.warn("Build timed out (image: %s)" % image_name)
             return
 
+        self.log.info("Staring container from image: %s" % image_name)
         yield super(CustomDockerSpawner, self).start(
             image=image_name
         )

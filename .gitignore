@@ -6,9 +6,11 @@ build
 dist
 # ignore config file at the top-level of the repo
 # but not sub-dirs
-/jupyterhub_config.py
+env.sh
+jupyterhub_config.py
 jupyterhub_cookie_secret
 jupyterhub.sqlite
+jupyterhub.log
 share/static/components
 share/static/css/style.min.css
 share/static/css/style.min.css.map
