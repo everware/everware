@@ -8,6 +8,7 @@ Most of the code c/o Kyle Kelley (@rgbkrk)
 import json
 import os
 import urllib
+import sys
 
 from tornado.auth import OAuth2Mixin
 from tornado.escape import url_escape
@@ -37,14 +38,16 @@ class WelcomeHandler(BaseHandler):
     """Render the login page."""
 
     def _render(self, login_error=None, username=None):
+        print('in _render', file=sys.stderr)
         return self.render_template('login.html',
                 next=url_escape(self.get_argument('next', default='')),
                 repo_url=url_escape(self.get_argument('repo_url', default='')),
                 username=username,
                 login_error=login_error,
         )
-    
+
     def get(self):
+        print('in get', file=sys.stderr)
         next_url = self.get_argument('next', '')
         if not next_url.startswith('/'):
             # disallow non-absolute next URLs (e.g. full URLs)
@@ -66,6 +69,7 @@ class WelcomeHandler(BaseHandler):
 class OAuthLoginHandler(BaseHandler):
 
     def get(self):
+        print('in oauth get', file=sys.stderr)
         guess_uri = '{proto}://{host}{path}'.format(
             proto=self.request.protocol,
             host=self.request.host,
@@ -74,15 +78,18 @@ class OAuthLoginHandler(BaseHandler):
                 'oauth_callback'
             )
         )
-        
+
         redirect_uri = self.authenticator.oauth_callback_url or guess_uri
         self.log.info('oauth redirect: %r', redirect_uri)
 
         repo_url = self.get_argument('repo_url', '')
+        repourl_direct = self.get_argument('repourl_direct', '')
 
         state = {'unique': 42}
         if repo_url:
             state['repo_url'] = repo_url
+        if repourl_direct:
+            state['repourl_direct'] = repourl_direct
 
         self.authorize_redirect(
             redirect_uri=redirect_uri,
@@ -105,6 +112,7 @@ class GitHubOAuthHandler(BaseHandler):
     def get(self):
         # Check state argument, should be there and contain a dict
         # as created in OAuthLoginHandler
+        print('in github get', file=sys.stderr)
         state = self.get_secure_cookie('state', self.get_argument('state', ''))
         if state is None:
             raise web.HTTPError(403)
@@ -117,7 +125,7 @@ class GitHubOAuthHandler(BaseHandler):
         if username:
             user = self.user_from_username(username)
             self.set_login_cookie(user)
-            if 'repo_url' in state:
+            if 'repo_url' in state or 'repourl_direct' in state:
                 self.log.debug("Redirect with %s", state)
                 self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
             else:
