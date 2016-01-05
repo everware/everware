@@ -199,7 +199,6 @@ class GitHubOAuthenticator(Authenticator):
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
         
         username = resp_json["login"]
-        print(username, self.whitelist, file=sys.stderr)
         if self.whitelist and username not in self.whitelist:
             username = None
         raise gen.Return(username)
