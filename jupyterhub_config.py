@@ -12,11 +12,11 @@ c = get_config()
 
 # spawn with custom docker containers
 c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
-#c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
+# c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
 
 # The docker instances need access to the Hub, so the default loopback port doesn't work:
 # Find it easier to hardcode the IP of the machine it is deployed on
-#from IPython.utils.localinterfaces import public_ips
+# from IPython.utils.localinterfaces import public_ips
 c.JupyterHub.hub_ip = '172.17.0.1'  # public_ips()[0]
 c.JupyterHub.hub_api_ip = '172.17.0.1'  # public_ips()[0]
 
@@ -40,7 +40,7 @@ c.GitHubOAuthenticator.client_secret = os.environ['GITHUB_CLIENT_SECRET']
 
 c.Spawner.tls = True
 # Set to False when running docker directly (i.e. on Linux)
-#c.Spawner.tls = False
+# c.Spawner.tls = False
 c.Spawner.debug = True
 c.Spawner.start_timeout = 180 * 2
 c.Spawner.remove_containers = True
