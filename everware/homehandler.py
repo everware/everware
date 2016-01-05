@@ -3,7 +3,6 @@ from tornado import gen, web
 
 from jupyterhub.handlers.pages import BaseHandler
 from IPython.html.utils import url_path_join
-import sys
 
 
 class HomeHandler(BaseHandler):
@@ -11,7 +10,6 @@ class HomeHandler(BaseHandler):
 
     @gen.coroutine
     def _spawn_user(self, repo_url):
-        print('in _spawn', file=sys.stderr)
         user = self.get_current_user()
         user.last_repo_url = repo_url
 
@@ -30,9 +28,7 @@ class HomeHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def get(self):
-        print('in homehandler get', file=sys.stderr)
         repourl_direct = self.get_argument('repourl_direct', '')
-        print(self.get_argument('repourl_direct', ''), file=sys.stderr)
         if repourl_direct:
             yield self._spawn_user(repourl_direct)
         else:
@@ -46,7 +42,6 @@ class HomeHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def post(self):
-        print('in HomeHandler post', file=sys.stderr)
         data = {}
         for arg in self.request.arguments:
             data[arg] = self.get_argument(arg)
