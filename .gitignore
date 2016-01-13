@@ -7,7 +7,6 @@ dist
 # ignore config file at the top-level of the repo
 # but not sub-dirs
 env.sh
-jupyterhub_config.py
 jupyterhub_cookie_secret
 jupyterhub.sqlite
 jupyterhub.log

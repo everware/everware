@@ -43,7 +43,7 @@ class WelcomeHandler(BaseHandler):
                 username=username,
                 login_error=login_error,
         )
-    
+
     def get(self):
         next_url = self.get_argument('next', '')
         if not next_url.startswith('/'):
@@ -74,15 +74,18 @@ class OAuthLoginHandler(BaseHandler):
                 'oauth_callback'
             )
         )
-        
+
         redirect_uri = self.authenticator.oauth_callback_url or guess_uri
         self.log.info('oauth redirect: %r', redirect_uri)
 
         repo_url = self.get_argument('repo_url', '')
+        repourl_direct = self.get_argument('repourl_direct', '')
 
         state = {'unique': 42}
         if repo_url:
             state['repo_url'] = repo_url
+        if repourl_direct:
+            state['repourl_direct'] = repourl_direct
 
         self.authorize_redirect(
             redirect_uri=redirect_uri,
@@ -117,7 +120,7 @@ class GitHubOAuthHandler(BaseHandler):
         if username:
             user = self.user_from_username(username)
             self.set_login_cookie(user)
-            if 'repo_url' in state:
+            if 'repo_url' in state or 'repourl_direct' in state:
                 self.log.debug("Redirect with %s", state)
                 self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
             else:
