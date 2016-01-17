@@ -25,6 +25,7 @@ $PYTHON setup.py js
 
 cp env.sh.orig env.sh
 cp jupyterhub_config.py.orig jupyterhub_config.py
+cp whitelist.txt.orig whitelist.txt
 
 echo "Modify 'env.sh' and 'jupyterhub_config.py' and then"
 echo "./run.sh"
