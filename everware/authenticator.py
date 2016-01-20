@@ -20,7 +20,10 @@ from jupyterhub.handlers import BaseHandler
 from jupyterhub.auth import Authenticator, LocalAuthenticator
 from jupyterhub.utils import url_path_join
 
+from traitlets.config import LoggingConfigurable
 from traitlets import Unicode, Set
+
+import signal
 
 
 class GitHubMixin(OAuth2Mixin):
@@ -62,6 +65,22 @@ class WelcomeHandler(BaseHandler):
             self.redirect('/oauth_login', permanent=False)
         else:
             self.finish(self._render())
+
+
+class DefaultWhitelistHandler:
+
+    @classmethod
+    def set_whitelist(cls, filename, config, authenticator):
+        cls.filename = filename
+        cls.authenticator = authenticator
+        authenticator.whitelist = set(x.rstrip() for x in open(filename))
+        config.Authenticator.whitelist = authenticator.whitelist
+        signal.signal(signal.SIGHUP, cls.reload_whitelist)
+
+    @classmethod
+    def reload_whitelist(cls, signal, frame):
+        cls.authenticator.whitelist = set(x.rstrip() for x in open(cls.filename))
+
 
 class OAuthLoginHandler(BaseHandler):
 
