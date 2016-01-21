@@ -22,19 +22,8 @@ c.JupyterHub.hub_api_ip = '172.17.0.1'  # public_ips()[0]
 
 authenticator = everware.GitHubOAuthenticator
 c.JupyterHub.authenticator_class = 'everware.%s' % authenticator.__name__
-
 whitelist_file = 'whitelist.txt'
-
-def set_whitelist(signal, frame):
-    whitelist = set(x.rstrip() for x in open(whitelist_file))
-    if not signal:
-        c.Authenticator.whitelist = whitelist
-    else:
-        print("Reloading whitelist: " + "\n".join(whitelist))
-        authenticator.whitelist = whitelist
-
-signal.signal(signal.SIGHUP, set_whitelist)
-set_whitelist(None, None)
+whitelist_handler = everware.DefaultWhitelistHandler(whitelist_file, c, authenticator)
 
 c.GitHubOAuthenticator.oauth_callback_url = os.environ['OAUTH_CALLBACK_URL']
 c.GitHubOAuthenticator.client_id = os.environ['GITHUB_CLIENT_ID']

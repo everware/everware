@@ -67,19 +67,23 @@ class WelcomeHandler(BaseHandler):
             self.finish(self._render())
 
 
-class DefaultWhitelistHandler:
-
-    @classmethod
-    def set_whitelist(cls, filename, config, authenticator):
-        cls.filename = filename
-        cls.authenticator = authenticator
+class DefaultWhitelistHandler(LoggingConfigurable):
+    def __init__(self, filename, config, authenticator):
+        super().__init__()
+        self.filename = filename
+        self.authenticator = authenticator
         authenticator.whitelist = set(x.rstrip() for x in open(filename))
         config.Authenticator.whitelist = authenticator.whitelist
-        signal.signal(signal.SIGHUP, cls.reload_whitelist)
+        signal.signal(signal.SIGHUP, self.reload_whitelist)
 
-    @classmethod
-    def reload_whitelist(cls, signal, frame):
-        cls.authenticator.whitelist = set(x.rstrip() for x in open(cls.filename))
+    def reload_whitelist(self, signal, frame):
+        self.authenticator.whitelist = set(
+            x.rstrip() for x in open(self.filename)
+        )
+        self.log.info(
+            'Whitelist reloaded:\n%s',
+            '\n'.join(self.authenticator.whitelist)
+        )
 
 
 class OAuthLoginHandler(BaseHandler):
@@ -154,7 +158,7 @@ class BitbucketOAuthHandler(GitHubOAuthHandler):
 
 
 class GitHubOAuthenticator(Authenticator):
-    
+
     login_service = "GitHub"
     oauth_callback_url = Unicode('', config=True)
     client_id = Unicode(os.environ.get('GITHUB_CLIENT_ID', ''),
@@ -164,14 +168,14 @@ class GitHubOAuthenticator(Authenticator):
 
     def login_url(self, base_url):
         return url_path_join(base_url, 'login')
-    
+
     def get_handlers(self, app):
         return [
             (r'/login', WelcomeHandler),
             (r'/oauth_login', GitHubLoginHandler),
             (r'/oauth_callback', GitHubOAuthHandler),
         ]
-    
+
     @gen.coroutine
     def authenticate(self, handler):
         code = handler.get_argument("code", False)
@@ -179,32 +183,32 @@ class GitHubOAuthenticator(Authenticator):
             raise web.HTTPError(400, "oauth callback made without a token")
         # TODO: Configure the curl_httpclient for tornado
         http_client = AsyncHTTPClient()
-        
+
         # Exchange the OAuth code for a GitHub Access Token
         #
         # See: https://developer.github.com/v3/oauth/
-        
+
         # GitHub specifies a POST request yet requires URL parameters
         params = dict(
             client_id=self.client_id,
             client_secret=self.client_secret,
             code=code
         )
-        
+
         url = url_concat("https://github.com/login/oauth/access_token",
                          params)
-        
+
         req = HTTPRequest(url,
                           method="POST",
                           headers={"Accept": "application/json"},
                           body='' # Body is required for a POST...
                           )
-        
+
         resp = yield http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-        
+
         access_token = resp_json['access_token']
-        
+
         # Determine who the logged in user is
         headers={"Accept": "application/json",
                  "User-Agent": "JupyterHub",
@@ -216,7 +220,7 @@ class GitHubOAuthenticator(Authenticator):
                           )
         resp = yield http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-        
+
         username = resp_json["login"]
         if self.whitelist and username not in self.whitelist:
             username = None
