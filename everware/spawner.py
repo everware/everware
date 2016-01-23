@@ -22,6 +22,10 @@ import git
 
 
 class CustomDockerSpawner(DockerSpawner):
+    poll_interval = Integer(30, config=True,
+        help="""Interval (in seconds) on which to poll the spawner."""
+    )
+
     def __init__(self, **kwargs):
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
@@ -41,6 +45,7 @@ class CustomDockerSpawner(DockerSpawner):
                 ret = []
                 for l in mm:
                     ret.append(l)
+                    self.log.debug('In cycle: %s', l)
                 return ret
             return lister(m(*args, **kwargs))
         else:
@@ -66,7 +71,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     def _git(self, method, *args, **kwargs):
         """wrapper for calling git methods
-        
+
         to be passed to ThreadPoolExecutor
         """
         m = getattr(self.git_client, method)
@@ -74,7 +79,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     def git(self, method, *args, **kwargs):
         """Call a git method in a background thread
-        
+
         returns a Future
         """
         return self.git_executor.submit(self._git, method, *args, **kwargs)
@@ -131,6 +136,19 @@ class CustomDockerSpawner(DockerSpawner):
             tags = [tag.split(':')[0] for tag in img['RepoTags']]
             if image_name in tags:
                 return img
+
+    @gen.coroutine
+    def get_logs(self):
+        res = yield self.docker(
+            'logs',
+            container=self.container_name,
+            stdout=True,
+            stream=False,
+            timestamps=True,
+        )
+        # self.log.debug('Got: %s', res)
+        return res.decode('utf-8')
+
 
     @gen.coroutine
     def start(self, image=None):
@@ -199,7 +217,7 @@ class CustomSwarmSpawner(CustomDockerSpawner):
         yield super(CustomSwarmSpawner, self).start(
             image=image
         )
-        
+
         container = yield self.get_container()
         if container is not None:
             node_name = container['Node']['Name']
