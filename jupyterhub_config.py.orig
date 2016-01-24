@@ -2,11 +2,15 @@ import os
 import everware
 
 import jupyterhub.handlers.pages
+import jupyterhub.handlers.base
 import signal
 
 jupyterhub.handlers.pages.HomeHandler.get = everware.HomeHandler.get
 jupyterhub.handlers.pages.HomeHandler.post = everware.HomeHandler.post
 jupyterhub.handlers.pages.HomeHandler._spawn_user = everware.HomeHandler._spawn_user
+
+jupyterhub.handlers.base.UserSpawnHandler.get = everware.UserSpawnHandler.get
+jupyterhub.handlers.base.UserSpawnHandler._process_logs = everware.UserSpawnHandler._process_logs
 
 c = get_config()
 
