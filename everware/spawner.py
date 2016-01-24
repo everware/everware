@@ -22,15 +22,19 @@ import git
 
 
 class CustomDockerSpawner(DockerSpawner):
-    poll_interval = Integer(30, config=True,
+    poll_interval = Integer(
+        30,
+        config=True,
         help="""Interval (in seconds) on which to poll the spawner."""
     )
 
     def __init__(self, **kwargs):
         super(CustomDockerSpawner, self).__init__(**kwargs)
+        self._user_log = []
 
     def _docker(self, method, *args, **kwargs):
-        """wrapper for calling docker methods
+        """
+        wrapper for calling docker methods
 
         to be passed to ThreadPoolExecutor
         """
@@ -40,48 +44,61 @@ class CustomDockerSpawner(DockerSpawner):
         m = getattr(self.client, method)
 
         if method in generator_methods:
-            self.log.info("run docker %s: %s, %s" % (method, args, kwargs))
+            self.log.info("run docker with block %s: %s, %s" %
+                          (method, args, kwargs))
+
             def lister(mm):
                 ret = []
+                self._user_log.append('<ul>')
                 for l in mm:
-                    ret.append(l)
-                    self.log.debug('In cycle: %s', l)
+                    ret.append(str(l))
+                    self._user_log.append('<li>' + str(l) + '</li>')
+                self._user_log.append('</ul>\n')
                 return ret
+
             return lister(m(*args, **kwargs))
         else:
             return m(*args, **kwargs)
 
     _git_executor = None
+
     @property
     def git_executor(self):
         """single global git executor"""
+
         cls = self.__class__
         if cls._git_executor is None:
             cls._git_executor = ThreadPoolExecutor(1)
         return cls._git_executor
 
     _git_client = None
+
     @property
     def git_client(self):
         """single global git client instance"""
+
         cls = self.__class__
         if cls._git_client is None:
             cls._git_client = git.Git()
         return cls._git_client
 
     def _git(self, method, *args, **kwargs):
-        """wrapper for calling git methods
+        """
+        wrapper for calling git methods
 
         to be passed to ThreadPoolExecutor
         """
+
         m = getattr(self.git_client, method)
         return m(*args, **kwargs)
 
     def git(self, method, *args, **kwargs):
-        """Call a git method in a background thread
+        """
+        Call a git method in a background thread
 
         returns a Future
         """
+
         return self.git_executor.submit(self._git, method, *args, **kwargs)
 
     def clear_state(self):
@@ -95,6 +112,7 @@ class CustomDockerSpawner(DockerSpawner):
         return last_repo_url
 
     _escaped_repo_url = None
+
     @property
     def escaped_repo_url(self):
         if self._escaped_repo_url is None:
@@ -103,10 +121,12 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def container_name(self):
-        return "{}-{}-{}-{}".format(self.container_prefix,
-                                    self.escaped_name,
-                                    self.escaped_repo_url,
-                                    self.repo_sha)
+        return "{}-{}-{}-{}".format(
+            self.container_prefix,
+            self.escaped_name,
+            self.escaped_repo_url,
+            self.repo_sha
+        )
 
 #    @gen.coroutine
 #    def get_container(self):
@@ -133,29 +153,23 @@ class CustomDockerSpawner(DockerSpawner):
     def get_image(self, image_name):
         images = yield self.docker('images')
         for img in images:
-            tags = [tag.split(':')[0] for tag in img['RepoTags']]
+            tags = (tag.split(':')[0] for tag in img['RepoTags'])
             if image_name in tags:
                 return img
 
-    @gen.coroutine
-    def get_logs(self):
-        res = yield self.docker(
-            'logs',
-            container=self.container_name,
-            stdout=True,
-            stream=False,
-            timestamps=True,
-        )
-        # self.log.debug('Got: %s', res)
-        return res.decode('utf-8')
+    @property
+    def user_log(self):
+        return self._user_log
 
+    def _add_to_log(self, message):
+        self._user_log.append('<li>' + message + '</li>')
 
     @gen.coroutine
-    def start(self, image=None):
-        """start the single-user server in a docker container"""
-        tic = IOLoop.current().time()
-
+    def build_image(self):
+        """download the repo and build a docker image if needed"""
+        building_start = IOLoop.current().time()
         tmp_dir = mkdtemp(suffix='-everware')
+        self._add_to_log('Cloning repository %s' % self.repo_url)
         yield self.git('clone', self.repo_url, tmp_dir)
         # is this blocking?
         # use the username, git repo URL and HEAD commit sha to derive
@@ -163,26 +177,45 @@ class CustomDockerSpawner(DockerSpawner):
         repo = git.Repo(tmp_dir)
         self.repo_sha = repo.rev_parse("HEAD")
 
-        image_name = "everware/{}-{}-{}".format(self.user.name,
-                                                self.escaped_repo_url,
-                                                self.repo_sha)
+        image_name = "everware/{}-{}-{}".format(
+            self.user.name,
+            self.escaped_repo_url,
+            self.repo_sha
+        )
+
+        self._add_to_log('Building image')
 
         image = yield self.get_image(image_name)
         if image is None:
             self.log.debug("Building image {}".format(image_name))
-            build_log = yield self.docker('build',
-                                          path=tmp_dir,
-                                          tag=image_name,
-                                          rm=True)
+            build_log = yield self.docker(
+                'build',
+                path=tmp_dir,
+                tag=image_name,
+                rm=True,
+                decode=True
+            )
             self.log.debug("".join(str(line) for line in build_log))
 
         # If the build took too long, do not start the container
-        toc = IOLoop.current().time()
-        if toc - tic > self.start_timeout:
+        building_end = IOLoop.current().time()
+        if building_end - building_start > self.start_timeout:
             self.log.warn("Build timed out (image: %s)" % image_name)
             return
+        return image_name
 
+    @gen.coroutine
+    def is_running(self):
+        status = yield self.poll()
+        return status is None
+
+    @gen.coroutine
+    def start(self, image=None):
+        """start the single-user server in a docker container"""
+        self._user_log = []
+        image_name = yield self.build_image()
         self.log.info("Staring container from image: %s" % image_name)
+        self._add_to_log('Creating container')
         yield super(CustomDockerSpawner, self).start(
             image=image_name
         )
@@ -223,4 +256,4 @@ class CustomSwarmSpawner(CustomDockerSpawner):
             node_name = container['Node']['Name']
             self.user.server.ip = node_name
             self.log.info("{} was started on {} ({}:{})".format(
-            self.container_name, node_name, self.user.server.ip, self.user.server.port))
+                self.container_name, node_name, self.user.server.ip, self.user.server.port))

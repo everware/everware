@@ -3,6 +3,7 @@ from tornado import gen, web
 
 from jupyterhub.handlers.pages import BaseHandler
 from IPython.html.utils import url_path_join
+from urllib.parse import urlencode
 
 
 class HomeHandler(BaseHandler):
@@ -11,19 +12,22 @@ class HomeHandler(BaseHandler):
     @gen.coroutine
     def _spawn_user(self, repo_url):
         user = self.get_current_user()
-        user.last_repo_url = repo_url
-
-        already_running = False
-        if user.spawner:
-            status = yield user.spawner.poll()
-            already_running = (status == None)
-        if not already_running:
-            yield self.spawn_single_user(user)
-
-        self.redirect(url_path_join(
-            self.hub.server.base_url,
-            user.server.base_url
-        ))
+        try:
+            user.last_repo_url = repo_url
+            self.redirect(url_path_join(
+                self.hub.server.base_url,
+                user.server.base_url
+            ))
+        except AttributeError:
+            # user's server hasn't been created
+            query = {
+                'repo_url': repo_url
+            }
+            self.redirect(url_path_join(
+                self.hub.server.base_url,
+                'user',
+                user.escaped_name + '?' + urlencode(query)
+            ))
 
     @web.authenticated
     @gen.coroutine
