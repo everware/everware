@@ -49,11 +49,10 @@ class CustomDockerSpawner(DockerSpawner):
 
             def lister(mm):
                 ret = []
-                self._user_log.append('<ul>')
                 for l in mm:
                     ret.append(str(l))
-                    self._user_log.append('<li>' + str(l) + '</li>')
-                self._user_log.append('</ul>\n')
+                    if 'stream' in l and not l['stream'].startswith(' --->'):
+                        self._add_to_log(l['stream'], 2)
                 return ret
 
             return lister(m(*args, **kwargs))
@@ -161,8 +160,11 @@ class CustomDockerSpawner(DockerSpawner):
     def user_log(self):
         return self._user_log
 
-    def _add_to_log(self, message):
-        self._user_log.append('<li>' + message + '</li>')
+    def _add_to_log(self, message, level=1):
+        self._user_log.append({
+            'text': message,
+            'level': level
+        })
 
     @gen.coroutine
     def build_image(self):

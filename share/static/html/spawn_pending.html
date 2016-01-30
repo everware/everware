@@ -1,32 +1,70 @@
 {% extends "page.html" %}
 
+
 {% block main %}
 
-<div class="container">
-  <div class="row">
-    <div class="text-center">
-      <p>Your server is starting up.</p>
-      <p>This can take seconds or minutes, please be patient</p>
-      <p>You will be redirected automatically when it's ready for you.</p>
-      <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
-    </div>
-  </div>
-  <div class="row">
-    {{log_lines}}
-  </div>
-</div>
 
+<div class="container">
+    <div class="row">
+        <div class="text-center">
+            <p>Your server is starting up.</p>
+            <p>This can take seconds or minutes, please be patient</p>
+            <p>You will be redirected automatically when it's ready for you.</p>
+            <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
+        </div>
+    </div>
+    <div class="row" id='log-lines'>
+        {{log_lines}}
+    </div>
+</div>
 {% endblock %}
+
 
 {% block script %}
 <script type="text/javascript">
+
+function make_list(log) {
+    function escapeHTML(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    var result = [];
+    var cur_level = -1;
+    console.log(log);
+    log.forEach(function(item) {
+        var level = item.level;
+        if (level != cur_level) {
+            if (level < cur_level)
+                result.push('</ul>');
+            else
+                result.push('<ul>');
+            cur_level = level;
+        }
+        result.push('<li>' + escapeHTML(item.text) + '</li>');
+    });
+    for (var i = 1; i <= cur_level; ++i)
+        result.push('</ul>');
+    return result.join('');
+}
+
 require(["jquery"], function ($) {
-  $("#refresh").click(function () {
-    window.location.reload();
-  })
-  setTimeout(function () {
-    window.location.reload();
-  }, 2000);
+    $("#refresh").click(function () {
+        window.location.reload();
+    });
+    function write_log_lines(log) {
+        $('#log-lines').html(make_list(log));
+    }
+    
+    var id = setInterval(function () {
+        $.getJSON('#', {
+            'get_logs': 1
+        }, function (data) {
+            if ('done' in data) {
+                clearInterval(id);
+                window.location.reload();
+            } else
+                write_log_lines(data.log);
+        });
+    }, 2000);
 });
 </script>
 {% endblock %}
