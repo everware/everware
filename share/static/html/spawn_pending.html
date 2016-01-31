@@ -1,22 +1,45 @@
 {% extends "page.html" %}
 
+{% block title %}
+Everware
+{% endblock %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
+    <style type="text/css"></style>
+{% endblock %}
+
 
 {% block main %}
 
+<div id="login-main">
+<header class="jumbotron masthead" style="padding: 1px">
+    <h1 style="font-size: 55px">everware</h1>
+    <p style="font-size: 26px">Sharing is caring</p>
+</header>
+
 
 <div class="container">
-    <div class="row">
+    <div class="row" style="margin-top: 2%">
         <div class="text-center">
             <p>Your server is starting up.</p>
-            <p>This can take seconds or minutes, please be patient</p>
+            <p>This can take seconds or minutes, please be patient.</p>
             <p>You will be redirected automatically when it's ready for you.</p>
+            <p>This page is updated automatically.</p>
             <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
         </div>
     </div>
-    <div class="row" id='log-lines'>
-        {{log_lines}}
-    </div>
+    <div class="row" id='log-lines' style="margin-top: 2%"></div>
 </div>
+
+<footer class="footer">
+  <div class="footer-inside">
+    <div class="col-sm-8">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+    </div>
+    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
+  </div>
+</footer>
 {% endblock %}
 
 
@@ -27,7 +50,7 @@ function make_list(log) {
     function escapeHTML(s) {
         return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
-    var result = [];
+    var result = [], is_done = [];
     var cur_level = -1;
     console.log(log);
     log.forEach(function(item) {
@@ -39,22 +62,56 @@ function make_list(log) {
                 result.push('<ul>');
             cur_level = level;
         }
+        is_done.push(true);
         result.push('<li>' + escapeHTML(item.text) + '</li>');
     });
     for (var i = 1; i <= cur_level; ++i)
         result.push('</ul>');
-    return result.join('');
+    var min_level = Infinity;
+    for (var i = log.length - 1; i >= 0; --i) {
+        if (log[i].level < min_level) {
+            min_level = log[i].level;
+            is_done[i] = false;
+        }
+    }
+    var style = '';
+    var level_begins = [];
+    is_done.forEach(function (is_done, i) {
+        if (log[i].level > level_begins.length)
+            level_begins.push(i);
+        else if (log[i].level < level_begins.length) {
+            while (level_begins.length != log[i].level)
+                level_begins[level_begins.length - 2] += i - level_begins.pop() - 1;
+        }
+        var selector = 'div > ';
+        for (var j = 0; j < level_begins.length; ++j)
+            selector += 'ul > ';
+        style += selector + 'li:nth-child(' + (i - level_begins[level_begins.length - 1] + 1) + '){list-style-image:url(\'';
+        if (is_done)
+            style += '{{ static_url('images/done.png') }}';
+        else
+            style += '{{ static_url('images/loading.gif') }}';
+        style += '\');}\n';
+    });
+    return [result.join(''), style];
 }
 
+require(["jquery"], function ($) {
+    var data = JSON.parse('%s');
+    var res = make_list(data.log);
+    $('#log-lines').html(res[0]);
+    $('head style').html(res[1]);
+})
 require(["jquery"], function ($) {
     $("#refresh").click(function () {
         window.location.reload();
     });
     function write_log_lines(log) {
-        $('#log-lines').html(make_list(log));
+        var res = make_list(log);
+        $('#log-lines').html(res[0]);
+        $('head style').html(res[1]);
     }
-    
-    var id = setInterval(function () {
+    function update_log() {
         $.getJSON('#', {
             'get_logs': 1
         }, function (data) {
@@ -64,7 +121,9 @@ require(["jquery"], function ($) {
             } else
                 write_log_lines(data.log);
         });
-    }, 2000);
+    }
+    update_log();
+    var id = setInterval(update_log, 2000);
 });
 </script>
 {% endblock %}

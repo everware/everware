@@ -51,6 +51,7 @@ class CustomDockerSpawner(DockerSpawner):
                 ret = []
                 for l in mm:
                     ret.append(str(l))
+                    # include only high-level docker's log
                     if 'stream' in l and not l['stream'].startswith(' --->'):
                         self._add_to_log(l['stream'], 2)
                 return ret

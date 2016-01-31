@@ -12,17 +12,6 @@ class UserSpawnHandler(BaseHandler):
     being redirected to the original.
     """
 
-    def _process_logs(self, logs):
-        """prepare log for html"""
-        result = json_encode(logs)
-        return """
-        <script type="text/javascript">
-        require(["jquery"], function ($) {
-            var data = JSON.parse('%s');
-            $('#log-lines').html(make_list(data.log));
-        })
-        </script>""" % result
-
     @gen.coroutine
     def get(self, name):
         current_user = self.get_current_user()
@@ -46,7 +35,6 @@ class UserSpawnHandler(BaseHandler):
                         return
                     if is_running:
                         # set login cookie anew
-                        yield gen.sleep(30)
                         self.set_login_cookie(current_user)
                         without_prefix = self.request.uri[
                             len(self.hub.server.base_url):
@@ -70,9 +58,6 @@ class UserSpawnHandler(BaseHandler):
                 html = self.render_template(
                     "spawn_pending.html",
                     user=current_user,
-                    log_lines=self._process_logs({
-                        'log': log_lines
-                    })
                 )
                 self.finish(html)
                 if not current_user.spawner:
