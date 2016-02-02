@@ -33,12 +33,19 @@ class HomeHandler(BaseHandler):
     @gen.coroutine
     def get(self):
         repourl_direct = self.get_argument('repourl_direct', '')
-        if repourl_direct:
+        user = self.get_current_user()
+        if user.stop_pending:
+            html = self.render_template(
+                'wait_for_stop.html',
+                user=user
+            )
+            self.finish(html)
+        elif repourl_direct:
             yield self._spawn_user(repourl_direct)
         else:
             html = self.render_template(
                 'home.html',
-                user=self.get_current_user(),
+                user=user,
                 repo_url=self.get_argument('repo_url', ''),
             )
             self.finish(html)

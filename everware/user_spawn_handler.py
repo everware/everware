@@ -19,11 +19,13 @@ class UserSpawnHandler(BaseHandler):
         if repo_url:
             current_user.last_repo_url = repo_url
         is_log_request = self.get_argument('get_logs', False)
+        is_failed = False
         if current_user and current_user.name == name:
             # logged in, work with spawner
             if current_user.spawner:
                 log_lines = current_user.spawner.user_log
-                if not current_user.spawn_pending:
+                is_failed = current_user.spawner.is_failed
+                if not current_user.spawn_pending and not is_failed:
                     # user's server has started or
                     # even hasn't been created
                     is_running = yield current_user.spawner.is_running()
@@ -51,15 +53,22 @@ class UserSpawnHandler(BaseHandler):
                 log_lines = []
 
             if is_log_request:
-                self.finish(json_encode({
+                resp = {
                     'log': log_lines
-                }))
+                }
+                if is_failed:
+                    resp.update({
+                        'stop': 1
+                    })
+                self.finish(json_encode(resp))
             else:
                 html = self.render_template(
                     "spawn_pending.html",
                     user=current_user,
                 )
                 self.finish(html)
+                if is_failed:
+                    return
                 if not current_user.spawner:
                     yield self.spawn_single_user(current_user)
                 elif not current_user.spawn_pending and not is_running:

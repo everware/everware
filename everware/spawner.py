@@ -31,6 +31,8 @@ class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
         super(CustomDockerSpawner, self).__init__(**kwargs)
         self._user_log = []
+        self._is_failed = False
+        self._is_building = False
 
     def _docker(self, method, *args, **kwargs):
         """
@@ -161,6 +163,10 @@ class CustomDockerSpawner(DockerSpawner):
     def user_log(self):
         return self._user_log
 
+    @property
+    def is_failed(self):
+        return self._is_failed
+
     def _add_to_log(self, message, level=1):
         self._user_log.append({
             'text': message,
@@ -170,7 +176,6 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
-        building_start = IOLoop.current().time()
         tmp_dir = mkdtemp(suffix='-everware')
         self._add_to_log('Cloning repository %s' % self.repo_url)
         yield self.git('clone', self.repo_url, tmp_dir)
@@ -200,11 +205,6 @@ class CustomDockerSpawner(DockerSpawner):
             )
             self.log.debug("".join(str(line) for line in build_log))
 
-        # If the build took too long, do not start the container
-        building_end = IOLoop.current().time()
-        if building_end - building_start > self.start_timeout:
-            self.log.warn("Build timed out (image: %s)" % image_name)
-            return
         return image_name
 
     @gen.coroutine
@@ -216,12 +216,37 @@ class CustomDockerSpawner(DockerSpawner):
     def start(self, image=None):
         """start the single-user server in a docker container"""
         self._user_log = []
-        image_name = yield self.build_image()
-        self.log.info("Staring container from image: %s" % image_name)
-        self._add_to_log('Creating container')
-        yield super(CustomDockerSpawner, self).start(
-            image=image_name
-        )
+        self._is_failed = False
+        self._is_building = True
+        try:
+            f = self.build_image()
+            image_name = yield gen.with_timeout(
+                timedelta(seconds=self.start_timeout - 5),
+                f
+            )
+            self._is_building = False
+            self.log.info("Starting container from image: %s" % image_name)
+            self._add_to_log('Creating container')
+            yield super(CustomDockerSpawner, self).start(
+                image=image_name
+            )
+        except Exception as e:
+            self._is_failed = True
+            if isinstance(e, gen.TimeoutError):
+                self._add_to_log(
+                    'Building took too long (> %.3f secs)' % self.start_timeout,
+                    level=2
+                )
+            else:
+                self._add_to_log('Something went wrong')
+            raise
+
+    @gen.coroutine
+    def get_container(self):
+        if self._is_building:
+            return None
+        container = yield super(CustomDockerSpawner, self).get_container()
+        return container
 
     def _env_default(self):
         env = super(CustomDockerSpawner, self)._env_default()
