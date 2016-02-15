@@ -1,6 +1,10 @@
+import re
 import pwd
+import zipfile
+from io import BytesIO
 from tempfile import mkdtemp
 from datetime import timedelta
+from os.path import join as pjoin
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -22,6 +26,7 @@ import git
 
 class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
+        self._building = False
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
     def _docker(self, method, *args, **kwargs):
@@ -82,16 +87,40 @@ class CustomDockerSpawner(DockerSpawner):
         state = super(CustomDockerSpawner, self).clear_state()
         self.container_id = ''
 
+    def _options_form_default(self):
+        return """
+            <label for="username_input">Git repository:</label>
+            <input
+              id="repository_input"
+              type="text"
+              autocapitalize="off"
+              autocorrect="off"
+              class="form-control"
+              name="repository_url"
+              tabindex="1"
+              autofocus="autofocus"
+            />
+        """
+
+    def options_from_form(self, formdata):
+        options = {}
+        options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
+        if not options['repo_url']:
+            raise Exception('You have to provide the URL to a git repository.')
+
+        return options
+
     @property
     def repo_url(self):
-        return self.user.last_repo_url
+        return self.user_options['repo_url']
 
     _escaped_repo_url = None
     @property
     def escaped_repo_url(self):
         if self._escaped_repo_url is None:
             trans = str.maketrans(':/-.', "____")
-            self._escaped_repo_url = self.repo_url.translate(trans)
+            repo_url = self.repo_url.translate(trans)
+            self._escaped_repo_url = re.sub("_+", "_", repo_url)
         return self._escaped_repo_url
 
     @property
@@ -131,6 +160,7 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def start(self, image=None):
         """start the single-user server in a docker container"""
+        self._building = True
         tic = IOLoop.current().time()
 
         tmp_dir = mkdtemp(suffix='-everware')
@@ -154,6 +184,7 @@ class CustomDockerSpawner(DockerSpawner):
                                           rm=True)
             self.log.debug("".join(str(line) for line in build_log))
 
+        self._building = False
         # If the build took too long, do not start the container
         toc = IOLoop.current().time()
         if toc - tic > self.start_timeout:
@@ -162,6 +193,13 @@ class CustomDockerSpawner(DockerSpawner):
         yield super(CustomDockerSpawner, self).start(
             image=image_name
         )
+
+    def poll(self):
+        if self._building:
+            return None
+
+        else:
+            return super(CustomDockerSpawner, self).poll()
 
     def _env_default(self):
         env = super(CustomDockerSpawner, self)._env_default()
@@ -198,5 +236,6 @@ class CustomSwarmSpawner(CustomDockerSpawner):
         if container is not None:
             node_name = container['Node']['Name']
             self.user.server.ip = node_name
+            self.db.commit()
             self.log.info("{} was started on {} ({}:{})".format(
-            self.container_name, node_name, self.user.server.ip, self.user.server.port))
+                self.container_name, node_name, self.user.server.ip, self.user.server.port))

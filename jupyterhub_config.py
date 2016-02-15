@@ -1,23 +1,20 @@
 import os
 import everware
 
-import jupyterhub.handlers.pages
-jupyterhub.handlers.pages.HomeHandler.get = everware.HomeHandler.get
-jupyterhub.handlers.pages.HomeHandler.post = everware.HomeHandler.post
 
 c = get_config()
 
 # spawn with custom docker containers
-#c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
-c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
+c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
+#c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
 
 # The docker instances need access to the Hub, so the default loopback port doesn't work:
 # Find it easier to hardcode the IP of the machine it is deployed on
-#from IPython.utils.localinterfaces import public_ips
-c.JupyterHub.hub_ip = '128.142.143.186'#public_ips()[0]
-c.JupyterHub.hub_api_ip = '128.142.143.186'#public_ips()[0]
+ip_addr = '192.168.99.1'
+c.JupyterHub.hub_ip = ip_addr
+c.JupyterHub.hub_api_ip = ip_addr
 
-c.JupyterHub.authenticator_class = 'everware.GitHubOAuthenticator'
+c.JupyterHub.authenticator_class = 'oauthenticator.GitHubOAuthenticator'
 c.Authenticator.whitelist = set(['betatim', 'ibab', 'kdungs', 'seneubert', 'alexpearce'])
 
 c.GitHubOAuthenticator.oauth_callback_url = os.environ['OAUTH_CALLBACK_URL']
@@ -33,9 +30,10 @@ c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True
 
-c.JupyterHub.data_files_path = 'share'
-c.JupyterHub.template_paths = ['share/static/html']
+#c.JupyterHub.data_files_path = 'share'
+#c.JupyterHub.template_paths = ['share/static/html']
 
-# change this to the ip that `boot2docker ip` tells you if
-# you use boot2docker, otherwise remove the line
-#c.Spawner.container_ip = '192.168.59.103'
+# change this to the ip that `boot2docker ip` or
+# `docker-machine ip <vm_name>`tells you if
+# you use boot2docker/a VM, otherwise remove the line
+c.Spawner.container_ip = '192.168.99.100'
