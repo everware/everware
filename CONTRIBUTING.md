@@ -4,6 +4,9 @@
 
 To report a bug, open an issue on our [issue tracker][issues].
 
+Contributors to the project are required to follow the [code of
+conduct](CONDUCT.md).
+
 By contributing, you are agreeing that we may redistribute your work under
 [these licenses][license].
 
