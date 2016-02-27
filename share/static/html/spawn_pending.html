@@ -1,29 +1,132 @@
 {% extends "page.html" %}
 
+{% block title %}
+Everware
+{% endblock %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
+    <style type="text/css"></style>
+{% endblock %}
+
+
 {% block main %}
 
+<div id="login-main">
+<header class="jumbotron masthead" style="padding: 1px">
+    <h1 style="font-size: 55px">everware</h1>
+    <p style="font-size: 26px">Sharing is caring</p>
+</header>
+
+
 <div class="container">
-  <div class="row">
-    <div class="text-center">
-      <p>Your server is starting up.</p>
-      <p>This can take seconds or minutes, please be patient</p>
-      <p>You will be redirected automatically when it's ready for you.</p>
-      <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
+    <div class="row" style="margin-top: 2%">
+        <div class="text-center">
+            <p>Your server is starting up.</p>
+            <p>This can take seconds or minutes, please be patient.</p>
+            <p>You will be redirected automatically when it's ready for you.</p>
+            <p>This page is updated automatically.</p>
+            <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
+        </div>
     </div>
-  </div>
+    <div class="row" id='log-lines' style="margin-top: 2%"></div>
 </div>
 
 {% endblock %}
 
+
 {% block script %}
 <script type="text/javascript">
+function make_list(log, is_failed) {
+    function escapeHTML(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    var result = [], is_done = [];
+    var cur_level = -1;
+    console.log(log);
+    log.forEach(function(item) {
+        var level = item.level;
+        if (level != cur_level) {
+            if (level < cur_level)
+                result.push('</ul>');
+            else
+                result.push('<ul>');
+            cur_level = level;
+        }
+        is_done.push(true);
+        result.push('<li>' + escapeHTML(item.text) + '</li>');
+    });
+    for (var i = 1; i <= cur_level; ++i)
+        result.push('</ul>');
+    var min_level = Infinity;
+    for (var i = log.length - 1; i >= 0; --i) {
+        if (log[i].level < min_level) {
+            min_level = log[i].level;
+            is_done[i] = false;
+        }
+    }
+    var style = '';
+    var level_begins = [];
+    is_done.forEach(function (is_done, i) {
+        if (log[i].level > level_begins.length)
+            level_begins.push(i);
+        else if (log[i].level < level_begins.length) {
+            while (level_begins.length != log[i].level)
+                level_begins[level_begins.length - 2] += i - level_begins.pop() - 1;
+        }
+        var selector = 'div > ';
+        for (var j = 0; j < level_begins.length; ++j)
+            selector += 'ul > ';
+        style += selector + 'li:nth-child(' + (i - level_begins[level_begins.length - 1] + 1) + '){list-style-image:url(\'';
+        if (is_done)
+            style += '{{ static_url('images/done.png') }}';
+        else if (is_failed)
+            style += '{{ static_url('images/error.png') }}';
+        else
+            style += '{{ static_url('images/loading.gif') }}';
+        style += '\');}\n';
+    });
+    return [result.join(''), style];
+}
 require(["jquery"], function ($) {
-  $("#refresh").click(function () {
-    window.location.reload();
-  })
-  setTimeout(function () {
-    window.location.reload();
-  }, 5000);
+    $("#refresh").click(function () {
+        window.location.reload();
+    });
+    function write_log_lines(log, is_failed) {
+        var res = make_list(log, is_failed);
+        $('#log-lines').html(res[0]);
+        $('head style').html(res[1]);
+    }
+    var need_wait = {{need_wait}};
+    var user_name = "{{user.name}}";
+    function reload_page() {
+        window.location.replace('/user/' + user_name);
+    }
+    function update_log() {
+        $.getJSON('#', {
+            'get_logs': 1
+        }, function (data) {
+            if ('done' in data) {
+                clearInterval(id);
+                if (need_wait) {
+                    write_log_lines(data.log, false);
+                    setTimeout(reload_page, 5000);
+                } else
+                    window.location.reload();
+            } else {
+                var is_failed = false;
+                if ('failed' in data) {
+                    clearInterval(id);
+                    is_failed = true;
+                }
+                write_log_lines(data.log, is_failed);
+            }
+        });
+    }
+    console.log(need_wait);
+    update_log();
+    if (!need_wait)
+        var id = setInterval(update_log, 2000);
 });
 </script>
 {% endblock %}

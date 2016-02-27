@@ -2,7 +2,13 @@
 
 {% block main %}
 
-<div class="container">
+<div id="login-main">
+<header class="jumbotron masthead">
+    <h1>everware</h1>
+    <p>Sharing is caring</p>
+</header>
+
+<div class="container" style="margin-top: 3%;">
   <div class="row">
     <div class="text-center">
       {% if user.running %}
@@ -26,6 +32,15 @@
     </div>
   </div>
 </div>
+
+<footer class="footer">
+  <div class="footer-inside">
+    <div class="col-sm-8">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+    </div>
+    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
+  </div>
+</footer>
 
 {% endblock %}
 

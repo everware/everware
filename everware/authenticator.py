@@ -8,6 +8,7 @@ Most of the code c/o Kyle Kelley (@rgbkrk)
 import json
 import os
 import urllib
+import signal
 
 from tornado.auth import OAuth2Mixin
 from tornado.escape import url_escape
@@ -21,6 +22,28 @@ from jupyterhub.auth import Authenticator, LocalAuthenticator
 from jupyterhub.utils import url_path_join
 
 from traitlets import Unicode, Set
+from traitlets.config import LoggingConfigurable
+
+
+class DefaultWhitelistHandler(LoggingConfigurable):
+
+    def __init__(self, filename, config, authenticator):
+        super().__init__()
+        self.filename = filename
+        self.authenticator = authenticator
+        authenticator.whitelist = set(x.rstrip() for x in open(filename))
+        config.Authenticator.whitelist = authenticator.whitelist
+        signal.signal(signal.SIGHUP, self.reload_whitelist)
+
+
+    def reload_whitelist(self, signal, frame):
+        self.authenticator.whitelist = set(
+            x.rstrip() for x in open(self.filename)
+        )
+        self.log.info(
+            'Whitelist reloaded:\n%s',
+            '\n'.join(self.authenticator.whitelist)
+        )
 
 
 class GitHubMixin(OAuth2Mixin):
