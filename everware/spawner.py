@@ -23,12 +23,16 @@ from escapism import escape
 
 import git
 
+from .image_handler import ImageHandler
+
 
 class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
         self._is_building = False
+        self._image_handler = ImageHandler()
+        self._cur_waiter = None
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
     def _docker(self, method, *args, **kwargs):
@@ -47,8 +51,9 @@ class CustomDockerSpawner(DockerSpawner):
                 for l in mm:
                     ret.append(str(l))
                     # include only high-level docker's log
-                    if method == 'build' and 'stream' in l and not l['stream'].startswith(' --->'):
-                        self._add_to_log(l['stream'], 2)
+                    if 'stream' in l and not l['stream'].startswith(' --->'):
+                        # self._add_to_log(l['stream'], 2)
+                        self._cur_waiter.add_to_log(l['stream'], 2)
                 return ret
             return lister(m(*args, **kwargs))
         else:
@@ -165,7 +170,11 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def user_log(self):
-        return self._user_log
+        if self._is_building:
+            build_log = getattr(self._cur_waiter, 'building_log', [])
+            return self._user_log + build_log
+        else:
+            return self._user_log
 
     @property
     def is_failed(self):
@@ -180,8 +189,18 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
+        if self.repo_url.startswith('docker:'):
+            image_name = self.repo_url.replace('docker:', '')
+            image = yield self.get_image(image_name)
+            if image is None:
+                raise Exception('Image %s doesn\'t exist' % image_name)
+            else:
+                self._add_to_log('Image %s is found' % image_name)
+                return image_name
+
         tmp_dir = mkdtemp(suffix='-everware')
         self._add_to_log('Cloning repository %s' % self.repo_url)
+        self.log.info('Cloning repo %s' % self.repo_url)
         yield self.git('clone', self.repo_url, tmp_dir)
         # use git repo URL and HEAD commit sha to derive
         # the image name
@@ -194,10 +213,16 @@ class CustomDockerSpawner(DockerSpawner):
         )
 
         self._add_to_log('Building image')
-        # self._image_handler.start_building(image_name)
 
-        image = yield self.get_image(image_name)
-        if image is None:
+        with self._image_handler.get_waiter(image_name) as self._cur_waiter:
+            counter = yield self._cur_waiter.block()
+            if counter > 0:
+                last_exception = self._cur_waiter.last_exception
+                if last_exception is not None:
+                    raise last_exception
+            image = yield self.get_image(image_name)
+            if image is not None:
+                return image_name
             self.log.debug("Building image {}".format(image_name))
             build_log = yield self.docker(
                 'build',
@@ -206,12 +231,12 @@ class CustomDockerSpawner(DockerSpawner):
                 rm=True,
                 decode=True
             )
-            full_error = "".join(str(line) for line in build_log)
-            self.log.debug(full_error)
+            self._user_log.extend(self._cur_waiter.building_log)
+            full_output = "".join(str(line) for line in build_log)
+            self.log.debug(full_output)
             image = yield self.get_image(image_name)
             if image is None:
-                raise Exception(full_error)
-            # self._image_handler.finish_building(image_name)
+                raise Exception(full_output)
 
         return image_name
 
@@ -233,24 +258,27 @@ class CustomDockerSpawner(DockerSpawner):
             yield super(CustomDockerSpawner, self).start(
                 image=image_name
             )
+            self._add_to_log('Adding to proxy')
         except Exception as e:
             self._is_failed = True
             if isinstance(e, gen.TimeoutError):
+                # manually adjust because gen.timeout
+                # doesn't call __exit__ in with
+                self._user_log.extend(self._cur_waiter.building_log)
+                self._is_building = False
+                self._cur_waiter.__exit__(gen.TimeoutError, e, None)
                 self._add_to_log(
                     'Building took too long (> %.3f secs)' % self.start_timeout,
                     level=2
                 )
             else:
                 self._add_to_log('Something went wrong during building. Error:\n%s' % repr(e))
-            raise
+            raise e
 
     @gen.coroutine
     def is_running(self):
         status = yield self.poll()
         return status is None
-
-#     def poll(self):
-#         return super(CustomDockerSpawner, self).poll()
 
     def _env_default(self):
         env = super(CustomDockerSpawner, self)._env_default()

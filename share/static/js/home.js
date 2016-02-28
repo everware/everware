@@ -9,9 +9,12 @@ require(["jquery", "jhapi"], function ($, JHAPI) {
     var api = new JHAPI(base_url);
     
     $("#stop").click(function () {
+        $("#wait").show();
         api.stop_server(user, {
             success: function () {
-                $("#stop").hide();
+                setTimeout(function() {
+                    window.location.reload();
+                }, 3000);
             }
         });
     });

@@ -31,6 +31,14 @@
       {% endif %}
     </div>
   </div>
+  {% if user.running %}
+  <div class="row" id="wait" hidden style="margin-top: 2%; font-size: larger">
+    <div class="text-center">
+      <img src="{{ static_url("images/loading.gif") }}">
+      Stopping server... Please, wait.
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <footer class="footer">

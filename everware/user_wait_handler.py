@@ -24,7 +24,6 @@ class UserSpawnHandler(BaseHandler):
                     is_done = True
             else:
                 log_lines = []
-            # self.log.info('is_done: %s' % is_done)
             if is_log_request:
                 resp = {
                     'log': log_lines

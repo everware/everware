@@ -19,4 +19,4 @@ MANIFEST
 .coverage
 htmlcov
 whitelist.txt
-
+*.swp

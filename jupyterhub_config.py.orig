@@ -29,12 +29,12 @@ whitelist_handler = everware.DefaultWhitelistHandler(whitelist_file, c, authenti
 c.GitHubOAuthenticator.oauth_callback_url = os.environ['OAUTH_CALLBACK_URL']
 c.GitHubOAuthenticator.client_id = os.environ['GITHUB_CLIENT_ID']
 c.GitHubOAuthenticator.client_secret = os.environ['GITHUB_CLIENT_SECRET']
-
-# c.Spawner.tls = True
+# c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
+c.Spawner.tls = True
 # Set to False when running docker directly (i.e. on Linux)
-c.Spawner.tls = False
+# c.Spawner.tls = False
 c.Spawner.debug = True
-c.Spawner.start_timeout = 180*2
+c.Spawner.start_timeout = 180
 c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True
