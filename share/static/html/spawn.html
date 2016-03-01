@@ -30,7 +30,7 @@ Everware
     <form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form">
       {{spawner_options_form | safe}}
       <br>
-      <input type="submit" value="Spawn" class="btn btn-jupyter">
+      <input type="submit" value="Spawn" class="btn btn-primary">
     </form>
   </div>
 </div>
@@ -50,6 +50,15 @@ Everware
     </div>
   </div>
 </div>
+
+<footer class="footer">
+  <div class="footer-inside">
+    <div class="col-sm-8">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+    </div>
+    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
+  </div>
+</footer>
 
 {% endblock %}
 

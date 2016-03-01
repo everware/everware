@@ -1,13 +1,15 @@
 import os
 import everware
-import oauthenticator
 import jupyterhub.handlers.pages
 import jupyterhub.handlers.base
 
-# TODO: find a way to change default handles
+# TODO: find a way to change default handlers
 # instead of this shit
 jupyterhub.handlers.base.UserSpawnHandler.get = everware.UserSpawnHandler.get
 jupyterhub.handlers.pages.SpawnHandler.post = everware.SpawnHandler.post
+jupyterhub.handlers.pages.SpawnHandler.get = everware.SpawnHandler.get
+jupyterhub.handlers.pages.SpawnHandler._spawn = everware.SpawnHandler._spawn
+jupyterhub.handlers.pages.HomeHandler.get = everware.HomeHandler.get
 
 c = get_config()
 
@@ -21,20 +23,19 @@ ip_addr = '192.168.0.39'
 c.JupyterHub.hub_ip = ip_addr
 c.JupyterHub.hub_api_ip = ip_addr
 
-authenticator = oauthenticator.GitHubOAuthenticator
+authenticator = everware.GitHubOAuthenticator
 c.JupyterHub.authenticator_class = '%s.%s' % (authenticator.__module__, authenticator.__name__)
 whitelist_file = 'whitelist.txt'
 whitelist_handler = everware.DefaultWhitelistHandler(whitelist_file, c, authenticator)
-
 c.GitHubOAuthenticator.oauth_callback_url = os.environ['OAUTH_CALLBACK_URL']
 c.GitHubOAuthenticator.client_id = os.environ['GITHUB_CLIENT_ID']
 c.GitHubOAuthenticator.client_secret = os.environ['GITHUB_CLIENT_SECRET']
 # c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
-c.Spawner.tls = True
+# c.Spawner.tls = True
 # Set to False when running docker directly (i.e. on Linux)
-# c.Spawner.tls = False
+c.Spawner.tls = False
 c.Spawner.debug = True
-c.Spawner.start_timeout = 180
+c.Spawner.start_timeout = 1000
 c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True

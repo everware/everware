@@ -14,9 +14,10 @@
       {% if user.running %}
       <a id="stop" class="btn btn-lg btn-danger">Stop My Server</a>
       {% endif %}
+      {% if not user.stop_pending %}
       <a id="start" class="btn btn-lg btn-success"
 	 {% if user.running %}
-	 href="{{base_url}}user/{{user.name}}/"
+	 href="/user/{{user.name}}/"
 	 {% else %}
 	 href="{{base_url}}spawn"
 	 {% endif %}
@@ -26,13 +27,18 @@
 	{% endif %}
 	My Server
       </a>
+      {% endif %}
       {% if user.admin %}
       <a id="admin" class="btn btn-lg btn-primary" href="{{base_url}}admin">Admin</a>
       {% endif %}
     </div>
   </div>
   {% if user.running %}
-  <div class="row" id="wait" hidden style="margin-top: 2%; font-size: larger">
+  <div class="row" id="wait" style="margin-top: 2%; font-size: larger" 
+  {% if not user.stop_pending %}
+  hidden
+  {% endif %}
+  >
     <div class="text-center">
       <img src="{{ static_url("images/loading.gif") }}">
       Stopping server... Please, wait.

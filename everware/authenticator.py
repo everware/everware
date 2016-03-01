@@ -62,7 +62,7 @@ class WelcomeHandler(BaseHandler):
     def _render(self, login_error=None, username=None):
         return self.render_template('login.html',
                 next=url_escape(self.get_argument('next', default='')),
-                repo_url=url_escape(self.get_argument('repo_url', default='')),
+                repourl=url_escape(self.get_argument('repourl', default='')),
                 username=username,
                 login_error=login_error,
         )
@@ -101,11 +101,11 @@ class OAuthLoginHandler(BaseHandler):
         redirect_uri = self.authenticator.oauth_callback_url or guess_uri
         self.log.info('oauth redirect: %r', redirect_uri)
 
-        repo_url = self.get_argument('repo_url', '')
+        repourl = self.get_argument('repourl', '')
 
         state = {'unique': 42}
-        if repo_url:
-            state['repo_url'] = repo_url
+        if repourl:
+            state['repourl'] = repourl
 
         self.authorize_redirect(
             redirect_uri=redirect_uri,
@@ -140,7 +140,7 @@ class GitHubOAuthHandler(BaseHandler):
         if username:
             user = self.user_from_username(username)
             self.set_login_cookie(user)
-            if 'repo_url' in state:
+            if 'repourl' in state:
                 self.log.debug("Redirect with %s", state)
                 self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
             else:

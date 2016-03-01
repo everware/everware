@@ -27,6 +27,7 @@ Everware
             <p>You will be redirected automatically when it's ready for you.</p>
             <p>This page is updated automatically.</p>
             <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
+            <a id="resist" class="btn btn-lg btn-danger" href="{{base_url}}spawn" style="display: none">Return to spawn page</a>
         </div>
     </div>
     <div class="row" id='log-lines' style="margin-top: 2%"></div>
@@ -110,7 +111,7 @@ require(["jquery"], function ($) {
                 clearInterval(id);
                 if (need_wait) {
                     write_log_lines(data.log, false);
-                    setTimeout(reload_page, 5000);
+                    setTimeout(reload_page, 3000);
                 } else
                     window.location.reload();
             } else {
@@ -118,6 +119,7 @@ require(["jquery"], function ($) {
                 if ('failed' in data) {
                     clearInterval(id);
                     is_failed = true;
+                    $("#resist").show();
                 }
                 write_log_lines(data.log, is_failed);
             }
