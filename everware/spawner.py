@@ -163,8 +163,12 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def get_image(self, image_name):
         images = yield self.docker('images')
+        if ':' in image_name:
+            tag_processor = lambda tag: tag
+        else:
+            tag_processor = lambda tag: tag.split(':')[0]
         for img in images:
-            tags = (tag.split(':')[0] for tag in img['RepoTags'])
+            tags = (tag_processor(tag) for tag in img['RepoTags'])
             if image_name in tags:
                 return img
 
