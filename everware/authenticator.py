@@ -8,6 +8,7 @@ Most of the code c/o Kyle Kelley (@rgbkrk)
 import json
 import os
 import urllib
+import signal
 
 from tornado.auth import OAuth2Mixin
 from tornado.escape import url_escape
@@ -21,6 +22,28 @@ from jupyterhub.auth import Authenticator, LocalAuthenticator
 from jupyterhub.utils import url_path_join
 
 from traitlets import Unicode, Set
+from traitlets.config import LoggingConfigurable
+
+
+class DefaultWhitelistHandler(LoggingConfigurable):
+
+    def __init__(self, filename, config, authenticator):
+        super().__init__()
+        self.filename = filename
+        self.authenticator = authenticator
+        authenticator.whitelist = set(x.rstrip() for x in open(filename))
+        config.Authenticator.whitelist = authenticator.whitelist
+        signal.signal(signal.SIGHUP, self.reload_whitelist)
+
+
+    def reload_whitelist(self, signal, frame):
+        self.authenticator.whitelist = set(
+            x.rstrip() for x in open(self.filename)
+        )
+        self.log.info(
+            'Whitelist reloaded:\n%s',
+            '\n'.join(self.authenticator.whitelist)
+        )
 
 
 class GitHubMixin(OAuth2Mixin):
@@ -39,7 +62,7 @@ class WelcomeHandler(BaseHandler):
     def _render(self, login_error=None, username=None):
         return self.render_template('login.html',
                 next=url_escape(self.get_argument('next', default='')),
-                repo_url=url_escape(self.get_argument('repo_url', default='')),
+                repourl=url_escape(self.get_argument('repourl', default='')),
                 username=username,
                 login_error=login_error,
         )
@@ -78,11 +101,11 @@ class OAuthLoginHandler(BaseHandler):
         redirect_uri = self.authenticator.oauth_callback_url or guess_uri
         self.log.info('oauth redirect: %r', redirect_uri)
 
-        repo_url = self.get_argument('repo_url', '')
+        repourl = self.get_argument('repourl', '')
 
         state = {'unique': 42}
-        if repo_url:
-            state['repo_url'] = repo_url
+        if repourl:
+            state['repourl'] = repourl
 
         self.authorize_redirect(
             redirect_uri=redirect_uri,
@@ -117,7 +140,7 @@ class GitHubOAuthHandler(BaseHandler):
         if username:
             user = self.user_from_username(username)
             self.set_login_cookie(user)
-            if 'repo_url' in state:
+            if 'repourl' in state:
                 self.log.debug("Redirect with %s", state)
                 self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
             else:

@@ -23,10 +23,16 @@ from escapism import escape
 
 import git
 
+from .image_handler import ImageHandler
+
 
 class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
-        self._building = False
+        self._user_log = []
+        self._is_failed = False
+        self._is_building = False
+        self._image_handler = ImageHandler()
+        self._cur_waiter = None
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
     def _docker(self, method, *args, **kwargs):
@@ -43,8 +49,11 @@ class CustomDockerSpawner(DockerSpawner):
             def lister(mm):
                 ret = []
                 for l in mm:
-                    self.log.debug("build %s", l)
-                    ret.append(l)
+                    ret.append(str(l))
+                    # include only high-level docker's log
+                    if 'stream' in l and not l['stream'].startswith(' --->'):
+                        # self._add_to_log(l['stream'], 2)
+                        self._cur_waiter.add_to_log(l['stream'], 2)
                 return ret
             return lister(m(*args, **kwargs))
         else:
@@ -119,7 +128,9 @@ class CustomDockerSpawner(DockerSpawner):
     def escaped_repo_url(self):
         if self._escaped_repo_url is None:
             trans = str.maketrans(':/-.', "____")
-            repo_url = self.repo_url.translate(trans)
+            repo_url = self.repo_url.translate(trans).lower()
+            if repo_url.endswith('.git'):
+                repo_url = repo_url[:-4]
             self._escaped_repo_url = re.sub("_+", "_", repo_url)
         return self._escaped_repo_url
 
@@ -152,54 +163,126 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def get_image(self, image_name):
         images = yield self.docker('images')
+        if ':' in image_name:
+            tag_processor = lambda tag: tag
+        else:
+            tag_processor = lambda tag: tag.split(':')[0]
         for img in images:
-            tags = [tag.split(':')[0] for tag in img['RepoTags']]
+            tags = (tag_processor(tag) for tag in img['RepoTags'])
             if image_name in tags:
                 return img
 
+    @property
+    def user_log(self):
+        if self._is_building:
+            build_log = getattr(self._cur_waiter, 'building_log', [])
+            return self._user_log + build_log
+        else:
+            return self._user_log
+
+    @property
+    def is_failed(self):
+        return self._is_failed
+
+    def _add_to_log(self, message, level=1):
+        self._user_log.append({
+            'text': message,
+            'level': level
+        })
+
     @gen.coroutine
-    def start(self, image=None):
-        """start the single-user server in a docker container"""
-        self._building = True
-        tic = IOLoop.current().time()
+    def build_image(self):
+        """download the repo and build a docker image if needed"""
+        if self.repo_url.startswith('docker:'):
+            image_name = self.repo_url.replace('docker:', '')
+            image = yield self.get_image(image_name)
+            if image is None:
+                raise Exception('Image %s doesn\'t exist' % image_name)
+            else:
+                self._add_to_log('Image %s is found' % image_name)
+                return image_name
 
         tmp_dir = mkdtemp(suffix='-everware')
+        self._add_to_log('Cloning repository %s' % self.repo_url)
+        self.log.info('Cloning repo %s' % self.repo_url)
         yield self.git('clone', self.repo_url, tmp_dir)
-        # is this blocking?
-        # use the username, git repo URL and HEAD commit sha to derive
+        # use git repo URL and HEAD commit sha to derive
         # the image name
         repo = git.Repo(tmp_dir)
         self.repo_sha = repo.rev_parse("HEAD")
 
-        image_name = "everware/{}-{}-{}".format(self.user.name,
-                                                self.escaped_repo_url,
-                                                self.repo_sha)
-
-        image = yield self.get_image(image_name)
-        if image is None:
-            self.log.debug("Building image {}".format(image_name))
-            build_log = yield self.docker('build',
-                                          path=tmp_dir,
-                                          tag=image_name,
-                                          rm=True)
-            self.log.debug("".join(str(line) for line in build_log))
-
-        self._building = False
-        # If the build took too long, do not start the container
-        toc = IOLoop.current().time()
-        if toc - tic > self.start_timeout:
-            return
-
-        yield super(CustomDockerSpawner, self).start(
-            image=image_name
+        image_name = "everware/{}-{}".format(
+            self.escaped_repo_url,
+            self.repo_sha
         )
 
-    def poll(self):
-        if self._building:
-            return None
+        self._add_to_log('Building image')
 
-        else:
-            return super(CustomDockerSpawner, self).poll()
+        with self._image_handler.get_waiter(image_name) as self._cur_waiter:
+            counter = yield self._cur_waiter.block()
+            if counter > 0:
+                last_exception = self._cur_waiter.last_exception
+                if last_exception is not None:
+                    raise last_exception
+            image = yield self.get_image(image_name)
+            if image is not None:
+                return image_name
+            self.log.debug("Building image {}".format(image_name))
+            build_log = yield self.docker(
+                'build',
+                path=tmp_dir,
+                tag=image_name,
+                rm=True,
+                decode=True
+            )
+            self._user_log.extend(self._cur_waiter.building_log)
+            full_output = "".join(str(line) for line in build_log)
+            self.log.debug(full_output)
+            image = yield self.get_image(image_name)
+            if image is None:
+                raise Exception(full_output)
+
+        return image_name
+
+    @gen.coroutine
+    def start(self, image=None):
+        """start the single-user server in a docker container"""
+        self._user_log = []
+        self._is_failed = False
+        self._is_building = True
+        try:
+            f = self.build_image()
+            image_name = yield gen.with_timeout(
+                timedelta(seconds=self.start_timeout - 5),
+                f
+            )
+            self._is_building = False
+            self.log.info("Starting container from image: %s" % image_name)
+            self._add_to_log('Creating container')
+            yield super(CustomDockerSpawner, self).start(
+                image=image_name
+            )
+            self._add_to_log('Adding to proxy')
+        except Exception as e:
+            self._is_failed = True
+            if isinstance(e, gen.TimeoutError):
+                # manually adjust because gen.timeout
+                # doesn't call __exit__ in with
+                self._user_log.extend(self._cur_waiter.building_log)
+                self._is_building = False
+                self._cur_waiter.__exit__(gen.TimeoutError, e, None)
+                self._add_to_log(
+                    'Building took too long (> %.3f secs)' % self.start_timeout,
+                    level=2
+                )
+            else:
+                self._add_to_log('Something went wrong during building. Error:\n%s' % repr(e))
+            raise e
+
+    @gen.coroutine
+    def is_running(self):
+        status = yield self.poll()
+        return status is None
 
     def _env_default(self):
         env = super(CustomDockerSpawner, self)._env_default()
@@ -231,7 +314,7 @@ class CustomSwarmSpawner(CustomDockerSpawner):
         yield super(CustomSwarmSpawner, self).start(
             image=image
         )
-        
+
         container = yield self.get_container()
         if container is not None:
             node_name = container['Node']['Name']
