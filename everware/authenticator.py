@@ -121,7 +121,7 @@ class GitHubOAuthHandler(BaseHandler):
                 self.log.debug("Redirect with %s", state)
                 self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
             else:
-                self.redirect(self.hub.server.base_url)
+                self.redirect(self.hub.server.base_url + '/home')
         else:
             # todo: custom error page?
             raise web.HTTPError(403)
