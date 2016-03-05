@@ -2,6 +2,7 @@ import os
 import everware
 import jupyterhub.handlers.pages
 import jupyterhub.handlers.base
+import dummyauthenticator
 
 # TODO: find a way to change default handlers
 # instead of this shit
