@@ -9,7 +9,7 @@ from tornado.escape import json_encode
 class UserSpawnHandler(BaseHandler):
 
     @gen.coroutine
-    def get(self, name):
+    def get(self, name, user_path):
         current_user = self.get_current_user()
         if current_user and current_user.name == name:
             # logged in, work with spawner
@@ -50,11 +50,8 @@ class UserSpawnHandler(BaseHandler):
                 )
                 self.finish(html)
         else:
-            # not logged in to the right user,
-            # clear any cookies and reload (will redirect to login)
-            self.clear_login_cookie()
-            self.redirect(url_concat(
-                self.settings['login_url'], {
-                    'next': self.request.uri,
-                }
-            ))
+            # logged in as a different user, redirect
+            target = url_path_join(self.base_url, 'user', current_user.name,
+                                   user_path or '')
+            self.redirect(target)
+
