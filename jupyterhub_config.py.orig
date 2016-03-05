@@ -19,10 +19,10 @@ c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
 #c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
 
 # The docker instances need access to the Hub, so the default loopback port doesn't work:
-# Find it easier to hardcode the IP of the machine it is deployed on
-ip_addr = '192.168.0.39'
-c.JupyterHub.hub_ip = ip_addr
-c.JupyterHub.hub_api_ip = ip_addr
+# (IP addrress setting is overriden by command line argument at Makefile)
+# ip_addr = '192.168.0.39'
+# c.JupyterHub.hub_ip = ip_addr
+# c.JupyterHub.hub_api_ip = ip_addr
 
 authenticator = everware.GitHubOAuthenticator
 c.JupyterHub.authenticator_class = '%s.%s' % (authenticator.__module__, authenticator.__name__)

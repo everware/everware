@@ -21,6 +21,7 @@ before_install:
   # print DEBUG information
   - which python
   - echo $LD_LIBRARY_PATH
+
 install: 
   - make install
   - make run-test-server

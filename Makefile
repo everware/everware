@@ -39,9 +39,9 @@ install:  ## install everware
 			echo "Unable to find python" ;\
 			exit 1 ;\
 		fi ;\
-		$${PIP} install -e . ;\
-		$${PYTHON} setup.py css ;\
-		$${PYTHON} setup.py js ;\
+		$${PIP} install -e . && \
+		$${PYTHON} setup.py css && \
+		$${PYTHON} setup.py js && \
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
 	if [ ! -f jupyterhub_config.py ] ; then cp jupyterhub_config.py.orig jupyterhub_config.py ; fi
