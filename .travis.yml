@@ -8,6 +8,7 @@ addons:
   apt:
     packages:
     - build-essential
+    - pyzmq
 python:
     - 3.5
 # commented out for testing speed-up sake
@@ -31,7 +32,7 @@ script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/travis/test_frontend.sh
   - set -e
-  - make test-client
+  - make test-client || cat everware.log
   - make stop
   - make upload_screens
 cache:
