@@ -41,7 +41,7 @@ install:  ## install everware
 		fi ;\
 		$${PIP} install -e . && \
 		$${PYTHON} setup.py css && \
-		$${PYTHON} setup.py js && \
+		$${PYTHON} setup.py js
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
 	if [ ! -f jupyterhub_config.py ] ; then cp jupyterhub_config.py.orig jupyterhub_config.py ; fi
