@@ -35,6 +35,17 @@ class CustomDockerSpawner(DockerSpawner):
         self._cur_waiter = None
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
+
+    # We override the executor here to increase the number of threads
+    @property
+    def executor(self):
+        """single global executor"""
+        cls = self.__class__
+        if cls._executor is None:
+            cls._executor = ThreadPoolExecutor(20)
+        return cls._executor
+
+
     def _docker(self, method, *args, **kwargs):
         """wrapper for calling docker methods
 
