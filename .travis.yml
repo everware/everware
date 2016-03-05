@@ -39,9 +39,9 @@ cache:
     - $HOME/.cache/pip
 notifications:
   email: false
-#   webhooks:
-#     urls:
-#       - https://webhooks.gitter.im/e/4eb609958a03b4bc1df5
-#     on_success: always  # options: [always|never|change] default: always
-#     on_failure: always  # options: [always|never|change] default: always
-#     on_start: always   
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/778f542a122b7dd8c0f3
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: always   
