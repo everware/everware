@@ -7,3 +7,4 @@ jupyterhub
 dockerspawner
 GitPython==1.0.1
 -e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=Package
+nose2
