@@ -22,3 +22,4 @@ htmlcov
 whitelist.txt
 *.swp
 *.log
+*.pid

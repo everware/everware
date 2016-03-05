@@ -12,21 +12,40 @@ addons:
 
 python:
     - 3.5
-    - 3.4
-env:
-    - JHUB_VERSION=master
-    - JHUB_VERSION=latest # latest released version
+# commented out for testing speed-up sake
+#     - 3.4
+# env:
+#     - JHUB_VERSION=master
+#     - JHUB_VERSION=latest # latest released version
 
 before_install:
-    - npm install
-    - npm install -g configurable-http-proxy
-    - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
-install: ./build_tools/travis/install.sh
+  - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
+  # print DEBUG information
+  - which python
+  - conda list
+  - echo $LD_LIBRARY_PATH
+install: 
+  - make install
+  - make run-test-server
+# - ./build_tools/travis/install.sh
 
 script:
-    - nose2 -v --start-dir everware # unit tests live in everware/
-    - ./build_tools/travis/test_frontend.sh
-
-# Make travis quiet
+  - nose2 -v --start-dir everware # unit tests live in everware/
+  - ./build_tools/travis/test_frontend.sh
+  - set -e
+  - make test-client
+  - make stop
+  - make upload_screens
+cache:
+  apt: true
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/miniconda/pkgs
 notifications:
   email: false
+#   webhooks:
+#     urls:
+#       - https://webhooks.gitter.im/e/4eb609958a03b4bc1df5
+#     on_success: always  # options: [always|never|change] default: always
+#     on_failure: always  # options: [always|never|change] default: always
+#     on_start: always   

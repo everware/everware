@@ -6,11 +6,14 @@
 #
 
 SHELL := /bin/bash
-OPTIONS := --debug --port 8000 --log-file=jupyterhub.log --no-ssl
 TEST_OPTIONS := -s tests -N 2
-TESTS := case_happy_mp
+TESTS := test_happy_mp
+LOG := jupyterhub.log
+IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
+SPAWNER_IP = $(shell which docker-machine > /dev/null && echo "--LocalProcessSpawner.ip='192.168.99.100'")
+OPTIONS = --debug --port 8000 --log-file=jupyterhub.log --no-ssl --JupyterHub.hub_ip=${IP} ${SPAWNER_IP}
 
-.PHONY: install reload clean run
+.PHONY: install reload clean run run-daemon run-test stop test-client x
 
 
 help:
@@ -56,10 +59,28 @@ run: clean  ## run everware server
 	source ./env.sh && \
 		jupyterhub ${OPTIONS}
 
-run-test:  clean ## run everware instance for testing (no auth)
+run-daemon: clean
+	source ./env.sh && \
+		jupyterhub ${OPTIONS} >> ${LOG}  2> /dev/null &
+	@sleep 1
+	pgrep -f jupyterhub > jupyterhub.pid || ( tail ${LOG} && exit 1 )
+	echo "Started. Log saved to ${LOG}"
+
+stop: jupyterhub.pid
+	kill -9 `cat jupyterhub.pid`
+	pkill -9 -f configurable-http-proxy
+	rm jupyterhub.pid
+
+run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') > jupyterhub_config_test.py
 	source ./env.sh && \
-		jupyterhub ${OPTIONS} --config=jupyterhub_config_test.py
+		jupyterhub ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >> ${LOG}  2> /dev/null &
+	@sleep 1
+	pgrep -f jupyterhub > jupyterhub.pid || ( tail ${LOG} && exit 1 )
+	echo "Started. Log saved to ${LOG}"
+
+tail: ${LOG}
+	tail -f ${LOG}
 
 test-client: ## run selenium tests
 	nose2 ${TEST_OPTIONS} ${TESTS}
