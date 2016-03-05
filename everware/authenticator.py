@@ -31,19 +31,25 @@ class DefaultWhitelistHandler(LoggingConfigurable):
         super().__init__()
         self.filename = filename
         self.authenticator = authenticator
-        authenticator.whitelist = set(x.rstrip() for x in open(filename))
+        if os.path.exists(filename):
+            authenticator.whitelist = set(x.rstrip() for x in open(filename))
+        else:
+            authenticator.whitelist = set()
         config.Authenticator.whitelist = authenticator.whitelist
         signal.signal(signal.SIGHUP, self.reload_whitelist)
 
 
     def reload_whitelist(self, signal, frame):
-        self.authenticator.whitelist = set(
-            x.rstrip() for x in open(self.filename)
-        )
-        self.log.info(
-            'Whitelist reloaded:\n%s',
-            '\n'.join(self.authenticator.whitelist)
-        )
+        if os.path.exists(self.filename):
+            self.authenticator.whitelist = set(
+                x.rstrip() for x in open(self.filename)
+            )
+            self.log.info(
+                'Whitelist reloaded:\n%s',
+                '\n'.join(self.authenticator.whitelist)
+            )
+        else:
+            self.log.info("whitelist file (%s) not found" % self.filename)
 
 
 class GitHubMixin(OAuth2Mixin):
