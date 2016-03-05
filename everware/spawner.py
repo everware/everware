@@ -140,15 +140,13 @@ class CustomDockerSpawner(DockerSpawner):
     def repo_url(self):
         return self.user_options.get('repo_url', '')
 
-    _escaped_repo_url = None
     @property
     def escaped_repo_url(self):
-        if self._escaped_repo_url is None:
-            trans = str.maketrans(':/-.', "____")
-            repo_url = self.repo_url.translate(trans).lower()
-            if repo_url.endswith('.git'):
-                repo_url = repo_url[:-4]
-            self._escaped_repo_url = re.sub("_+", "_", repo_url)
+        trans = str.maketrans(':/-.', "____")
+        repo_url = self.repo_url.translate(trans).lower()
+        if repo_url.endswith('.git'):
+            repo_url = repo_url[:-4]
+        self._escaped_repo_url = re.sub("_+", "_", repo_url)
         return self._escaped_repo_url
 
     @property
@@ -301,9 +299,8 @@ class CustomDockerSpawner(DockerSpawner):
         status = yield self.poll()
         return status is None
 
-    def _env_default(self):
-        env = super(CustomDockerSpawner, self)._env_default()
-
+    def get_env(self):
+        env = super(CustomDockerSpawner, self).get_env()
         env.update({'JPY_GITHUBURL': self.repo_url})
 
         return env
