@@ -8,7 +8,7 @@ addons:
   apt:
     packages:
     - build-essential
-    - pyzmq
+    - python3-zmq
 python:
     - 3.5
 # commented out for testing speed-up sake
@@ -18,8 +18,10 @@ python:
 #     - JHUB_VERSION=latest # latest released version
 
 before_install:
-  - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
+<<- git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
   # print DEBUG information
+  - make install
+  - set -e
   - which python
   - echo $LD_LIBRARY_PATH
 
@@ -29,8 +31,8 @@ install:
 # - ./build_tools/travis/install.sh
 
 script:
-  - nose2 -v --start-dir everware # unit tests live in everware/
-  - ./build_tools/travis/test_frontend.sh
+#  - nose2 -v --start-dir everware # unit tests live in everware/
+#  - ./build_tools/travis/test_frontend.sh
   - set -e
   - make test-client || cat everware.log
   - make stop

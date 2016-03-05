@@ -8,4 +8,6 @@ dockerspawner
 GitPython==1.0.1
 nose2
 selenium
+-e git+https://github.com/jupyter/jupyterhub.git#egg=Package
+-e git+https://github.com/jupyter/dockerspawner.git#egg=Package
 -e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=Package
