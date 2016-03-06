@@ -32,10 +32,11 @@ install:
 script:
 #  - nose2 -v --start-dir everware # unit tests live in everware/
 #  - ./build_tools/travis/test_frontend.sh
-  - set -e
-  - make test-client || cat everware.log
+  - make test-client || FAIL=1
   - make stop
   - make upload_screens
+  - cat everware.log
+  - exit $FAIL
 cache:
   apt: true
   directories:

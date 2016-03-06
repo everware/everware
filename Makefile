@@ -2,6 +2,7 @@
 # arguments can be supplied by -e definitions: 
 #
 #    TESTS -- list of tests to run
+#    M -- commit message
 #
 #
 
@@ -9,6 +10,7 @@ SHELL := /bin/bash
 TEST_OPTIONS := -s tests -N 2
 TESTS := test_happy_mp
 LOG := everware.log
+PIDFILE := everware.pid
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
 IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
@@ -54,11 +56,11 @@ install:  ## install everware
 
 reload:  ## reload everware whitelist
 	PID=`pgrep -f jupyterhub` ;\
-		if [ -z "$${PID}" ] ; then echo "Cannot find jupyterhub.pid" ; exit 1 ; fi
+		if [ -z "$${PID}" ] ; then echo "Cannot find ${PIDFILE}" ; exit 1 ; fi
 	pkill -1 -f jupyterhub
 
 clean:  ## clean user base
-	if [ -f jupyterhub.pid ] ; then echo "jupyterhub.pid exists, cannot continute" ; exit 1; fi
+	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
 	rm -f jupyterhub.sqlite
 
 run: clean  ## run everware server
@@ -69,13 +71,13 @@ run-daemon: clean
 	source ./env.sh && \
 		jupyterhub ${OPTIONS} >> ${LOG}  2> /dev/null &
 	@sleep 1
-	pgrep -f jupyterhub > jupyterhub.pid || ( tail ${LOG} && exit 1 )
+	pgrep -f jupyterhub > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
-stop: jupyterhub.pid
-	kill -9 `cat jupyterhub.pid`
+stop: ${PIDFILE}
+	kill -9 `cat ${PIDFILE}`
 	pkill -9 -f configurable-http-proxy
-	rm jupyterhub.pid
+	rm ${PIDFILE}
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
@@ -85,7 +87,7 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 	    export EVERWARE_WHITELIST= ; \
 		jupyterhub ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
 	@sleep 1
-	pgrep -f jupyterhub > jupyterhub.pid || exit 1
+	pgrep -f jupyterhub > ${PIDFILE} || exit 1
 	echo "Started. Log saved to ${LOG}"
 
 logs: ${LOG} ## watch log file
@@ -93,3 +95,9 @@ logs: ${LOG} ## watch log file
 
 test-client: ## run tests
 	nose2 ${TEST_OPTIONS} ${TESTS}
+
+diff: ## git diff
+	git diff
+
+cmp: ## commit -m push
+	git commit -am "${M}" && git push
