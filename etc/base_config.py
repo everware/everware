@@ -24,11 +24,10 @@ c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True
 
-# The docker containers need access to the Hub, so the default loopback
-# port doesn't work:
+# The docker containers need access to the Hub API, so the default
+# loopback address doesn't work
 from jupyter_client.localinterfaces import public_ips
 c.JupyterHub.hub_ip = public_ips()[0]
-c.JupyterHub.hub_api_ip = public_ips()[0]
 
 c.JupyterHub.data_files_path = 'share'
 c.JupyterHub.template_paths = ['share/static/html']

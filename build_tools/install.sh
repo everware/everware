@@ -13,3 +13,6 @@ if [[ "$JHUB_VERSION" == "master" ]]; then
 fi
 
 pip install -f travis-wheels/wheelhouse -r requirements.txt .
+# Always have to run these to generate JS and CSS
+python setup.py js
+python setup.py css

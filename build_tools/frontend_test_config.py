@@ -1,4 +1,4 @@
 c = get_config()
-load_subconfig('base_config.py')
+load_subconfig('etc/base_config.py')
 
 c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'

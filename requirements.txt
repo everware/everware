@@ -3,6 +3,6 @@ coveralls
 nose2
 GitPython==1.0.1
 selenium
--e git+https://github.com/jupyter/jupyterhub.git#egg=jupyterhub
--e git+https://github.com/jupyter/dockerspawner.git#egg=dockerspawner
+jupyterhub
+dockerspawner
 -e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=dummyauthenticator
