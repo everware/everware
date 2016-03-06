@@ -56,5 +56,12 @@ In order to test drive `everware`, you have to:
 
 ## Development
 
-To run our tests you will need selenium. On OS X you can install it with
-`brew install selenium-server-standalone`.
+To run our tests you will need [selenium] and [phantomjs]. On OS X you can install them with:
+
+```
+brew install selenium-server-standalone
+brew install phantomjs
+```
+
+[selenium]: http://www.seleniumhq.org/
+[phantomjs]: http://phantomjs.org/
