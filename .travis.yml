@@ -5,6 +5,11 @@ sudo: required
 services:
     - docker
 
+addons:
+    apt:
+      packages:
+      - build-essential
+
 python:
     - 3.5
     - 3.4
