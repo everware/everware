@@ -7,7 +7,7 @@ if [[ "$JHUB_VERSION" == "master" ]]; then
 	cd jupyterhub
 	pip install -r requirements.txt -e.
 	python setup.py js
-	python3 setup.py css
+	python setup.py css
 	popd
 	echo "Done installing jupyterhub master"
 fi
