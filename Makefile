@@ -54,10 +54,11 @@ install:  ## install everware
 
 reload:  ## reload everware whitelist
 	PID=`pgrep -f jupyterhub` ;\
-		if [ -z "$${PID}" ] ; then echo "Cannot find jupyterhub running" ; exit 1 ; fi
+		if [ -z "$${PID}" ] ; then echo "Cannot find jupyterhub.pid" ; exit 1 ; fi
 	pkill -1 -f jupyterhub
 
 clean:  ## clean user base
+	if [ -f jupyterhub.pid ] ; then echo "jupyterhub.pid exists, cannot continute" ; exit 1; fi
 	rm -f jupyterhub.sqlite
 
 run: clean  ## run everware server
@@ -78,7 +79,7 @@ stop: jupyterhub.pid
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
-		<(echo c.Spawner.container_ip = "${SPAWNER_IP}") \
+		<(echo c.Spawner.container_ip = \'${SPAWNER_IP}\') \
 		> jupyterhub_config_test.py
 	source ./env.sh && \
 	    export EVERWARE_WHITELIST= ; \
@@ -87,7 +88,7 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 	pgrep -f jupyterhub > jupyterhub.pid || exit 1
 	echo "Started. Log saved to ${LOG}"
 
-tail: ${LOG}
+logs: ${LOG} ## watch log file
 	tail -f ${LOG}
 
 test-client: ## run tests

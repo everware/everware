@@ -17,7 +17,7 @@ python:
 #     - JHUB_VERSION=latest # latest released version
 
 before_install:
-<<- git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
+  - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
   # print DEBUG information
   - make install
   - set -e
