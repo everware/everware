@@ -5,10 +5,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
-import time
 import traceback
 import nose2
-
+import time
+import os
 
 REPO = "https://github.com/everware/everware-dimuon-example"
 # repo = "docker:yandex/rep-tutorial:0.1.3"
@@ -20,9 +20,15 @@ DRIVER = "phantomjs"
 # DRIVER = "firefox"
 
 # Test matrix
-SCENARIOUS = ["scenario_short", "scenario_full"]
-# SCENARIOUS = ["scenario_full"]
+# SCENARIOUS = ["scenario_short", "scenario_full"]
+SCENARIOUS = ["scenario_short"]
 USERS = ["an1", "an2"]
+TIMEOUT = 30
+UPLOADDIR = os.environ['UPLOADDIR']
+
+def make_screenshot(driver, name):
+    driver.save_screenshot(os.path.join(UPLOADDIR, name))
+
 
 class User:
     def __init__(self, login=None, repo=REPO, driver_type=DRIVER):
@@ -40,9 +46,10 @@ class User:
     def get_driver(self):
         if self.driver_type == "phantomjs":
             self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
+            self.driver.set_window_size(1024,768)
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(60)
+        self.driver.implicitly_wait(TIMEOUT)
         return self.driver
 
 
@@ -83,13 +90,16 @@ class User:
 def test_generator():
     for scenario in SCENARIOUS:
         for username in USERS:
-            yield scenario_runner, scenario, username
+            yield run_scenario, scenario, username
 
 
-def scenario_runner(scenario, username):
+def run_scenario(scenario, username):
     user = User(username)
     try:
         globals()[scenario](user)
+    except NoSuchElementException as e:
+        make_screenshot(user.driver, "./{}-{}.png".format(scenario, username))
+        assert False, "Cannot find element {}\n{}".format(e.msg, '\n'.join(traceback.format_stack()))
     except Exception as e:
         print("oops: %s" % repr(e))
         assert False, traceback.format_stack()
@@ -106,7 +116,7 @@ def scenario_short(user):
     driver.find_element_by_id("password_input").clear()
     driver.find_element_by_id("password_input").send_keys(user.password)
     driver.find_element_by_id("login_submit").click()
-    user.wait_for_element_present(By.ID, "start")
+    user.wait_for_element_present(By.ID, "start1")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 
