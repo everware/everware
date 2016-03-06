@@ -6,6 +6,10 @@
 set -e
 
 # Start a hub that our tests can interact with
-jupyterhub -f build_tools/travis/frontend_test_config.py --no-ssl --debug
+jupyterhub -f build_tools/travis/frontend_test_config.py \
+           --no-ssl --debug > hub.txt 2>&1 &
 sleep 3
 nose2 -v --start-dir frontend_tests -N 2 test_happy_mp
+echo ">>> Logging output of jupyterhub"
+cat hub.log
+echo "<<< Logging output of jupyterhub"
