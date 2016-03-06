@@ -39,7 +39,7 @@ script:
 # will continue on it a bit later
 #  - make upload_screens 
   - cat everware.log
-  - test $FAIL -eq 1 && exit $FAIL
+  - test "$FAIL" == "1" && exit $FAIL
 cache:
   apt: true
   directories:
