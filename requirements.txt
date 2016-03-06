@@ -6,7 +6,6 @@ jupyterhub-dummyauthenticator
 jupyterhub
 dockerspawner
 GitPython==1.0.1
-nose2
 selenium
 -e git+https://github.com/jupyter/jupyterhub.git#egg=jupyterhub
 -e git+https://github.com/jupyter/dockerspawner.git#egg=dockerspawner
