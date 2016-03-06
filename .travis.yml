@@ -26,7 +26,7 @@ before_install:
 
 install: 
   - npm install -g gistup
-  - export PIP_OPTIONS="-f travis-wheels"
+  - export PIP_OPTIONS="-f ~/travis-wheels/wheelhouse"
   - make install
 # - ./build_tools/travis/install.sh
 
@@ -39,7 +39,7 @@ script:
 # will continue on it a bit later
 #  - make upload_screens 
   - cat everware.log
-  - exit $FAIL
+  - test $FAIL -eq 1 && exit $FAIL
 cache:
   apt: true
   directories:
