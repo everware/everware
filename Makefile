@@ -78,17 +78,17 @@ stop: jupyterhub.pid
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
-		<(echo c.Spawner.container_ip = ${SPAWNER_IP}) \
+		<(echo c.Spawner.container_ip = "${SPAWNER_IP}") \
 		> jupyterhub_config_test.py
 	source ./env.sh && \
 	    export EVERWARE_WHITELIST= ; \
 		jupyterhub ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
 	@sleep 1
-	pgrep -f jupyterhub > jupyterhub.pid || ( tail ${LOG} && exit 1 )
+	pgrep -f jupyterhub > jupyterhub.pid || exit 1
 	echo "Started. Log saved to ${LOG}"
 
 tail: ${LOG}
 	tail -f ${LOG}
 
-test-client: ## run selenium tests
+test-client: ## run tests
 	nose2 ${TEST_OPTIONS} ${TESTS}
