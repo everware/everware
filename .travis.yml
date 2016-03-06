@@ -1,0 +1,32 @@
+language: python
+
+# Needed so we can spawn docker containers
+sudo: required
+services:
+    - docker
+
+addons:
+    apt:
+      packages:
+      - build-essential
+
+python:
+    - 3.5
+    - 3.4
+env:
+    - JHUB_VERSION=master
+    - JHUB_VERSION=latest # latest released version
+
+before_install:
+    - npm install
+    - npm install -g configurable-http-proxy
+    - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
+install: ./build_tools/travis/install.sh
+
+script:
+    - nose2 -v --start-dir everware # unit tests live in everware/
+    - ./build_tools/travis/test_frontend.sh
+
+# Make travis quiet
+notifications:
+  email: false

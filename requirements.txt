@@ -1,7 +1,8 @@
 ipython[notebook]
 coveralls
-pytest-cov
-pytest
+nose2
+selenium
+jupyterhub-dummyauthenticator
 jupyterhub
 dockerspawner
 GitPython==1.0.1
