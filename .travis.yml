@@ -31,12 +31,12 @@ install:
 # - ./build_tools/travis/install.sh
 
 script:
- - nose2 -v --start-dir everware # unit tests live in everware/
+  - nose2 -v --start-dir everware # unit tests live in everware/
 #  - ./build_tools/travis/test_frontend.sh
   - make run-test-server
   - make test-client || FAIL=1
   - make stop
-# will continue a bit later
+# will continue on it a bit later
 #  - make upload_screens 
   - cat everware.log
   - exit $FAIL
