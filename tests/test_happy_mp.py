@@ -27,6 +27,8 @@ TIMEOUT = 30
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
+    if not os.path.exists(UPLOADDIR):
+        os.makedirs(UPLOADDIR)
     driver.save_screenshot(os.path.join(UPLOADDIR, name))
 
 
