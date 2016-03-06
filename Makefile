@@ -46,7 +46,7 @@ install:  ## install everware
 			echo "Unable to find python" ;\
 			exit 1 ;\
 		fi ;\
-		$${PIP} install -r requirements.txt && \
+		$${PIP} install $${PIP_OPTIONS} -r requirements.txt && \
 		$${PIP} install -e . && \
 		$${PYTHON} setup.py css && \
 		$${PYTHON} setup.py js

@@ -18,22 +18,21 @@ python:
 
 before_install:
   - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
-  # print DEBUG information
-  - make install
-  - npm install -g gistup
   # some DEBUG information
-  - set -e
   - which python
-  - echo $LD_LIBRARY_PATH
+  - pip --version
+  - pip freeze
+  - npm list
 
 install: 
-  - make install
-  - make run-test-server
+  - npm install -g gistup
+  - PIP_OPTIONS="-f travis-wheels" make install
 # - ./build_tools/travis/install.sh
 
 script:
 #  - nose2 -v --start-dir everware # unit tests live in everware/
 #  - ./build_tools/travis/test_frontend.sh
+  - make run-test-server
   - make test-client || FAIL=1
   - make stop
   - make upload_screens
