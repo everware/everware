@@ -8,7 +8,6 @@ addons:
   apt:
     packages:
     - build-essential
-    - python3-zmq
 python:
     - 3.5
 # commented out for testing speed-up sake

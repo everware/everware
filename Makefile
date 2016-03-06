@@ -11,7 +11,6 @@ TESTS := test_happy_mp
 LOG := everware.log
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
 SPAWNER_IP = $(shell which docker-machine > /dev/null && echo "--LocalProcessSpawner.ip='192.168.99.100'")
-OPTIONS = --debug --port 8000 --log-file=${LOG} --no-ssl --JupyterHub.hub_ip=${IP} ${SPAWNER_IP}
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP} ${SPAWNER_IP}
 
 .PHONY: install reload clean run run-daemon run-test stop test-client tail

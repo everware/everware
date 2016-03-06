@@ -76,7 +76,7 @@ class User:
 
 
 def test_generator():
-    for scenario in ["scenario_short"]:
+    for scenario in ["scenario_short", "scenario_full"]:
         for username in ["an1", "an2"]:
         # for username in ["an1"]:
             yield scenario_runner, scenario, username
