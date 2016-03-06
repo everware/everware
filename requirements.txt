@@ -1,7 +1,6 @@
 ipython[notebook]
 coveralls
 nose2
-dockerspawner
 GitPython==1.0.1
 selenium
 -e git+https://github.com/jupyter/jupyterhub.git#egg=jupyterhub
