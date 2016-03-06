@@ -26,16 +26,18 @@ before_install:
 
 install: 
   - npm install -g gistup
-  - PIP_OPTIONS="-f travis-wheels" make install
+  - export PIP_OPTIONS="-f travis-wheels"
+  - make install
 # - ./build_tools/travis/install.sh
 
 script:
-#  - nose2 -v --start-dir everware # unit tests live in everware/
+ - nose2 -v --start-dir everware # unit tests live in everware/
 #  - ./build_tools/travis/test_frontend.sh
   - make run-test-server
   - make test-client || FAIL=1
   - make stop
-  - make upload_screens
+# will continue a bit later
+#  - make upload_screens 
   - cat everware.log
   - exit $FAIL
 cache:

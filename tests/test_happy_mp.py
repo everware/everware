@@ -101,7 +101,7 @@ def run_scenario(scenario, username):
         globals()[scenario](user)
     except NoSuchElementException as e:
         make_screenshot(user.driver, "./{}-{}.png".format(scenario, username))
-        assert False, "Cannot find element {}\n{}".format(e.msg, '\n'.join(traceback.format_stack()))
+        assert False, "Cannot find element {}\n{}".format(e.msg, ''.join(traceback.format_stack()))
     except Exception as e:
         print("oops: %s" % repr(e))
         assert False, traceback.format_stack()
@@ -118,7 +118,7 @@ def scenario_short(user):
     driver.find_element_by_id("password_input").clear()
     driver.find_element_by_id("password_input").send_keys(user.password)
     driver.find_element_by_id("login_submit").click()
-    user.wait_for_element_present(By.ID, "start1")
+    user.wait_for_element_present(By.ID, "start")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 
