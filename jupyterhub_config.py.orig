@@ -2,6 +2,7 @@ import os
 import everware
 import jupyterhub.handlers.pages
 import jupyterhub.handlers.base
+import dummyauthenticator
 
 # TODO: find a way to change default handlers
 # instead of this shit
@@ -18,14 +19,15 @@ c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
 #c.JupyterHub.spawner_class = 'everware.CustomSwarmSpawner'
 
 # The docker instances need access to the Hub, so the default loopback port doesn't work:
-# Find it easier to hardcode the IP of the machine it is deployed on
-ip_addr = '192.168.0.39'
-c.JupyterHub.hub_ip = ip_addr
-c.JupyterHub.hub_api_ip = ip_addr
+# (IP addrress setting is overriden by command line argument at Makefile)
+# ip_addr = '192.168.0.39'
+# c.JupyterHub.hub_ip = ip_addr
+# c.JupyterHub.hub_api_ip = ip_addr
 
 authenticator = everware.GitHubOAuthenticator
 c.JupyterHub.authenticator_class = '%s.%s' % (authenticator.__module__, authenticator.__name__)
-whitelist_file = 'whitelist.txt'
+# whitelist_file = 'whitelist.txt'
+whitelist_file = os.environ['EVERWARE_WHITELIST']
 whitelist_handler = everware.DefaultWhitelistHandler(whitelist_file, c, authenticator)
 c.GitHubOAuthenticator.oauth_callback_url = os.environ['OAUTH_CALLBACK_URL']
 c.GitHubOAuthenticator.client_id = os.environ['GITHUB_CLIENT_ID']

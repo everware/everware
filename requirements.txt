@@ -1,8 +1,8 @@
 ipython[notebook]
 coveralls
 nose2
-selenium
-jupyterhub-dummyauthenticator
-jupyterhub
-dockerspawner
 GitPython==1.0.1
+selenium
+-e git+https://github.com/jupyter/jupyterhub.git#egg=jupyterhub
+-e git+https://github.com/jupyter/dockerspawner.git#egg=dockerspawner
+-e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=dummyauthenticator

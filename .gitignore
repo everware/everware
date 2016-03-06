@@ -8,6 +8,7 @@ env.sh
 # ignore config file at the top-level of the repo
 # but not sub-dirs
 /jupyterhub_config.py
+/jupyterhub_config_test.py
 jupyterhub_cookie_secret
 jupyterhub.sqlite
 jupyterhub.log
@@ -20,3 +21,5 @@ MANIFEST
 htmlcov
 whitelist.txt
 *.swp
+*.log
+*.pid
