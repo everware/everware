@@ -1,8 +1,6 @@
 
 # everware
 
-**Welcome [#MozFest](https://2015.mozillafestival.org)ers, let us know you stopped by: [Greetings from MozFest](https://github.com/everware/everware/issues/24).**
-
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/everware/everware?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Everware is an add-on for [JupyterHub](https://github.com/jupyter/jupyterhub).
@@ -21,9 +19,9 @@ The original everware team consists of [@OmeGak](https://github.com/omegak), [@i
 
 Documentation on the different ways to use `everware` and [getting started](https://github.com/everware/everware/wiki/Getting-Started).
 
-## Testing
+## Try it out
 
-In order to test `everware`, you have to:
+In order to test drive `everware`, you have to:
 
  - Install the newest git version of `jupyterhub`: https://github.com/jupyter/jupyterhub. Double check with their [README.md](https://github.com/jupyter/jupyterhub/blob/master/README.md)
 ```
@@ -56,3 +54,7 @@ In order to test `everware`, you have to:
     jupyterhub
 ```
 
+## Development
+
+To run our tests you will need selenium. On OS X you can install it with
+`brew install selenium-server-standalone`.
