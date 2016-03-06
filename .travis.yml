@@ -1,5 +1,10 @@
 language: python
-sudo: false
+
+# Needed so we can spawn docker containers
+sudo: required
+services:
+    - docker
+
 python:
     - 3.5
     - 3.4
