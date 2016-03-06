@@ -14,7 +14,8 @@ before_install:
 install: ./build_tools/travis/install.sh
 
 script:
-    - nose2 -v
+    - nose2 -v --start-dir everware # unit tests live in everware/
+    - ./build_tools/travis/test_frontend.sh
 
 # Make travis quiet
 notifications:
