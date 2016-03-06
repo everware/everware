@@ -10,11 +10,15 @@ TEST_OPTIONS := -s tests -N 2
 TESTS := test_happy_mp
 LOG := everware.log
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
-SPAWNER_IP = $(shell which docker-machine > /dev/null && echo "--LocalProcessSpawner.ip='192.168.99.100'")
-OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP} ${SPAWNER_IP}
+OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
+IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
+ifeq (0, $(IS_DOCKER_MACHINE))
+	SPAWNER_IP = "192.168.99.100"
+else
+	SPAWNER_IP = "127.0.0.1"
+endif
 
 .PHONY: install reload clean run run-daemon run-test stop test-client tail
-
 
 help:
 	@echo Usage: make [-e VARIABLE=VALUE] targets
@@ -74,6 +78,7 @@ stop: jupyterhub.pid
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
+		<(echo c.Spawner.container_ip = ${SPAWNER_IP}) \
 		> jupyterhub_config_test.py
 	source ./env.sh && \
 	    export EVERWARE_WHITELIST= ; \

@@ -19,6 +19,11 @@ REPO = "https://github.com/everware/everware-dimuon-example"
 DRIVER = "phantomjs"
 # DRIVER = "firefox"
 
+# Test matrix
+SCENARIOUS = ["scenario_short", "scenario_full"]
+# SCENARIOUS = ["scenario_full"]
+USERS = ["an1", "an2"]
+
 class User:
     def __init__(self, login=None, repo=REPO, driver_type=DRIVER):
         self.login = login
@@ -37,7 +42,7 @@ class User:
             self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(30)
+        self.driver.implicitly_wait(60)
         return self.driver
 
 
@@ -76,9 +81,8 @@ class User:
 
 
 def test_generator():
-    for scenario in ["scenario_short", "scenario_full"]:
-        for username in ["an1", "an2"]:
-        # for username in ["an1"]:
+    for scenario in SCENARIOUS:
+        for username in USERS:
             yield scenario_runner, scenario, username
 
 
