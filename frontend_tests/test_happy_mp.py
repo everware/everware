@@ -10,7 +10,8 @@ import nose2
 import time
 import os
 
-REPO = "https://github.com/everware/everware-dimuon-example"
+# REPO = "https://github.com/everware/everware-dimuon-example"
+REPO = "https://github.com/everware/everware-cpp-example.git"
 # repo = "docker:yandex/rep-tutorial:0.1.3"
 # repo = "docker:everware/https_github_com_everware_everware_dimuon_example-5e87f9567d33842e12636038d56544d54c3d0702"
 # repo = "docker:everware/https_github_com_everware_everware_dimuon_example-9bec6770485eb6b245648bc251d045a204973cc9"

@@ -105,8 +105,8 @@ cmp: ## commit -m push
 	git commit -am "${M}" && git push
 
 gistup: ## install gistup
-	git clone https://github.com/anaderi/gistup.git
-	cd gistup ; \
+	git clone https://github.com/anaderi/gistup.git src/gistup
+	cd src/gistup ; \
 		npm install -g
 
 upload_screens: ## upload screenshots of failed tests
