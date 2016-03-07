@@ -40,7 +40,7 @@ script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
   - prefix="build $TRAVIS_JOB_NUMBER"
-  - [ "$TRAVIS_PULL_REQUEST" != false ] && prefix+=" PR $TRAVIS_PULL_REQUEST "
+  - test "$TRAVIS_PULL_REQUEST" != "false" && prefix+=" PR $TRAVIS_PULL_REQUEST "
   - make upload_screens -e M="$prefix travis-CI screens ($JHUB_VERSION $TRAVIS_PYTHON_VERSION)"
 
 cache:
