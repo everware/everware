@@ -30,7 +30,7 @@ before_install:
   - pip --version
   - pip freeze
   - npm list
-  - ls -alR $HOME/frontend-test-screenshots/
+  - if [ -d $HOME/frontend-test-screenshots/ ] ; then ls -alR $HOME/frontend-test-screenshots/ ; fi
 
 install: 
   - npm install -g configurable-http-proxy
