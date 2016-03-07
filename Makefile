@@ -98,12 +98,6 @@ test-client: ## run tests
 	export UPLOADDIR=${UPLOADDIR} ; \
 		nose2 ${TEST_OPTIONS} ${TESTS}
 
-diff: ## git diff
-	git diff
-
-cmp: ## commit -m push
-	git commit -am "${M}" && git push
-
 gistup: ## install gistup
 	git clone https://github.com/anaderi/gistup.git src/gistup
 	cd src/gistup ; \
