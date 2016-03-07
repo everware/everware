@@ -21,7 +21,8 @@ DRIVER = "phantomjs"
 
 # Test matrix
 # SCENARIOS = ["scenario_short", "scenario_full"]
-SCENARIOS = ["scenario_short", "scenario_short_bad"]
+# SCENARIOS = ["scenario_short", "scenario_short_bad"]
+SCENARIOS = ["scenario_short"]
 USERS = ["an1", "an2"]
 TIMEOUT = 30
 UPLOADDIR = os.environ['UPLOADDIR']
