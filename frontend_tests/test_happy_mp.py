@@ -20,8 +20,8 @@ DRIVER = "phantomjs"
 # DRIVER = "firefox"
 
 # Test matrix
-# SCENARIOUS = ["scenario_short", "scenario_full"]
-SCENARIOUS = ["scenario_short"]
+# SCENARIOS = ["scenario_short", "scenario_full"]
+SCENARIOS = ["scenario_short", "scenario_short_bad"]
 USERS = ["an1", "an2"]
 TIMEOUT = 30
 UPLOADDIR = os.environ['UPLOADDIR']
@@ -90,7 +90,7 @@ class User:
 
 
 def test_generator():
-    for scenario in SCENARIOUS:
+    for scenario in SCENARIOS:
         for username in USERS:
             yield run_scenario, scenario, username
 
@@ -110,6 +110,20 @@ def run_scenario(scenario, username):
 
 
 def scenario_short(user):
+    driver = user.get_driver()
+    driver.get(user.base_url + "/hub/login")
+    user.log("login")
+    driver.find_element_by_id("username_input").clear()
+    driver.find_element_by_id("username_input").send_keys(user.login)
+    driver.find_element_by_id("password_input").clear()
+    driver.find_element_by_id("password_input").send_keys(user.password)
+    driver.find_element_by_id("login_submit").click()
+    user.wait_for_element_present(By.ID, "start")
+    driver.find_element_by_id("logout").click()
+    user.log("logout clicked")
+
+
+def scenario_short_bad(user):
     driver = user.get_driver()
     driver.get(user.base_url + "/hub/login")
     user.log("login")
