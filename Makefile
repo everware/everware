@@ -120,7 +120,12 @@ upload_screens: ## upload screenshots of failed tests
 		fi ; \
 	fi
 	if [ -d ${UPLOADDIR} ] ; then \
-		rm -rf ${UPLOADDIR}/.git ; \
 		cd ${UPLOADDIR} ; \
-		gistup --no-open --description="${M}" 2>/dev/null; \
+	 	if [ ! -d ${UPLOADDIR}/.git ] ; then \
+			gistup --no-open --description="${M}" 2>/dev/null; \
+		else \
+			git add * ;\
+			git commit -am "${M}" ;\
+			git push ;\
+		fi ; \
 	fi
