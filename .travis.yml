@@ -19,6 +19,8 @@ before_install:
   # XXX remove IPv6 entry via https://github.com/travis-ci/travis-ci/issues/4978
   - sudo [ $(ip addr show | grep "inet6 ::1" | wc -l) -lt "1" ] && sudo sed -i '/^::1/d' /etc/hosts
   - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
+  - export UPLOADDIR="$HOME/frontend-test-screenshots"
+
   # some DEBUG information
   # XXX the next two are related to the IPv6 hack above
   - cat /etc/hosts
@@ -37,6 +39,13 @@ install:
 script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
+  - make gistup upload_screens
+
+cache:
+    apt: true
+    directories:
+     - $HOME/.cache/pip
+     - $HOME/frontend-test-screenshots
 
 notifications:
   email: false

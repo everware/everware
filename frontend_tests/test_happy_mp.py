@@ -48,7 +48,7 @@ class User:
     def get_driver(self):
         if self.driver_type == "phantomjs":
             self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
-            self.driver.set_window_size(1024,768)
+            self.driver.set_window_size(1024, 768)
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(TIMEOUT)
@@ -118,7 +118,7 @@ def scenario_short(user):
     driver.find_element_by_id("password_input").clear()
     driver.find_element_by_id("password_input").send_keys(user.password)
     driver.find_element_by_id("login_submit").click()
-    user.wait_for_element_present(By.ID, "start")
+    user.wait_for_element_present(By.ID, "start1")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 

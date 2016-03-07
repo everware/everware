@@ -104,11 +104,16 @@ diff: ## git diff
 cmp: ## commit -m push
 	git commit -am "${M}" && git push
 
-upload_screens:
-	@which gistup > /dev/null || (echo "setup https://github.com/mbostock/gistup first" && exit 1 )
+gistup: ## install gistup
+	git clone https://github.com/anaderi/gistup.git
+	cd gistup ; \
+		npm install -g
+
+upload_screens: ## upload screenshots of failed tests
+	@which gistup > /dev/null || (echo "setup https://github.com/anaderi/gistup first" && exit 1 )
 	@if [[ ! -f ~/.gistup.json  ]] ; then \
 		if [ -n "$${GIST_TOKEN}" ] ; then \
-			echo "{\"token\": \"$${GIST_TOKEN}\" }" > ~/.gistup.json ; \
+			echo "{\"token\": \"$${GIST_TOKEN}\", \"protocol\": \"https\" }" > ~/.gistup.json ; \
 		else \
 			echo "no GIST_TOKEN specified. exit"; exit 1; \
 		fi ; \
@@ -116,5 +121,5 @@ upload_screens:
 	if [ -d ${UPLOADDIR} ] ; then \
 		rm -rf ${UPLOADDIR}/.git ; \
 		cd ${UPLOADDIR} ; \
-		gistup --no-open; \
+		gistup --no-open 2>/dev/null; \
 	fi
