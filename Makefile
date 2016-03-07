@@ -14,7 +14,7 @@ PIDFILE := everware.pid
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
 IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
-UPLOADDIR = ~/upload_screens
+UPLOADDIR ?= ~/upload_screens
 ifeq (0, $(IS_DOCKER_MACHINE))
 	SPAWNER_IP = "192.168.99.100"
 else
@@ -111,6 +111,7 @@ gistup: ## install gistup
 
 upload_screens: ## upload screenshots of failed tests
 	@which gistup > /dev/null || (echo "setup https://github.com/anaderi/gistup first" && exit 1 )
+	echo ${UPLOADDIR}
 	@if [[ ! -f ~/.gistup.json  ]] ; then \
 		if [ -n "$${GIST_TOKEN}" ] ; then \
 			echo "{\"token\": \"$${GIST_TOKEN}\", \"protocol\": \"https\" }" > ~/.gistup.json ; \
