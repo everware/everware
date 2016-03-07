@@ -19,7 +19,8 @@ before_install:
   # XXX remove IPv6 entry via https://github.com/travis-ci/travis-ci/issues/4978
   - sudo [ $(ip addr show | grep "inet6 ::1" | wc -l) -lt "1" ] && sudo sed -i '/^::1/d' /etc/hosts
   - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
-  - export UPLOADDIR="$HOME/frontend-test-screenshots"
+  - export UPLOADDIR=${HOME}/frontend-test-screenshots_${JHUB_VERSION}_${TRAVIS_PYTHON_VERSION}
+  - make gistup
 
   # some DEBUG information
   # XXX the next two are related to the IPv6 hack above
@@ -31,7 +32,6 @@ before_install:
   - npm list
 
 install: 
-  - npm install -g gistup
   - npm install -g configurable-http-proxy
   - export PIP_OPTIONS="-f ~/travis-wheels/wheelhouse"
   - ./build_tools/install.sh
@@ -39,13 +39,13 @@ install:
 script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
-  - make gistup upload_screens
+  - make upload_screens
 
 cache:
     apt: true
     directories:
      - $HOME/.cache/pip
-     - $HOME/frontend-test-screenshots
+     - $UPLOADDIR
 
 notifications:
   email: false
