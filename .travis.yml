@@ -15,6 +15,8 @@ env:
   - JHUB_VERSION=master
   - JHUB_VERSION=latest # latest released version
 
+secure: "ZY7fEEgp4/dlz7LlD4YgzsZ8NscP/J6CXWxshFhHISMZ3Fdk6bUGfsIhEIEPVE9h2wwXyMeRUsmXivqC92wHx0SHJilr5cUbby9YTsKSj5bCF5EWz+JDAEaooTcL0QHyP4YB8TbQ5UsVW6H4cSrJI/WmHKllFnt+83ZOT1r8vXHxiFTTTshnZV11F0CqAfsbjCZiOCyX0s8vxUEdzpCEU5d1ky6JH1SFqEckaxWPItZoeQ+iG3W3AfMKKqJXFLJJ/YIFfuMQiEyW4HqPfeoG23ac1J4QimMKOdAABI+HGzagoB1yYc47XuMpIeO4yhNNRSnk9+KSqKIdZDRnVB+/GuClYNTlBWDZfTuzhYCMaU4KQb1X/15Hpiy26fzjgz12ypXgygFqCP2YlU6sNCyYESusuOanwMc1C03r4Uqebn6XPPwhDTQ/UjbigNyjsaSJgiFeqRvqV1iX4Ug2iGO1k6hI8lkc/nqBXQ9p1QrrDKQ8GmZCK+765B0WQiF7ubjK+0L0/ZijEk7hqjaVY4tZr+qXsfTVGplbz1warncGolHV0OLZhAEaGQDNdZUH+MDBId7PbhVyJc7ebGgmqXEL8tfVU9xT5eWvkN8YXf4L/JP7qik6Xp39IpJJvMDX7RUNNuwhfCn5IKl7H8QtdS7VNysyx5oAraHWPAuVM572gaU="
+
 before_install:
   # XXX remove IPv6 entry via https://github.com/travis-ci/travis-ci/issues/4978
   - sudo [ $(ip addr show | grep "inet6 ::1" | wc -l) -lt "1" ] && sudo sed -i '/^::1/d' /etc/hosts
