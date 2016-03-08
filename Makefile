@@ -106,7 +106,7 @@ gistup: ## install gistup
 upload_screens: ## upload screenshots of failed tests
 	@which gistup > /dev/null || (echo "setup https://github.com/anaderi/gistup first" && exit 1 )
 	echo ${UPLOADDIR}
-	if [[ `find ${UPLOADDIR} -not -path "*/.git/*" -type f -size +1000k -print` != "" ]] ; then \
+	if [[ `find ${UPLOADDIR} -not -path "*/.git/*" -type f -print` != "" ]] ; then \
 		cd ${UPLOADDIR} ; \
 		if [ ! -d ".git" ] ; then \
 			if [[ ! -f ~/.gistup.json  ]] ; then \
@@ -116,7 +116,9 @@ upload_screens: ## upload screenshots of failed tests
 					echo "no GIST_TOKEN specified. exit"; exit 1; \
 				fi ; \
 			fi ;\
-			gistup --no-open --description="${M}" 2>/dev/null; \
+			OPTIONS="--no-open" ; \
+			if [ "${M}" != "" ] ; then OPTIONS+=" --description ${M}" ; fi ;\
+			gistup $${OPTIONS} ; \
 		else \
 			git add * ;\
 			git commit -am "${M}" ;\
