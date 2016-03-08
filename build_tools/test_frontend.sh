@@ -13,11 +13,7 @@ echo "In" `pwd`
 echo "Starting everware"
 
 # XXX Latest release does not yet force SSL
-if [[ "$JHUB_VERSION" == "latest" ]]; then
-    OPTS="-f build_tools/frontend_test_config.py --debug"
-else
-    OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
-fi
+OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
 jupyterhub ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!
 sleep 3
