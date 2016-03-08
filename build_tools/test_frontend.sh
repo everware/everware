@@ -12,7 +12,6 @@ echo "In" `pwd`
 # Start a hub that our tests can interact with
 echo "Starting everware"
 
-# XXX Latest release does not yet force SSL
 OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
 jupyterhub ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!

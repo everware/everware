@@ -106,20 +106,20 @@ gistup: ## install gistup
 upload_screens: ## upload screenshots of failed tests
 	@which gistup > /dev/null || (echo "setup https://github.com/anaderi/gistup first" && exit 1 )
 	echo ${UPLOADDIR}
-	@if [[ ! -f ~/.gistup.json  ]] ; then \
-		if [ -n "$${GIST_TOKEN}" ] ; then \
-			echo "{\"token\": \"$${GIST_TOKEN}\", \"protocol\": \"https\" }" > ~/.gistup.json ; \
-		else \
-			echo "no GIST_TOKEN specified. exit"; exit 1; \
-		fi ; \
-	fi
-	if [ -d ${UPLOADDIR} ] ; then \
+	if [[ `find ${UPLOADDIR} -not -path "*/.git/*" -type f -size +1000k -print` != "" ]] ; then \
 		cd ${UPLOADDIR} ; \
-	 	if [ ! -d ${UPLOADDIR}/.git ] ; then \
+		if [ ! -d ".git" ] ; then \
+			if [[ ! -f ~/.gistup.json  ]] ; then \
+				if [ -n "$${GIST_TOKEN}" ] ; then \
+					echo "{\"token\": \"$${GIST_TOKEN}\", \"protocol\": \"https\" }" > ~/.gistup.json ; \
+				else \
+					echo "no GIST_TOKEN specified. exit"; exit 1; \
+				fi ; \
+			fi ;\
 			gistup --no-open --description="${M}" 2>/dev/null; \
 		else \
 			git add * ;\
 			git commit -am "${M}" ;\
 			git push ;\
-		fi ; \
+		fi ;\
 	fi
