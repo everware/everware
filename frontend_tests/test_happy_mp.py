@@ -10,7 +10,8 @@ import nose2
 import time
 import os
 
-REPO = "https://github.com/everware/everware-dimuon-example"
+# REPO = "https://github.com/everware/everware-dimuon-example"
+REPO = "https://github.com/everware/everware-cpp-example.git"
 # repo = "docker:yandex/rep-tutorial:0.1.3"
 # repo = "docker:everware/https_github_com_everware_everware_dimuon_example-5e87f9567d33842e12636038d56544d54c3d0702"
 # repo = "docker:everware/https_github_com_everware_everware_dimuon_example-9bec6770485eb6b245648bc251d045a204973cc9"
@@ -20,8 +21,9 @@ DRIVER = "phantomjs"
 # DRIVER = "firefox"
 
 # Test matrix
-# SCENARIOUS = ["scenario_short", "scenario_full"]
-SCENARIOUS = ["scenario_short"]
+# SCENARIOS = ["scenario_short", "scenario_full"]
+# SCENARIOS = ["scenario_short", "scenario_short_bad"]
+SCENARIOS = ["scenario_short"]
 USERS = ["an1", "an2"]
 TIMEOUT = 30
 UPLOADDIR = os.environ['UPLOADDIR']
@@ -48,7 +50,7 @@ class User:
     def get_driver(self):
         if self.driver_type == "phantomjs":
             self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
-            self.driver.set_window_size(1024,768)
+            self.driver.set_window_size(1024, 768)
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(TIMEOUT)
@@ -90,7 +92,7 @@ class User:
 
 
 def test_generator():
-    for scenario in SCENARIOUS:
+    for scenario in SCENARIOS:
         for username in USERS:
             yield run_scenario, scenario, username
 
@@ -119,6 +121,20 @@ def scenario_short(user):
     driver.find_element_by_id("password_input").send_keys(user.password)
     driver.find_element_by_id("login_submit").click()
     user.wait_for_element_present(By.ID, "start")
+    driver.find_element_by_id("logout").click()
+    user.log("logout clicked")
+
+
+def scenario_short_bad(user):
+    driver = user.get_driver()
+    driver.get(user.base_url + "/hub/login")
+    user.log("login")
+    driver.find_element_by_id("username_input").clear()
+    driver.find_element_by_id("username_input").send_keys(user.login)
+    driver.find_element_by_id("password_input").clear()
+    driver.find_element_by_id("password_input").send_keys(user.password)
+    driver.find_element_by_id("login_submit").click()
+    user.wait_for_element_present(By.ID, "start1")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 

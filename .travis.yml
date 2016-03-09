@@ -15,10 +15,17 @@ env:
   - JHUB_VERSION=master
   - JHUB_VERSION=latest # latest released version
 
+# GIST_TOKEN=1234 for screen uploading
+secure: "ZY7fEEgp4/dlz7LlD4YgzsZ8NscP/J6CXWxshFhHISMZ3Fdk6bUGfsIhEIEPVE9h2wwXyMeRUsmXivqC92wHx0SHJilr5cUbby9YTsKSj5bCF5EWz+JDAEaooTcL0QHyP4YB8TbQ5UsVW6H4cSrJI/WmHKllFnt+83ZOT1r8vXHxiFTTTshnZV11F0CqAfsbjCZiOCyX0s8vxUEdzpCEU5d1ky6JH1SFqEckaxWPItZoeQ+iG3W3AfMKKqJXFLJJ/YIFfuMQiEyW4HqPfeoG23ac1J4QimMKOdAABI+HGzagoB1yYc47XuMpIeO4yhNNRSnk9+KSqKIdZDRnVB+/GuClYNTlBWDZfTuzhYCMaU4KQb1X/15Hpiy26fzjgz12ypXgygFqCP2YlU6sNCyYESusuOanwMc1C03r4Uqebn6XPPwhDTQ/UjbigNyjsaSJgiFeqRvqV1iX4Ug2iGO1k6hI8lkc/nqBXQ9p1QrrDKQ8GmZCK+765B0WQiF7ubjK+0L0/ZijEk7hqjaVY4tZr+qXsfTVGplbz1warncGolHV0OLZhAEaGQDNdZUH+MDBId7PbhVyJc7ebGgmqXEL8tfVU9xT5eWvkN8YXf4L/JP7qik6Xp39IpJJvMDX7RUNNuwhfCn5IKl7H8QtdS7VNysyx5oAraHWPAuVM572gaU="
+
 before_install:
   # XXX remove IPv6 entry via https://github.com/travis-ci/travis-ci/issues/4978
   - sudo [ $(ip addr show | grep "inet6 ::1" | wc -l) -lt "1" ] && sudo sed -i '/^::1/d' /etc/hosts
   - git clone --quiet --depth 1 https://github.com/minrk/travis-wheels travis-wheels
+  - export UPLOADDIR=${HOME}/frontend-test-screenshots/${JHUB_VERSION}_${TRAVIS_PYTHON_VERSION}
+  - make gistup
+  - docker pull anaderi/rep-jupyterhub:latest  # to speed up image creation during tests
+
   # some DEBUG information
   # XXX the next two are related to the IPv6 hack above
   - cat /etc/hosts
@@ -27,9 +34,9 @@ before_install:
   - pip --version
   - pip freeze
   - npm list
+  - if [ -d $HOME/frontend-test-screenshots/ ] ; then ls -alR $HOME/frontend-test-screenshots/ ; fi
 
 install: 
-  - npm install -g gistup
   - npm install -g configurable-http-proxy
   - export PIP_OPTIONS="-f ~/travis-wheels/wheelhouse"
   - ./build_tools/install.sh
@@ -37,6 +44,14 @@ install:
 script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
+  - prefix="build $TRAVIS_JOB_NUMBER"
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then make upload_screens -e M="travis-CI screens ($JHUB_VERSION v$TRAVIS_PYTHON_VERSION)" ; fi
+
+cache:
+    apt: true
+    directories:
+     - $HOME/.cache/pip
+     - $HOME/frontend-test-screenshots/
 
 notifications:
   email: false
