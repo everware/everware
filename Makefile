@@ -1,8 +1,8 @@
 # Makefile for building & starting rep-containers
-# arguments can be supplied by -e definitions: 
+# arguments can be supplied by -e definitions:
 #
-#    TESTS -- list of tests to run
-#    M -- commit message
+#	 TESTS -- list of tests to run
+#	 M -- commit message
 #
 #
 
@@ -15,6 +15,19 @@ IP ?= $(shell python -c 'from IPython.utils.localinterfaces import public_ips; p
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=$${IP}
 IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
 UPLOADDIR ?= ~/upload_screens
+PYTHON_MAJOR = $(shell python -c 'import sys; print(sys.version_info[0])')
+IS_PYTHON3 = $(shell which python3)
+
+ifeq (${PYTHON_MAJOR}, 3)
+	PYTHON = python
+	PIP = pip
+else ifdef IS_PYTHON3
+	PYTHON = python3
+	PIP = pip3
+else
+	$(error Unable to find python)
+endif
+
 ifeq (0, $(IS_DOCKER_MACHINE))
 	SPAWNER_IP = "192.168.99.100"
 else
@@ -29,27 +42,16 @@ help:
 	@grep -h "#\s\+\w\+ -- " $(MAKEFILE_LIST) |sed "s/#\s//"
 	@echo
 	@echo targets and corresponding dependencies:
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' -e 's/^/   /' | sed -e 's/##//'
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' -e 's/^/	/' | sed -e 's/##//'
 
 
 install:  ## install everware
 	npm install
 	npm install configurable-http-proxy
-	PYTHON_MAJOR=`python -c 'import sys; print(sys.version_info[0])'` ;\
-		if [ $${PYTHON_MAJOR} -eq 3 ] ; then \
-			PYTHON=python ;\
-			PIP=pip ;\
-		elif [ -n `which python3` ] ; then \
-			PYTHON=python3 ;\
-			PIP=pip3 ;\
-		else \
-			echo "Unable to find python" ;\
-			exit 1 ;\
-		fi ;\
-		$${PIP} install $${PIP_OPTIONS} -r requirements.txt && \
-		$${PIP} install -e . && \
-		$${PYTHON} setup.py css && \
-		$${PYTHON} setup.py js
+	${PIP} install $${PIP_OPTIONS} -r requirements.txt && \
+	${PIP} install -e . && \
+	${PYTHON} setup.py css && \
+	${PYTHON} setup.py js
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
 	if [ ! -f jupyterhub_config.py ] ; then cp jupyterhub_config.py.orig jupyterhub_config.py ; fi
@@ -60,17 +62,18 @@ reload:  ## reload everware whitelist
 		if [ -z "$${PID}" ] ; then echo "Cannot find ${PIDFILE}" ; exit 1 ; fi
 	pkill -1 -f jupyterhub
 
-clean:  ## clean user base
+clean:	## clean user base
 	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
 	rm -f jupyterhub.sqlite
 
-run: clean  ## run everware server
+run: clean	## run everware server
 	source ./env.sh && \
-		jupyterhub ${OPTIONS} | tee ${LOG}
+		${PYTHON} run.py ${OPTIONS}
+		# jupyterhub ${OPTIONS}
 
 run-daemon: clean
 	source ./env.sh && \
-		jupyterhub ${OPTIONS} >> ${LOG}  2> /dev/null &
+		${PYTHON} run.py ${OPTIONS} >> ${LOG}	2> /dev/null &
 	@sleep 1
 	pgrep -f jupyterhub > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
@@ -87,8 +90,8 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 		<(echo c.Spawner.container_ip = \'${SPAWNER_IP}\') \
 		> jupyterhub_config_test.py
 	source ./env.sh && \
-	    export EVERWARE_WHITELIST= ; \
-		jupyterhub ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
+		export EVERWARE_WHITELIST= ; \
+		${PYTHON} run.py ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
 	@sleep 1
 	pgrep -f jupyterhub > ${PIDFILE} || exit 1
 	echo "Started. Log saved to ${LOG}"

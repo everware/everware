@@ -4,14 +4,6 @@ import jupyterhub.handlers.pages
 import jupyterhub.handlers.base
 import dummyauthenticator
 
-# TODO: find a way to change default handlers
-# instead of this shit
-jupyterhub.handlers.base.UserSpawnHandler.get = everware.UserSpawnHandler.get
-jupyterhub.handlers.pages.SpawnHandler.post = everware.SpawnHandler.post
-jupyterhub.handlers.pages.SpawnHandler.get = everware.SpawnHandler.get
-jupyterhub.handlers.pages.SpawnHandler._spawn = everware.SpawnHandler._spawn
-jupyterhub.handlers.pages.HomeHandler.get = everware.HomeHandler.get
-
 c = get_config()
 
 # spawn with custom docker containers
@@ -26,7 +18,6 @@ c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
 
 authenticator = everware.GitHubOAuthenticator
 c.JupyterHub.authenticator_class = '%s.%s' % (authenticator.__module__, authenticator.__name__)
-# whitelist_file = 'whitelist.txt'
 whitelist_file = os.environ['EVERWARE_WHITELIST']
 whitelist_handler = everware.DefaultWhitelistHandler(whitelist_file, c, authenticator)
 c.GitHubOAuthenticator.oauth_callback_url = os.environ['OAUTH_CALLBACK_URL']
