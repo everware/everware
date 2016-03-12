@@ -1,8 +1,8 @@
 # Makefile for building & starting rep-containers
 # arguments can be supplied by -e definitions:
 #
-#	 TESTS -- list of tests to run
-#	 M -- commit message
+#    TESTS -- list of tests to run
+#    M -- commit message
 #
 #
 
@@ -28,6 +28,8 @@ else
 	$(error Unable to find python)
 endif
 
+EXECUTOR = ${PYTHON} run.py
+
 ifeq (0, $(IS_DOCKER_MACHINE))
 	SPAWNER_IP = "192.168.99.100"
 else
@@ -42,7 +44,7 @@ help:
 	@grep -h "#\s\+\w\+ -- " $(MAKEFILE_LIST) |sed "s/#\s//"
 	@echo
 	@echo targets and corresponding dependencies:
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' -e 's/^/	/' | sed -e 's/##//'
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' -e 's/^/   /' | sed -e 's/##//'
 
 
 install:  ## install everware
@@ -58,24 +60,23 @@ install:  ## install everware
 	if [ ! -f whitelist.txt ] ; then cp whitelist.txt.orig whitelist.txt ; fi
 
 reload:  ## reload everware whitelist
-	PID=`pgrep -f jupyterhub` ;\
+	PID=`pgrep -f '^${EXECUTOR}'` ;\
 		if [ -z "$${PID}" ] ; then echo "Cannot find ${PIDFILE}" ; exit 1 ; fi
-	pkill -1 -f jupyterhub
+	pkill -1 -f '^${EXECUTOR}'
 
-clean:	## clean user base
+clean:  ## clean user base
 	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
 	rm -f jupyterhub.sqlite
 
-run: clean	## run everware server
+run: clean  ## run everware server
 	source ./env.sh && \
-		${PYTHON} run.py ${OPTIONS}
-		# jupyterhub ${OPTIONS}
+		${EXECUTOR} ${OPTIONS}
 
 run-daemon: clean
 	source ./env.sh && \
-		${PYTHON} run.py ${OPTIONS} >> ${LOG}	2> /dev/null &
+		${EXECUTOR} ${OPTIONS} >> ${LOG}  2> /dev/null &
 	@sleep 1
-	pgrep -f jupyterhub > ${PIDFILE} || ( tail ${LOG} && exit 1 )
+	pgrep -f '^${EXECUTOR}' > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
 stop: ${PIDFILE}
@@ -91,9 +92,9 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 		> jupyterhub_config_test.py
 	source ./env.sh && \
 		export EVERWARE_WHITELIST= ; \
-		${PYTHON} run.py ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
+		${EXECUTOR} ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
 	@sleep 1
-	pgrep -f jupyterhub > ${PIDFILE} || exit 1
+	pgrep -f '^${EXECUTOR}' > ${PIDFILE} || exit 1
 	echo "Started. Log saved to ${LOG}"
 
 logs: ${LOG} ## watch log file
