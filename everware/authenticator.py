@@ -66,6 +66,8 @@ class WelcomeHandler(BaseHandler):
     """Render the login page."""
 
     def _render(self, login_error=None, username=None):
+        if username:
+            username = username.lower()
         return self.render_template('login.html',
                 next=url_escape(self.get_argument('next', default='')),
                 repourl=url_escape(self.get_argument('repourl', default='')),
@@ -144,6 +146,7 @@ class GitHubOAuthHandler(BaseHandler):
 
         username = yield self.authenticator.authenticate(self)
         if username:
+            username = username.lower()
             user = self.user_from_username(username)
             self.set_login_cookie(user)
             if 'repourl' in state:
@@ -227,6 +230,8 @@ class GitHubOAuthenticator(Authenticator):
         username = resp_json["login"]
         if self.whitelist and username not in self.whitelist:
             username = None
+        if username:
+            username = username.lower()
         raise gen.Return(username)
 
 
@@ -304,6 +309,8 @@ class BitbucketOAuthenticator(Authenticator):
         whitelisted = yield self.check_whitelist(username, headers)
         if not whitelisted:
             username = None
+        if username:
+            username = username.lower()
         return username
 
     def check_whitelist(self, username, headers):
