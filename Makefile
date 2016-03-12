@@ -14,7 +14,7 @@ PIDFILE := everware.pid
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
 IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
-UPLOADDIR = ~/upload_screens
+UPLOADDIR ?= ~/upload_screens
 ifeq (0, $(IS_DOCKER_MACHINE))
 	SPAWNER_IP = "192.168.99.100"
 else
@@ -98,23 +98,30 @@ test-client: ## run tests
 	export UPLOADDIR=${UPLOADDIR} ; \
 		nose2 ${TEST_OPTIONS} ${TESTS}
 
-diff: ## git diff
-	git diff
+gistup: ## install gistup
+	git clone https://github.com/anaderi/gistup.git src/gistup
+	cd src/gistup ; \
+		npm install -g
 
-cmp: ## commit -m push
-	git commit -am "${M}" && git push
-
-upload_screens:
-	@which gistup > /dev/null || (echo "setup https://github.com/mbostock/gistup first" && exit 1 )
-	@if [[ ! -f ~/.gistup.json  ]] ; then \
-		if [ -n "$${GIST_TOKEN}" ] ; then \
-			echo "{\"token\": \"$${GIST_TOKEN}\" }" > ~/.gistup.json ; \
-		else \
-			echo "no GIST_TOKEN specified. exit"; exit 1; \
-		fi ; \
-	fi
-	if [ -d ${UPLOADDIR} ] ; then \
-		rm -rf ${UPLOADDIR}/.git ; \
+upload_screens: ## upload screenshots of failed tests
+	@which gistup > /dev/null || (echo "setup https://github.com/anaderi/gistup first" && exit 1 )
+	echo ${UPLOADDIR}
+	if [[ `find ${UPLOADDIR} -not -path "*/.git/*" -type f -print` != "" ]] ; then \
 		cd ${UPLOADDIR} ; \
-		gistup --no-open; \
+		if [ ! -d ".git" ] ; then \
+			if [[ ! -f ~/.gistup.json  ]] ; then \
+				if [ -n "$${GIST_TOKEN}" ] ; then \
+					echo "{\"token\": \"$${GIST_TOKEN}\", \"protocol\": \"https\" }" > ~/.gistup.json ; \
+				else \
+					echo "no GIST_TOKEN specified. exit"; exit 1; \
+				fi ; \
+			fi ;\
+			OPTIONS="--no-open" ; \
+			if [ "${M}" != "" ] ; then OPTIONS+=" --description ${M}" ; fi ;\
+			gistup $${OPTIONS} ; \
+		else \
+			git add * ;\
+			git commit -am "${M}" ;\
+			git push ;\
+		fi ;\
 	fi

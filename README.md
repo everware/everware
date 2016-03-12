@@ -1,27 +1,42 @@
 
 # everware
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/everware/everware?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/everware/everware)
+[![Build Status](https://travis-ci.org/everware/everware.svg?branch=master)](https://travis-ci.org/everware/everware)
 
-Everware is an add-on for [JupyterHub](https://github.com/jupyter/jupyterhub).
-It allows users to launch [Jupyter Notebooks](https://github.com/jupyter/notebook.git) into a docker container simply by specifying the url of a git repository.
-Everware clones the repository, builds a docker image from a contained `Dockerfile` and launches the user into a running notebook instance inside the container.
+**Everware is about re-useable science, it allows people to jump right
+in to your research code.**
 
-Everware is designed to be a tool for [Open Science](https://en.wikipedia.org/wiki/Open_science).
-If a researcher provides an everware-compatible public git repository, it's possible to verify their research by simply launching the repository inside everware.
+It lets you launch [Jupyter](https://jupyter.org) notebooks from a git
+repository with a click of a button. Everware is an extension for
+[JupyterHub]. The main component is a spawner that allows you to spawn
+custom docker images.
 
-See [this blog post](http://betatim.github.io/posts/project-everware-reusable-science/) for more information about what everware is and how it can be useful.
+Checkout the **[ROADMAP](../../issues/39)** to see where we are going
+and how to get involved with the project.
 
-The idea for everware originated at the CERN Webfest 2015.
-The original everware team consists of [@OmeGak](https://github.com/omegak), [@ibab](https://github.com/ibab), [@ndawe](https://github.com/ndawe), [@betatim](https://github.com/betatim), [@uzzielperez](https://github.com/uzzielperez), [@anaderi](https://github.com/anaderi), and [@AxelVoitier](https://github.com/AxelVoitier).
+See [this blog
+post](http://betatim.github.io/posts/project-everware-reusable-science/)
+for more information about what `everware` is and how it can be useful.
+
+The idea for everware originated at the CERN Webfest 2015.  The
+original everware team consists of
+[@OmeGak](https://github.com/omegak),
+[@ibab](https://github.com/ibab), [@ndawe](https://github.com/ndawe),
+[@betatim](https://github.com/betatim),
+[@uzzielperez](https://github.com/uzzielperez),
+[@anaderi](https://github.com/anaderi), and
+[@AxelVoitier](https://github.com/AxelVoitier).
 
 ## Documentation
 
-Documentation on the different ways to use `everware` and [getting started](https://github.com/everware/everware/wiki/Getting-Started).
+We have some documentation on the different ways to use `everware` and
+[getting
+started](https://github.com/everware/everware/wiki/Getting-Started).
 
 ## Try it out
 
-In order to test drive `everware`, you have to:
+In order to deploy your own `everware` instance, you have to:
 
  - Install the newest git version of `jupyterhub`: https://github.com/jupyter/jupyterhub. Double check with their [README.md](https://github.com/jupyter/jupyterhub/blob/master/README.md)
 ```
@@ -56,5 +71,13 @@ In order to test drive `everware`, you have to:
 
 ## Development
 
-To run our tests you will need selenium. On OS X you can install it with
-`brew install selenium-server-standalone`.
+To run our tests you will need [selenium] and [phantomjs]. On OS X you can install them with:
+
+```
+brew install selenium-server-standalone
+brew install phantomjs
+```
+
+[selenium]: http://www.seleniumhq.org/
+[phantomjs]: http://phantomjs.org/
+[jupyterhub]: https://github.com/jupyter/jupyterhub

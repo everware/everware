@@ -3,29 +3,29 @@
 # This script is meant to be run from the script step in .travis.yml
 # The tests run by this script are "frontend" testing
 
+LOG="/tmp/frontend_test_hub.log"
+FAIL=0
+NPROC=2
+
 echo "In" `pwd`
 
 # Start a hub that our tests can interact with
 echo "Starting everware"
 
-# XXX Latest release does not yet force SSL
-if [[ "$JHUB_VERSION" == "latest" ]]; then
-    OPTS="-f build_tools/frontend_test_config.py --debug"
-else
-    OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
-fi
-jupyterhub ${OPTS} > /tmp/frontend_test_hub.log 2>&1 &
+OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
+jupyterhub ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!
 sleep 3
 
-export UPLOADDIR=/tmp/everware-frontend-test-screenshots
 echo "Start running frontend tests"
-nose2 -v --start-dir frontend_tests
+[ -d $UPLOADDIR ] && rm -rf $UPLOADDIR/*
+nose2 -v -N $NPROC --start-dir frontend_tests || FAIL=1
 
-if [ -f /tmp/frontend_test_hub.log ]; then
+if [ -f $LOG ]; then
     echo ">>> Frontend test hub log:"
-    cat /tmp/frontend_test_hub.log
+    cat $LOG
     echo "<<< Frontend test hub log:"
 fi
 
 kill ${HUB_PID}
+exit $FAIL
