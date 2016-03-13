@@ -1,0 +1,14 @@
+#!/bin/bash
+source ./env.sh
+PYTHON_MAJOR=`python -c 'import sys; print(sys.version_info[0])'`
+if [ ${PYTHON_MAJOR} -eq 3 ] ; then
+    PYTHON=python
+    PIP=pip
+elif [ -n `which python3` ] ; then
+    PYTHON=python3
+    PIP=pip3
+else
+    echo "Unable to find python"
+    exit 1
+fi
+${PYTHON} ./run.py "$@"
