@@ -4,14 +4,6 @@ import jupyterhub.handlers.pages
 import jupyterhub.handlers.base
 
 
-# TODO: find a way to change default handlers
-# instead of this shit
-jupyterhub.handlers.base.UserSpawnHandler.get = everware.UserSpawnHandler.get
-jupyterhub.handlers.pages.SpawnHandler.post = everware.SpawnHandler.post
-jupyterhub.handlers.pages.SpawnHandler.get = everware.SpawnHandler.get
-jupyterhub.handlers.pages.SpawnHandler._spawn = everware.SpawnHandler._spawn
-jupyterhub.handlers.pages.HomeHandler.get = everware.HomeHandler.get
-
 c = get_config()
 
 # spawn with custom docker containers
