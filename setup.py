@@ -7,6 +7,7 @@ import os
 import sys
 import shutil
 from subprocess import check_call
+from glob import glob
 
 v = sys.version_info
 if v[:2] < (3,3):
@@ -178,6 +179,7 @@ def get_data_files():
 setup_args = dict(
     name                = 'everware',
     packages            = ['everware'],
+    scripts             = glob(pjoin('scripts', '*')),
     version             = '0.0.0',
     description         = """Everware""",
     long_description    = "",
