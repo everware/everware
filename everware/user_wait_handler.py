@@ -11,7 +11,7 @@ class UserSpawnHandler(BaseHandler):
     @gen.coroutine
     def get(self, name, user_path):
         current_user = self.get_current_user()
-        if current_user and current_user.name == name.lower():
+        if current_user and current_user.name == name:
             # logged in, work with spawner
             if current_user.stop_pending:
                 self.redirect(url_path_join(self.hub.server.base_url, 'home'))

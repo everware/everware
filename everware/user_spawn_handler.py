@@ -16,7 +16,7 @@ class SpawnHandler(default_handlers.SpawnHandler):
     def get(self):
         user = self.get_current_user()
         if user.running:
-            name = user.name.lower()
+            name = user.name
             self.log.debug("User is running: %s", name)
             self.redirect('/user/%s' % name)
             return
