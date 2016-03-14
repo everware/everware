@@ -116,7 +116,7 @@ class OAuthLoginHandler(BaseHandler):
         self.authorize_redirect(
             redirect_uri=redirect_uri,
             client_id=self.authenticator.client_id,
-            scope=[],
+            scope=['repo'],
             response_type='code',
             extra_params={'state': self.create_signed_value('state', repr(state))})
 
@@ -142,10 +142,12 @@ class GitHubOAuthHandler(BaseHandler):
         self.log.debug('State dict: %s', state)
         state.pop('unique')
 
-        username = yield self.authenticator.authenticate(self)
+        username, token = yield self.authenticator.authenticate(self)
         if username:
             user = self.user_from_username(username)
+            user.token = token
             self.set_login_cookie(user)
+            user.login_service = "github"
             if 'repourl' in state:
                 self.log.debug("Redirect with %s", state)
                 self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
@@ -227,7 +229,7 @@ class GitHubOAuthenticator(Authenticator):
         username = resp_json["login"]
         if self.whitelist and username not in self.whitelist:
             username = None
-        raise gen.Return(username)
+        raise gen.Return((username, access_token))
 
 
 class BitbucketOAuthenticator(Authenticator):

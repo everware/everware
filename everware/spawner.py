@@ -132,7 +132,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def repo_url(self):
-        return self.user_options['repo_url']
+        return self.user_options.get('repo_url', '')
 
     _escaped_repo_url = None
     @property
