@@ -1,14 +1,31 @@
-#!/bin/bash
-source ./env.sh
-PYTHON_MAJOR=`python -c 'import sys; print(sys.version_info[0])'`
-if [ ${PYTHON_MAJOR} -eq 3 ] ; then
-    PYTHON=python
-    PIP=pip
-elif [ -n `which python3` ] ; then
-    PYTHON=python3
-    PIP=pip3
-else
-    echo "Unable to find python"
-    exit 1
-fi
-${PYTHON} ./run.py "$@"
+#!/usr/bin/env python3
+import jupyterhub.handlers.pages as pages
+import jupyterhub.handlers.base as base
+from jupyterhub import app
+from everware import HomeHandler, SpawnHandler, UserSpawnHandler
+import sys
+
+handlers_map = {
+    pages.HomeHandler: HomeHandler,
+    pages.SpawnHandler: SpawnHandler,
+    base.UserSpawnHandler: UserSpawnHandler
+}
+
+
+class Everware(app.JupyterHub):
+    name = 'everware'
+
+    def init_handlers(self):
+        super().init_handlers()
+        for i, cur_handler in enumerate(self.handlers):
+            new_handler = handlers_map.get(cur_handler[1])
+            if new_handler:
+                cur_handler = list(cur_handler)
+                cur_handler[1] = new_handler
+                self.handlers[i] = tuple(cur_handler)
+
+
+main = Everware.launch_instance
+
+if __name__ == "__main__":
+    main(sys.argv)

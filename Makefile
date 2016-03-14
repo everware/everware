@@ -28,7 +28,7 @@ else
 	$(error Unable to find python)
 endif
 
-EXECUTOR = ${PYTHON} run.py
+EXECUTOR = everware-server
 
 ifeq (0, $(IS_DOCKER_MACHINE))
 	SPAWNER_IP = "192.168.99.100"
@@ -60,9 +60,7 @@ install:  ## install everware
 	if [ ! -f whitelist.txt ] ; then cp whitelist.txt.orig whitelist.txt ; fi
 
 reload:  ## reload everware whitelist
-	PID=`pgrep -f '^${EXECUTOR}'` ;\
-		if [ -z "$${PID}" ] ; then echo "Cannot find ${PIDFILE}" ; exit 1 ; fi
-	pkill -1 -f '^${EXECUTOR}'
+	kill -1 `cat ${PIDFILE}` || ( echo "Everware isn't running" && exit 1 )
 
 clean:  ## clean user base
 	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
@@ -75,8 +73,7 @@ run: clean  ## run everware server
 run-daemon: clean
 	source ./env.sh && \
 		${EXECUTOR} ${OPTIONS} >> ${LOG}  2> /dev/null &
-	@sleep 1
-	pgrep -f '^${EXECUTOR}' > ${PIDFILE} || ( tail ${LOG} && exit 1 )
+	pgrep -f ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
 stop: ${PIDFILE}
@@ -94,7 +91,7 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 		export EVERWARE_WHITELIST= ; \
 		${EXECUTOR} ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
 	@sleep 1
-	pgrep -f '^${EXECUTOR}' > ${PIDFILE} || exit 1
+	echo $$! >${PIDFILE}
 	echo "Started. Log saved to ${LOG}"
 
 logs: ${LOG} ## watch log file
