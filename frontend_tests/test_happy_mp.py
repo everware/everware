@@ -24,7 +24,7 @@ DRIVER = "phantomjs"
 SCENARIOS = ["scenario_short", "scenario_full"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 USERS = ["an1", "an2"]
-TIMEOUT = 30
+TIMEOUT = 60
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
