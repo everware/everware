@@ -24,7 +24,7 @@ DRIVER = "phantomjs"
 SCENARIOS = ["scenario_short", "scenario_full"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 USERS = ["an1", "an2"]
-TIMEOUT = 100
+TIMEOUT = 60
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -64,7 +64,7 @@ class User:
         print("{}:     {}".format(self.login, message))
 
 
-    def wait_for_element_present(self, how, what, displayed=True, timeout=30):
+    def wait_for_element_present(self, how, what, displayed=True, timeout=TIMEOUT):
         for i in range(timeout):
             element = self.driver.find_element(by=how, value=what)
             if element is not None and element.is_displayed() == displayed: break
@@ -72,7 +72,7 @@ class User:
         else: assert False, "time out waiting for (%s, %s)" % (how, what)
 
 
-    def wait_for_element_id_is_gone(self, value, timeout=30):
+    def wait_for_element_id_is_gone(self, value, timeout=TIMEOUT):
         for i in range(timeout):
             try:
                 element = self.driver.find_element_by_id(value)
