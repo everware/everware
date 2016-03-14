@@ -60,7 +60,9 @@ install:  ## install everware
 	if [ ! -f whitelist.txt ] ; then cp whitelist.txt.orig whitelist.txt ; fi
 
 reload:  ## reload everware whitelist
-	kill -1 `cat ${PIDFILE}` || ( echo "Everware isn't running" && exit 1 )
+	PID=`pgrep -f -n '${EXECUTOR}'` ;\
+		if [ -z "$${PID}" ] ; then echo "Cannot find ${PIDFILE}" ; exit 1 ; fi
+	pkill -1 -f -n '${EXECUTOR}'
 
 clean:  ## clean user base
 	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
@@ -89,7 +91,7 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 		export EVERWARE_WHITELIST= ; \
 		${EXECUTOR} ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
 	@sleep 1
-	echo $$! >${PIDFILE}
+	pgrep -f '${EXECUTOR}' > ${PIDFILE} || exit 1
 	echo "Started. Log saved to ${LOG}"
 
 logs: ${LOG} ## watch log file
