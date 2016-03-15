@@ -30,6 +30,10 @@ before_install:
   - make gistup
   - docker pull anaderi/rep-jupyterhub:latest  # to speed up image creation during tests
 
+install: 
+  - npm install -g configurable-http-proxy
+  - export PIP_OPTIONS="-f ~/travis-wheels/wheelhouse"
+  - ./build_tools/install.sh
   # some DEBUG information
   # XXX the next two are related to the IPv6 hack above
   - cat /etc/hosts
@@ -41,15 +45,10 @@ before_install:
   - if [ -d $HOME/frontend-test-screenshots/ ] ; then ls -alR $HOME/frontend-test-screenshots/ ; fi
   - python -c "import multiprocessing; print('CPU cores - %d' % multiprocessing.cpu_count())"
 
-install: 
-  - npm install -g configurable-http-proxy
-  - export PIP_OPTIONS="-f ~/travis-wheels/wheelhouse"
-  - ./build_tools/install.sh
-
 script:
   - py.test everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then make upload_screens -e M=travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION} ; fi
+  - if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$GIST_TOKEN" != "" ]] ; then make upload_screens -e M=travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION} ; fi
 
 cache:
     apt: true

@@ -230,7 +230,7 @@ class CustomDockerSpawner(DockerSpawner):
             self.repo_sha
         )
 
-        self._add_to_log('Building image')
+        self._add_to_log('Building image (%s)' % image_name)
 
         with self._image_handler.get_waiter(image_name) as self._cur_waiter:
             counter = yield self._cur_waiter.block()
