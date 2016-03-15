@@ -130,7 +130,7 @@ class HomeHandler(BaseHandler):
 
         stat = yield user.spawner.poll()
         self.log.debug("The container is {}".format(repr(stat)))
-        if user.running:
+        if user.running and hasattr(user, "login_service") and user.login_service == "github":
             if do_fork:
                 self.log.info('Will fork %s' % user.spawner.repo_url)
                 yield _fork_github_repo(
