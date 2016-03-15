@@ -25,6 +25,9 @@ import git
 
 from .image_handler import ImageHandler
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 class CustomDockerSpawner(DockerSpawner):
     def __init__(self, **kwargs):
@@ -59,12 +62,15 @@ class CustomDockerSpawner(DockerSpawner):
         if method in generator_methods:
             def lister(mm):
                 ret = []
-                for l in mm:
-                    ret.append(str(l))
-                    # include only high-level docker's log
-                    if 'stream' in l and not l['stream'].startswith(' --->'):
-                        # self._add_to_log(l['stream'], 2)
-                        self._cur_waiter.add_to_log(l['stream'], 2)
+                try:
+                    for l in mm:
+                        ret.append(str(l))
+                        # include only high-level docker's log
+                        if 'stream' in l and not l['stream'].startswith(' --->'):
+                            # self._add_to_log(l['stream'], 2)
+                            self._cur_waiter.add_to_log(l['stream'], 2)
+                except JSONDecodeError as e:
+                    self.warn("Error parsing docker output (%s)" % repr(e))
                 return ret
             return lister(m(*args, **kwargs))
         else:
@@ -132,7 +138,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def repo_url(self):
-        return self.user_options['repo_url']
+        return self.user_options.get('repo_url', '')
 
     _escaped_repo_url = None
     @property

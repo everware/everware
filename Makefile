@@ -11,8 +11,8 @@ TEST_OPTIONS := -s tests -N 2
 TESTS := test_happy_mp
 LOG := everware.log
 PIDFILE := everware.pid
-IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
-OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
+IP ?= $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
+OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=$${IP}
 IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
 UPLOADDIR ?= ~/upload_screens
 ifeq (0, $(IS_DOCKER_MACHINE))
@@ -34,7 +34,7 @@ help:
 
 install:  ## install everware
 	npm install
-	npm install -g configurable-http-proxy
+	npm install configurable-http-proxy
 	PYTHON_MAJOR=`python -c 'import sys; print(sys.version_info[0])'` ;\
 		if [ $${PYTHON_MAJOR} -eq 3 ] ; then \
 			PYTHON=python ;\
@@ -66,7 +66,7 @@ clean:  ## clean user base
 
 run: clean  ## run everware server
 	source ./env.sh && \
-		jupyterhub ${OPTIONS}
+		jupyterhub ${OPTIONS} | tee ${LOG}
 
 run-daemon: clean
 	source ./env.sh && \
@@ -76,9 +76,11 @@ run-daemon: clean
 	echo "Started. Log saved to ${LOG}"
 
 stop: ${PIDFILE}
-	kill -9 `cat ${PIDFILE}`
-	pkill -9 -f configurable-http-proxy
 	rm ${PIDFILE}
+	kill -9 `cat ${PIDFILE}` || pkill -9 -f configurable-http-proxy
+
+stop-zombie:
+	pkill -9 -f jupyterhub || pkill -9 -f configurable-http-proxy
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
@@ -93,6 +95,9 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 
 logs: ${LOG} ## watch log file
 	tail -f ${LOG}
+
+test: ## run tests
+	export UPLOADDIR=${UPLOADDIR} && build_tools/test_frontend.sh
 
 test-client: ## run tests
 	export UPLOADDIR=${UPLOADDIR} ; \
@@ -117,7 +122,7 @@ upload_screens: ## upload screenshots of failed tests
 				fi ; \
 			fi ;\
 			OPTIONS="--no-open" ; \
-			if [ "${M}" != "" ] ; then OPTIONS+=" --description ${M}" ; fi ;\
+			if [ "${M}" != "" ] ; then OPTIONS+=" --description '${M}'" ; fi ;\
 			gistup $${OPTIONS} ; \
 		else \
 			git add * ;\
@@ -125,3 +130,4 @@ upload_screens: ## upload screenshots of failed tests
 			git push ;\
 		fi ;\
 	fi
+
