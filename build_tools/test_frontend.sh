@@ -5,7 +5,7 @@
 
 LOG="/tmp/frontend_test_hub.log"
 FAIL=0
-NPROC=1
+NPROC=2
 
 echo "In" `pwd`
 

@@ -26,7 +26,7 @@ else:
 SCENARIOS = ["scenario_full", "scenario_short"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 # USERS = ["user_1", "an2"]
-USERS = ["user1"]
+USERS = ["user1", "user2"]
 TIMEOUT = 120
 UPLOADDIR = os.environ['UPLOADDIR']
 
