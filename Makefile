@@ -11,8 +11,8 @@ TEST_OPTIONS := -s tests -N 2
 TESTS := test_happy_mp
 LOG := everware.log
 PIDFILE := everware.pid
-IP ?= $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
-OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=$${IP}
+IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
+OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
 IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
 UPLOADDIR ?= ~/upload_screens
 PYTHON_MAJOR = $(shell python -c 'import sys; print(sys.version_info[0])')
@@ -70,7 +70,7 @@ clean:  ## clean user base
 
 run: clean  ## run everware server
 	source ./env.sh && \
-		${EXECUTOR} ${OPTIONS}
+		${EXECUTOR} ${OPTIONS} | tee ${LOG}
 
 run-daemon: clean
 	source ./env.sh && \
@@ -78,12 +78,12 @@ run-daemon: clean
 	pgrep -f ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
-stop: ${PIDFILE}
-	rm ${PIDFILE}
-	kill -9 `cat ${PIDFILE}` || pkill -9 -f configurable-http-proxy
+stop:
+	rm ${PIDFILE} || true
+	pkill -9 -f ${EXECUTOR} || pkill -9 -f configurable-http-proxy
 
 stop-zombie:
-	pkill -9 -f jupyterhub || pkill -9 -f configurable-http-proxy
+	pkill -9 -f ${EXECUTOR} || pkill -9 -f configurable-http-proxy
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
