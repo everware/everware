@@ -27,7 +27,7 @@ SCENARIOS = ["scenario_full", "scenario_short"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 # USERS = ["user_1", "an2"]
 USERS = ["user1", "user2"]
-TIMEOUT = 180
+TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -83,7 +83,7 @@ class User:
                 break
             time.sleep(1)
             # self.log("waiting for %s to go %d" % (value, i))
-        else: self.fail("time out wairing for (%s) to disappear" % (what))
+        else: assert False, "time out waiting for (%s) to disappear" % (what)
         self.log("gone finally (%d)" % i)
 
 
