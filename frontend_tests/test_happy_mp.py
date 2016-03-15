@@ -17,15 +17,17 @@ REPO = "https://github.com/everware/everware-cpp-example.git"
 # repo = "docker:everware/https_github_com_everware_everware_dimuon_example-9bec6770485eb6b245648bc251d045a204973cc9"
 # REPO = "docker:yandex/rep-tutorial"
 
-DRIVER = "phantomjs"
-# DRIVER = "firefox"
+if os.environ['TRAVIS'] == 'true':
+    DRIVER = "phantomjs"
+else:
+    DRIVER = "firefox"
 
 # Test matrix
-# SCENARIOS = ["scenario_short", "scenario_full"]
+SCENARIOS = ["scenario_full", "scenario_short"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
-SCENARIOS = ["scenario_short"]
-USERS = ["an1", "an2"]
-TIMEOUT = 30
+# USERS = ["user_1", "an2"]
+USERS = ["user1", "user2"]
+TIMEOUT = 180
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -49,7 +51,7 @@ class User:
 
     def get_driver(self):
         if self.driver_type == "phantomjs":
-            self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
+            self.driver = webdriver.PhantomJS()
             self.driver.set_window_size(1024, 768)
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()
@@ -65,7 +67,7 @@ class User:
         print("{}:     {}".format(self.login, message))
 
 
-    def wait_for_element_present(self, how, what, displayed=True, timeout=30):
+    def wait_for_element_present(self, how, what, displayed=True, timeout=TIMEOUT):
         for i in range(timeout):
             element = self.driver.find_element(by=how, value=what)
             if element is not None and element.is_displayed() == displayed: break
@@ -73,7 +75,7 @@ class User:
         else: assert False, "time out waiting for (%s, %s)" % (how, what)
 
 
-    def wait_for_element_id_is_gone(self, value, timeout=30):
+    def wait_for_element_id_is_gone(self, value, timeout=TIMEOUT):
         for i in range(timeout):
             try:
                 element = self.driver.find_element_by_id(value)
@@ -102,12 +104,12 @@ def run_scenario(scenario, username):
     try:
         globals()[scenario](user)
     except NoSuchElementException as e:
-        make_screenshot(user.driver, "./{}-{}.png".format(scenario, username))
         assert False, "Cannot find element {}\n{}".format(e.msg, ''.join(traceback.format_stack()))
     except Exception as e:
         print("oops: %s" % repr(e))
         assert False, traceback.format_stack()
     finally:
+        make_screenshot(user.driver, "{}-{}.png".format(scenario, username))
         user.tearDown()
 
 
@@ -153,15 +155,13 @@ def scenario_full(user):
     driver.find_element_by_id("repository_input").clear()
     driver.find_element_by_id("repository_input").send_keys(user.repo)
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
-    user.log("start clicked")
+    user.log("spawn clicked")
     user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
     driver.find_element_by_link_text("Control Panel").click()
     user.wait_for_element_present(By.ID, "stop")
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
-    user.wait_for_element_present(By.ID, "wait")
-    user.log("waiting to stop")
-    user.wait_for_element_id_is_gone("wait")
+    user.wait_for_element_id_is_gone("stop")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 

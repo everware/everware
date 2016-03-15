@@ -49,7 +49,7 @@ class ImageMutex():
     def __exit__(self, exc_type, exc_value, traceback):
         self._building_log = []
         if isinstance(exc_value, Exception):
-            self._exception = exc_type(exc_value)
+            self._exception = exc_value
         self._mutex.set()
 
     def add_to_log(self, message, level=1):
