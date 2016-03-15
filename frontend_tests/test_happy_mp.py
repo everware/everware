@@ -24,7 +24,7 @@ DRIVER = "phantomjs"
 SCENARIOS = ["scenario_short", "scenario_full"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 USERS = ["an1", "an2"]
-TIMEOUT = 60
+TIMEOUT = 100
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -48,7 +48,7 @@ class User:
 
     def get_driver(self):
         if self.driver_type == "phantomjs":
-            self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
+            self.driver = webdriver.PhantomJS()
             self.driver.set_window_size(1024, 768)
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()

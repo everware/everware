@@ -160,10 +160,15 @@ class HomeHandler(BaseHandler):
             fork_exists = False
             repository_changed = False
 
+
+        if hasattr(user, 'login_service'):
+            loginservice = user.login_service
+        else:
+            loginservice = 'none'
         html = self.render_template('home.html',
             user=user,
             repourl=repo_url,
-            login_service=user.login_service,
+            login_service=loginservice,
             fork_exists=fork_exists,
             repository_changed=repository_changed,
         )

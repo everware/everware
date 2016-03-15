@@ -18,6 +18,7 @@ HUB_PID=$!
 sleep 3
 
 echo "Start running frontend tests"
+[ -z "$UPLOADDIR" ] && echo "no UPLOADDIR defined" && exit 1
 [ -d $UPLOADDIR ] && rm -rf $UPLOADDIR/*
 nose2 -v -N $NPROC --start-dir frontend_tests || FAIL=1
 
