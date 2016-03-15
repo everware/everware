@@ -24,7 +24,7 @@ DRIVER = "phantomjs"
 SCENARIOS = ["scenario_short", "scenario_full"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 # USERS = ["user_1", "an2"]
-USERS = ["user_1"]
+USERS = ["user1"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
 
