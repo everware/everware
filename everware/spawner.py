@@ -152,18 +152,16 @@ class CustomDockerSpawner(DockerSpawner):
 
     @gen.coroutine
     def get_container(self):
-        if not self.container_id:
-            return None
 
-        self.log.debug("Getting container: %s", self.container_id)
+        self.log.debug("Getting container: %s", self.container_name)
         try:
             container = yield self.docker(
-                'inspect_container', self.container_id
+                'inspect_container', self.container_name
             )
             self.container_id = container['Id']
         except APIError as e:
             if e.response.status_code == 404:
-                self.log.info("Container '%s' is gone", self.container_id)
+                self.log.info("Container '%s' is gone", self.container_name)
                 container = None
                 # my container is gone, forget my id
                 self.container_id = ''
@@ -227,14 +225,14 @@ class CustomDockerSpawner(DockerSpawner):
             self.repo_sha
         )
 
-        self._add_to_log('Building image')
-
         with self._image_handler.get_waiter(image_name) as self._cur_waiter:
-            counter = yield self._cur_waiter.block()
-            if counter > 0:
-                last_exception = self._cur_waiter.last_exception
-                if last_exception is not None:
-                    raise last_exception
+            if self._cur_waiter.last_exception:
+                raise self._cur_waiter.last_exception
+            self._add_to_log('Building image')
+            yield self._cur_waiter.block()
+            last_exception = self._cur_waiter.last_exception
+            if last_exception is not None:
+                raise last_exception
             image = yield self.get_image(image_name)
             if image is not None:
                 return image_name
@@ -264,7 +262,7 @@ class CustomDockerSpawner(DockerSpawner):
         try:
             f = self.build_image()
             image_name = yield gen.with_timeout(
-                timedelta(seconds=self.start_timeout - 5),
+                timedelta(seconds=self.start_timeout),
                 f
             )
             self._is_building = False
@@ -277,17 +275,19 @@ class CustomDockerSpawner(DockerSpawner):
         except Exception as e:
             self._is_failed = True
             if isinstance(e, gen.TimeoutError):
-                # manually adjust because gen.timeout
-                # doesn't call __exit__ in with
-                self._user_log.extend(self._cur_waiter.building_log)
+                if self._cur_waiter:
+                    self._user_log.extend(self._cur_waiter.building_log)
+                    self._cur_waiter.timeout_happened()
                 self._is_building = False
-                self._cur_waiter.__exit__(gen.TimeoutError, e, None)
                 self._add_to_log(
                     'Building took too long (> %.3f secs)' % self.start_timeout,
                     level=2
                 )
             else:
-                self._add_to_log('Something went wrong during building. Error:\n%s' % repr(e))
+                message = str(e)
+                if message.startswith('Failed to get port'):
+                    message = 'Container doesn\'t have jupyter-singleuser inside'
+                self._add_to_log('Something went wrong during building. Error:\n%s' % message)
             raise e
 
     @gen.coroutine
