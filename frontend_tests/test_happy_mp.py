@@ -86,10 +86,11 @@ def run_scenario(scenario, username):
     try:
         globals()[scenario](user)
     except NoSuchElementException as e:
+        print("oops, NoSuchElementException: %s" % repr(e))
         assert False, "Cannot find element {}\n{}".format(e.msg, ''.join(traceback.format_stack()))
     except Exception as e:
-        print("oops: %s" % repr(e))
-        assert False, traceback.format_stack()
+        print("oops, Exception: %s" % repr(e))
+        assert False, "Exception: {}\n{}".format(e.msg, ''.join(traceback.format_stack())
     finally:
         make_screenshot(user.driver, "{}-{}.png".format(scenario, username))
         user.tearDown()

@@ -3,8 +3,8 @@ coveralls
 nose2
 pytest>=2.8
 GitPython==1.0.1
-selenium
-jupyterhub
+selenium==2.52.0
+jupyterhub==0.5.0
 docker-py==1.7.2
 -e git+https://github.com/jupyter/dockerspawner.git@186b41c8826ec7e29637078c5292cac4ba19904b#egg=dockerspawner
 -e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=dummyauthenticator
