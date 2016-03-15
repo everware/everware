@@ -18,14 +18,14 @@ REPO = "https://github.com/everware/everware-cpp-example.git"
 # REPO = "docker:yandex/rep-tutorial"
 
 DRIVER = "phantomjs"
-# DRIVER = "firefox"
+DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = ["scenario_short", "scenario_full"]
+SCENARIOS = ["scenario_full", "scenario_short"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 # USERS = ["user_1", "an2"]
 USERS = ["user1"]
-TIMEOUT = 250
+TIMEOUT = 120
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -153,15 +153,13 @@ def scenario_full(user):
     driver.find_element_by_id("repository_input").clear()
     driver.find_element_by_id("repository_input").send_keys(user.repo)
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
-    user.log("start clicked")
+    user.log("spawn clicked")
     user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
     driver.find_element_by_link_text("Control Panel").click()
     user.wait_for_element_present(By.ID, "stop")
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
-    user.wait_for_element_present(By.ID, "wait")
-    user.log("waiting to stop")
-    user.wait_for_element_id_is_gone("wait")
+    user.wait_for_element_id_is_gone("stop")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 

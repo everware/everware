@@ -66,7 +66,7 @@ clean:  ## clean user base
 
 run: clean  ## run everware server
 	source ./env.sh && \
-		jupyterhub ${OPTIONS}
+		jupyterhub ${OPTIONS} | tee ${LOG}
 
 run-daemon: clean
 	source ./env.sh && \
@@ -76,13 +76,11 @@ run-daemon: clean
 	echo "Started. Log saved to ${LOG}"
 
 stop: ${PIDFILE}
-	kill -9 `cat ${PIDFILE}`
-	pkill -9 -f configurable-http-proxy
 	rm ${PIDFILE}
+	kill -9 `cat ${PIDFILE}` || pkill -9 -f configurable-http-proxy
 
 stop-zombie:
-	pkill -9 -f jupyterhub
-	pkill -9 -f configurable-http-proxy
+	pkill -9 -f jupyterhub || pkill -9 -f configurable-http-proxy
 
 run-test-server:  clean ## run everware instance for testing (no auth)
 	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
@@ -97,6 +95,9 @@ run-test-server:  clean ## run everware instance for testing (no auth)
 
 logs: ${LOG} ## watch log file
 	tail -f ${LOG}
+
+test: ## run tests
+	export UPLOADDIR=${UPLOADDIR} && build_tools/test_frontend.sh
 
 test-client: ## run tests
 	export UPLOADDIR=${UPLOADDIR} ; \
