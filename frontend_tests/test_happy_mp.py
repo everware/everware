@@ -24,7 +24,7 @@ DRIVER = "phantomjs"
 SCENARIOS = ["scenario_short", "scenario_full"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
 USERS = ["an1", "an2"]
-TIMEOUT = 120
+TIMEOUT = 180
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -101,12 +101,12 @@ def run_scenario(scenario, username):
     try:
         globals()[scenario](user)
     except NoSuchElementException as e:
-        make_screenshot(user.driver, "./{}-{}.png".format(scenario, username))
         assert False, "Cannot find element {}\n{}".format(e.msg, ''.join(traceback.format_stack()))
     except Exception as e:
         print("oops: %s" % repr(e))
         assert False, traceback.format_stack()
     finally:
+        make_screenshot(user.driver, "{}-{}.png".format(scenario, username))
         user.tearDown()
 
 
