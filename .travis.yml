@@ -4,19 +4,23 @@ language: python
 sudo: required
 services:
     - docker
+
 addons:
   apt:
     packages:
     - build-essential
+
 python:
   - 3.4
   - 3.5
+
 env:
+  global:
+    # GIST_TOKEN=1234 for screen uploading
+    - secure: "ZY7fEEgp4/dlz7LlD4YgzsZ8NscP/J6CXWxshFhHISMZ3Fdk6bUGfsIhEIEPVE9h2wwXyMeRUsmXivqC92wHx0SHJilr5cUbby9YTsKSj5bCF5EWz+JDAEaooTcL0QHyP4YB8TbQ5UsVW6H4cSrJI/WmHKllFnt+83ZOT1r8vXHxiFTTTshnZV11F0CqAfsbjCZiOCyX0s8vxUEdzpCEU5d1ky6JH1SFqEckaxWPItZoeQ+iG3W3AfMKKqJXFLJJ/YIFfuMQiEyW4HqPfeoG23ac1J4QimMKOdAABI+HGzagoB1yYc47XuMpIeO4yhNNRSnk9+KSqKIdZDRnVB+/GuClYNTlBWDZfTuzhYCMaU4KQb1X/15Hpiy26fzjgz12ypXgygFqCP2YlU6sNCyYESusuOanwMc1C03r4Uqebn6XPPwhDTQ/UjbigNyjsaSJgiFeqRvqV1iX4Ug2iGO1k6hI8lkc/nqBXQ9p1QrrDKQ8GmZCK+765B0WQiF7ubjK+0L0/ZijEk7hqjaVY4tZr+qXsfTVGplbz1warncGolHV0OLZhAEaGQDNdZUH+MDBId7PbhVyJc7ebGgmqXEL8tfVU9xT5eWvkN8YXf4L/JP7qik6Xp39IpJJvMDX7RUNNuwhfCn5IKl7H8QtdS7VNysyx5oAraHWPAuVM572gaU="
+  matrix:
   - JHUB_VERSION=master
   - JHUB_VERSION=latest # latest released version
-
-# GIST_TOKEN=1234 for screen uploading
-secure: "ZY7fEEgp4/dlz7LlD4YgzsZ8NscP/J6CXWxshFhHISMZ3Fdk6bUGfsIhEIEPVE9h2wwXyMeRUsmXivqC92wHx0SHJilr5cUbby9YTsKSj5bCF5EWz+JDAEaooTcL0QHyP4YB8TbQ5UsVW6H4cSrJI/WmHKllFnt+83ZOT1r8vXHxiFTTTshnZV11F0CqAfsbjCZiOCyX0s8vxUEdzpCEU5d1ky6JH1SFqEckaxWPItZoeQ+iG3W3AfMKKqJXFLJJ/YIFfuMQiEyW4HqPfeoG23ac1J4QimMKOdAABI+HGzagoB1yYc47XuMpIeO4yhNNRSnk9+KSqKIdZDRnVB+/GuClYNTlBWDZfTuzhYCMaU4KQb1X/15Hpiy26fzjgz12ypXgygFqCP2YlU6sNCyYESusuOanwMc1C03r4Uqebn6XPPwhDTQ/UjbigNyjsaSJgiFeqRvqV1iX4Ug2iGO1k6hI8lkc/nqBXQ9p1QrrDKQ8GmZCK+765B0WQiF7ubjK+0L0/ZijEk7hqjaVY4tZr+qXsfTVGplbz1warncGolHV0OLZhAEaGQDNdZUH+MDBId7PbhVyJc7ebGgmqXEL8tfVU9xT5eWvkN8YXf4L/JP7qik6Xp39IpJJvMDX7RUNNuwhfCn5IKl7H8QtdS7VNysyx5oAraHWPAuVM572gaU="
 
 before_install:
   # XXX remove IPv6 entry via https://github.com/travis-ci/travis-ci/issues/4978
@@ -35,6 +39,7 @@ before_install:
   - pip freeze
   - npm list
   - if [ -d $HOME/frontend-test-screenshots/ ] ; then ls -alR $HOME/frontend-test-screenshots/ ; fi
+  - python -c "import multiprocessing; print('CPU cores - %d' % multiprocessing.cpu_count())"
 
 install: 
   - npm install -g configurable-http-proxy
@@ -44,7 +49,7 @@ install:
 script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then make upload_screens -e M="travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION}" ; fi
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then make upload_screens -e M=travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION} ; fi
 
 cache:
     apt: true
