@@ -49,7 +49,7 @@ install:
 script:
   - nose2 -v --start-dir everware # unit tests live in everware/
   - ./build_tools/test_frontend.sh
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then make upload_screens -e M=travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION} ; fi
+  - if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$GIST_TOKEN" != "" ]] ; then make upload_screens -e M=travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION} ; fi
 
 cache:
     apt: true
