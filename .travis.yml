@@ -53,7 +53,7 @@ script:
 cache:
     apt: true
     directories:
-     - $HOME/.cache/pip
+     # - $HOME/.cache/pip
      - $HOME/frontend-test-screenshots/
 
 notifications:

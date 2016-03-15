@@ -114,7 +114,7 @@ gistup: ## install gistup
 upload_screens: ## upload screenshots of failed tests
 	@which gistup > /dev/null || (echo "setup https://github.com/anaderi/gistup first" && exit 1 )
 	echo ${UPLOADDIR}
-	if [[ `find ${UPLOADDIR} -not -path "*/.git/*" -type f -print` != "" ]] ; then \
+	if [[ -d ${UPLOADDIR} && `find ${UPLOADDIR} -not -path "*/.git/*" -type f -print` != "" ]] ; then \
 		cd ${UPLOADDIR} ; \
 		if [ ! -d ".git" ] ; then \
 			if [[ ! -f ~/.gistup.json  ]] ; then \
