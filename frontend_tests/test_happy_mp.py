@@ -17,8 +17,10 @@ REPO = "https://github.com/everware/everware-cpp-example.git"
 # repo = "docker:everware/https_github_com_everware_everware_dimuon_example-9bec6770485eb6b245648bc251d045a204973cc9"
 # REPO = "docker:yandex/rep-tutorial"
 
-DRIVER = "phantomjs"
-DRIVER = "firefox"
+if os.environ['TRAVIS'] == 'true':
+    DRIVER = "phantomjs"
+else:
+    DRIVER = "firefox"
 
 # Test matrix
 SCENARIOS = ["scenario_full", "scenario_short"]
