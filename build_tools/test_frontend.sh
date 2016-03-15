@@ -5,7 +5,7 @@
 
 LOG="/tmp/frontend_test_hub.log"
 FAIL=0
-NPROC=2
+NPROC=1
 
 echo "In" `pwd`
 
@@ -26,6 +26,7 @@ if [ -f $LOG ]; then
     echo ">>> Frontend test hub log:"
     cat $LOG
     echo "<<< Frontend test hub log:"
+    docker ps -a
 fi
 
 kill ${HUB_PID}

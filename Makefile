@@ -121,7 +121,7 @@ upload_screens: ## upload screenshots of failed tests
 				fi ; \
 			fi ;\
 			OPTIONS="--no-open" ; \
-			if [ "${M}" != "" ] ; then OPTIONS+=" --description ${M}" ; fi ;\
+			if [ "${M}" != "" ] ; then OPTIONS+=" --description '${M}'" ; fi ;\
 			gistup $${OPTIONS} ; \
 		else \
 			git add * ;\

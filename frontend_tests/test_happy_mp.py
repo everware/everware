@@ -23,8 +23,9 @@ DRIVER = "phantomjs"
 # Test matrix
 SCENARIOS = ["scenario_short", "scenario_full"]
 # SCENARIOS = ["scenario_short", "scenario_short_bad"]
-USERS = ["an1", "an2"]
-TIMEOUT = 180
+# USERS = ["user_1", "an2"]
+USERS = ["user_1"]
+TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
