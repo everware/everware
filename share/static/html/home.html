@@ -55,7 +55,7 @@ Everware
       {% endif %}
     </div>
   </div>
-  {% if user.running %}
+  {% if user.running or user.stop_pending %}
   <div class="row" id="wait" style="margin-top: 2%; font-size: larger" 
   {% if not user.stop_pending %}
   hidden

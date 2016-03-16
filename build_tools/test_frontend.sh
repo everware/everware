@@ -13,7 +13,7 @@ echo "In" `pwd`
 echo "Starting everware"
 
 OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
-jupyterhub ${OPTS} > $LOG 2>&1 &
+everware-server ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!
 sleep 3
 
