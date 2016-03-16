@@ -23,3 +23,5 @@ whitelist.txt
 *.swp
 *.log
 *.pid
+# created by installing dummyauth
+src/*
