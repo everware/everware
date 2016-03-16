@@ -21,7 +21,7 @@ else:
 # Test matrix
 SCENARIOS = ["scenario_full", "scenario_short"]
 USERS = ["user1", "user2"]
-TIMEOUT = 25
+TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -67,19 +67,6 @@ class User:
             if element is not None and element.is_displayed() == displayed: break
             time.sleep(1)
         else: assert False, "time out waiting for (%s, %s)" % (how, what)
-
-
-    def wait_for_element_id_is_gone(self, value, timeout=TIMEOUT):
-        for i in range(timeout):
-            try:
-                element = self.driver.find_element_by_id(value)
-            except NoSuchElementException as e:
-                break
-            time.sleep(1)
-
-        else:
-            assert False, "time out waiting for (%s) to disappear" % (value)
-        self.log("gone finally (%d)" % i)
 
 
     def is_element_present(self, how, what):
@@ -156,7 +143,7 @@ def scenario_full(user):
     user.wait_for_element_present(By.ID, "stop")
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
-    user.wait_for_element_id_is_gone("stop")
+    user.wait_for_element_present(By.ID, "start")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 
