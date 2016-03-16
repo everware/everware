@@ -17,10 +17,16 @@ everware-server ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!
 sleep 3
 
+if [ `pgrep -f jupyterhub` == "" ] ; then echo "Error starting" && exit 1 ; fi
+
 echo "Start running frontend tests"
-[ -z "$UPLOADDIR" ] && echo "no UPLOADDIR defined" && exit 1
+if [ -z "$UPLOADDIR" ] ; then 
+	echo "no UPLOADDIR defined" 
+	kill ${HUB_PID}
+	exit 1
+fi
 [ -d $UPLOADDIR ] && rm -rf $UPLOADDIR/*
-nose2 -v -N $NPROC --start-dir=frontend_tests --log-level info || FAIL=1
+nose2 -v -N $NPROC --start-dir=frontend_tests || FAIL=1
 
 if [ -f $LOG ]; then
     echo ">>> Frontend test hub log:"
