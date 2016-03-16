@@ -96,7 +96,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     def _git(self, method, *args, **kwargs):
         """wrapper for calling git methods
-        
+
         to be passed to ThreadPoolExecutor
         """
         m = getattr(self.git_client, method)
@@ -104,7 +104,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     def git(self, method, *args, **kwargs):
         """Call a git method in a background thread
-        
+
         returns a Future
         """
         return self.git_executor.submit(self._git, method, *args, **kwargs)
@@ -146,8 +146,7 @@ class CustomDockerSpawner(DockerSpawner):
         repo_url = self.repo_url.translate(trans).lower()
         if repo_url.endswith('.git'):
             repo_url = repo_url[:-4]
-        self._escaped_repo_url = re.sub("_+", "_", repo_url)
-        return self._escaped_repo_url
+        return re.sub("_+", "_", repo_url)
 
     @property
     def container_name(self):
