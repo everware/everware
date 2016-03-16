@@ -3,7 +3,7 @@ import everware
 
 
 c = get_config()
-load_subconfig('base_config.py')
+load_subconfig('etc/base_config.py')
 
 authenticator = everware.GitHubOAuthenticator
 c.JupyterHub.authenticator_class = 'everware.GitHubOAuthenticator'
