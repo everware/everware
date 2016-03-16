@@ -10,24 +10,18 @@ import nose2
 import time
 import os
 
-# REPO = "https://github.com/everware/everware-dimuon-example"
-REPO = "https://github.com/everware/everware-cpp-example.git"
-# repo = "docker:yandex/rep-tutorial:0.1.3"
-# repo = "docker:everware/https_github_com_everware_everware_dimuon_example-5e87f9567d33842e12636038d56544d54c3d0702"
-# repo = "docker:everware/https_github_com_everware_everware_dimuon_example-9bec6770485eb6b245648bc251d045a204973cc9"
-# REPO = "docker:yandex/rep-tutorial"
 
-if os.environ['TRAVIS'] == 'true':
+REPO = "https://github.com/everware/everware-cpp-example.git"
+
+if os.environ.get('TRAVIS') == 'true':
     DRIVER = "phantomjs"
 else:
     DRIVER = "firefox"
 
 # Test matrix
 SCENARIOS = ["scenario_full", "scenario_short"]
-# SCENARIOS = ["scenario_short", "scenario_short_bad"]
-# USERS = ["user_1", "an2"]
 USERS = ["user1", "user2"]
-TIMEOUT = 250
+TIMEOUT = 25
 UPLOADDIR = os.environ['UPLOADDIR']
 
 def make_screenshot(driver, name):
@@ -82,8 +76,9 @@ class User:
             except NoSuchElementException as e:
                 break
             time.sleep(1)
-            # self.log("waiting for %s to go %d" % (value, i))
-        else: assert False, "time out waiting for (%s) to disappear" % (what)
+
+        else:
+            assert False, "time out waiting for (%s) to disappear" % (value)
         self.log("gone finally (%d)" % i)
 
 
