@@ -66,7 +66,9 @@ class User:
     def wait_for_element_present(self, how, what, displayed=True, timeout=TIMEOUT):
         for i in range(timeout):
             element = self.driver.find_element(by=how, value=what)
-            if element is not None and element.is_displayed() == displayed: break
+            if element is not None and element.is_displayed() == displayed:
+                time.sleep(1)  # let handlers attach to the button
+                break
             time.sleep(1)
         else: assert False, "time out waiting for (%s, %s)" % (how, what)
 
@@ -146,7 +148,6 @@ def scenario_full(user):
     user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
     driver.find_element_by_link_text("Control Panel").click()
     user.wait_for_element_present(By.ID, "stop")
-    time.sleep(1)  # let handlers attach to the button
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
     user.wait_for_element_present(By.ID, "start")
