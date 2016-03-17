@@ -19,7 +19,7 @@ else:
     DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = ["scenario_full", "scenario_short"]
+SCENARIOS = ["scenario_short", "scenario_full"]
 USERS = ["user1", "user2"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
