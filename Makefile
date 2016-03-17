@@ -31,7 +31,7 @@ EXECUTOR = everware-server
 
 ifeq ($(shell uname -s),Linux)
 	SPAWNER_IP = "127.0.0.1"
-else 
+else
 	SPAWNER_IP = "192.168.99.100"
 endif
 
@@ -49,14 +49,12 @@ help:
 install:  ## install everware
 	npm install
 	npm install configurable-http-proxy
-	${PIP} install $${PIP_OPTIONS} -r requirements.txt && \
-	${PIP} install -e . && \
-	${PYTHON} setup.py css && \
+	${PIP} install $${PIP_OPTIONS} -r requirements.txt
+	${PIP} install -e .
+	${PYTHON} setup.py css
 	${PYTHON} setup.py js
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
-	if [ ! -f jupyterhub_config.py ] ; then cp jupyterhub_config.py.orig jupyterhub_config.py ; fi
-	if [ ! -f whitelist.txt ] ; then cp whitelist.txt.orig whitelist.txt ; fi
 
 reload:  ## reload everware whitelist
 	PID=`pgrep '${EXECUTOR}'` ;\
@@ -67,13 +65,17 @@ clean:  ## clean user base
 	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
 	rm -f jupyterhub.sqlite
 
-run: clean  ## run everware server
+run-linux: clean  ## run everware server on linux
 	source ./env.sh && \
-		${EXECUTOR} ${OPTIONS} 2>&1 | tee ${LOG}
+		${EXECUTOR} -f etc/local_config.py --no-ssl 2>&1 | tee ${LOG}
 
-run-daemon: clean
+run-dockermachine: clean  ## run everware server on MacOS
 	source ./env.sh && \
-		${EXECUTOR} ${OPTIONS} >> ${LOG}  2>&1 &
+		${EXECUTOR} -f etc/local_dockermachine_config.py --no-ssl 2>&1 | tee ${LOG}
+
+run-daemon: clean ## run everware in daemon mode, linux only, SSL required
+	source ./env.sh && \
+		${EXECUTOR} -f etc/local_config.py >> ${LOG}  2>&1 &
 	pgrep ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
@@ -117,4 +119,3 @@ upload_screens: ## upload screenshots of failed tests
 			git push ;\
 		fi ;\
 	fi
-

@@ -28,61 +28,64 @@ original everware team consists of
 [@anaderi](https://github.com/anaderi), and
 [@AxelVoitier](https://github.com/AxelVoitier).
 
+
 ## Documentation
 
 We have some documentation on the different ways to use `everware` and
 [getting
 started](https://github.com/everware/everware/wiki/Getting-Started).
 
+
 ## Try it out
 
 In order to deploy your own `everware` instance, you have to:
 
- - Install the newest git version of `jupyterhub`: https://github.com/jupyter/jupyterhub. Double check with their [README.md](https://github.com/jupyter/jupyterhub/blob/master/README.md)
+ - create and activate a `conda` environment with python 3.5
 ```
-    sudo apt-get install npm nodejs-legacy
-    sudo npm install -g configurable-http-proxy
-    git clone https://github.com/jupyter/jupyterhub.git
-    cd jupyterhub
-    pip3 install -r dev-requirements.txt -e .
+    conda create -n everware python=3.5
 ```
- - Install the newest git version of `dockerspawner`: https://github.com/jupyter/dockerspawner. Double check with their [README.md](https://github.com/jupyter/dockerspawner/blob/master/README.md)
-```
-    git clone https://github.com/jupyter/dockerspawner.git
-    cd dockerspawner
-    pip3 install -e .
-```
- - Clone this repo
+ - Clone this repo and install `everware`
 ```
     git clone https://github.com/everware/everware
     cd everware
+    make install
 ```
- - [Create a Github OAuth application](https://github.com/settings/applications/new) with URL `http://localhost:8000/` and callback URL `http://localhost:8000/hub/oauth_callback`
- - Enter you OAuth information into `env.sh` and `source env.sh`
- - Install everware
+ - [Create a Github OAuth application](https://github.com/settings/applications/new)
+   with URL `http://localhost:8000/` and callback URL
+   `http://localhost:8000/hub/oauth_callback`
+ - Enter you OAuth information into `env.sh` and `source env.sh`. You will
+   have to set these environment variables every time before running `everware`
+
+ - If you are on **Mac OS** make sure the VM in which docker runs is
+   started (`docker-machine start <vm-name>`) and your environment is
+   setup properly (`docker-machine env <vm-name>`). Start `everware` with:
 ```
-    pip3 install -e .
+    everware-server -f etc/local_dockermachine_config.py --debug --no-ssl
 ```
- - If you are not using `boot2docker`, but run directly on Linux, edit `jupyterhub_config.py` as indicated in the file.
- - Run
+ - If you are on **Linux** make sure `dockerd` is running and your
+   environment contains the required information (`DOCKER_HOST` is set, etc).
+   Then start `everware` with
 ```
-    jupyterhub
+    everware-server -f etc/local_config.py --debug --no-ssl
 ```
+
 
 ## Development
 
-To run our tests you will need [selenium] and [phantomjs]. On OS X you can install them with:
+Follow the instructions for deploying your own everware instance. In
+addition to run our tests you will need [selenium] and [firefox]. On
+OS X you can install selenium with:
 
 ```
 brew install selenium-server-standalone
-brew install phantomjs
 ```
 
-## Final remarks
+_Note:_ if you are not starting from an environment that already contains
+[dockerspawner] make sure it is updated to the right commit. `pip` will
+be satisfied if it is installed which might leave you with an old version.
 
-if you aren't starting from a clean env, make sure [dockerspawner] is new enough
 
 [selenium]: http://www.seleniumhq.org/
-[phantomjs]: http://phantomjs.org/
 [jupyterhub]: https://github.com/jupyter/jupyterhub
 [dockerspawner]: https://github.com/jupyter/dockerspawner
+[firefox]: https://www.mozilla.org/en-US/firefox/

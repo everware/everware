@@ -1,10 +1,6 @@
-import os
-import everware
-import jupyterhub.handlers.pages
-import jupyterhub.handlers.base
+# Basic configuration, you should not use this directly
+# instead checkout local_config.py or local_dockermacine_config.py
 
-
-c = get_config()
 
 # spawn with custom docker containers
 c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
