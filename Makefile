@@ -36,7 +36,7 @@ else
 	SPAWNER_IP = "127.0.0.1"
 endif
 
-.PHONY: install reload clean run run-daemon run-test stop test-client tail
+.PHONY: install reload clean run run-daemon stop test tail
 
 help:
 	@echo Usage: make [-e VARIABLE=VALUE] targets
@@ -85,26 +85,13 @@ stop:
 stop-zombie:
 	pkill -9 -f ${EXECUTOR} || pkill -9 -f configurable-http-proxy
 
-run-test-server:  clean ## run everware instance for testing (no auth)
-	cat jupyterhub_config.py <(echo c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator') \
-		<(echo c.Spawner.container_ip = \'${SPAWNER_IP}\') \
-		> jupyterhub_config_test.py
-	source ./env.sh && \
-		export EVERWARE_WHITELIST= ; \
-		${EXECUTOR} ${OPTIONS} --JupyterHub.config_file=jupyterhub_config_test.py >& ${LOG} &
-	@sleep 1
-	pgrep -f '${EXECUTOR}' > ${PIDFILE} || exit 1
-	echo "Started. Log saved to ${LOG}"
-
 logs: ${LOG} ## watch log file
 	tail -f ${LOG}
 
-test: ## run tests
-	export UPLOADDIR=${UPLOADDIR} && build_tools/test_frontend.sh
-
-test-client: ## run tests
-	export UPLOADDIR=${UPLOADDIR} ; \
-		nose2 ${TEST_OPTIONS} ${TESTS}
+test: ## run all tests
+	export UPLOADDIR=${UPLOADDIR}; \
+		nose2 -v --start-dir everware ; \
+		build_tools/test_frontend.sh
 
 gistup: ## install gistup
 	git clone https://github.com/anaderi/gistup.git src/gistup

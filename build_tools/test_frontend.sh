@@ -35,5 +35,11 @@ if [ -f $LOG ]; then
     docker ps -a
 fi
 
+for client_log in $UPLOADDIR/*.log ; do
+    echo ">>> Frontend test client log: $client_log"
+    cat $client_log
+    echo "<<< Frontend test client log: $client_log"
+done
+
 kill ${HUB_PID}
 exit $FAIL

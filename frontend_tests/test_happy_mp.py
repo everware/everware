@@ -24,9 +24,9 @@ USERS = ["user1", "user2"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
 
+
 def make_screenshot(driver, name):
-    if not os.path.exists(UPLOADDIR):
-        os.makedirs(UPLOADDIR)
+    os.makedirs(UPLOADDIR, exist_ok=True)
     driver.save_screenshot(os.path.join(UPLOADDIR, name))
 
 
@@ -45,7 +45,9 @@ class User:
 
     def get_driver(self):
         if self.driver_type == "phantomjs":
-            self.driver = webdriver.PhantomJS()
+            os.makedirs(UPLOADDIR, exist_ok=True)
+            self.driver = webdriver.PhantomJS(
+                service_log_path=os.path.join(UPLOADDIR, "phantom_%s.log" % self.login))
             self.driver.set_window_size(1024, 768)
         if self.driver_type == "firefox":
             self.driver = webdriver.Firefox()
@@ -90,7 +92,7 @@ def run_scenario(username, scenario):
                 globals()[s](user)
     except Exception as e:
         make_screenshot(user.driver, "{}-{}.png".format(scenario, username))
-        print("oops,  Exception: {}\n{}".format(e.msg, ''.join(traceback.format_stack())))
+        print("oops,  Exception: {}\n{}".format(repr(e), ''.join(traceback.format_stack())))
         raise e
         # assert False, "Exception: {}\n{}".format(e.msg, ''.join(traceback.format_stack()))
     finally:
@@ -144,6 +146,7 @@ def scenario_full(user):
     user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
     driver.find_element_by_link_text("Control Panel").click()
     user.wait_for_element_present(By.ID, "stop")
+    time.sleep(1)  # let handlers attach to the button
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
     user.wait_for_element_present(By.ID, "start")
