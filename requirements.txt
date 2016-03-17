@@ -4,5 +4,6 @@ nose2
 GitPython==1.0.1
 selenium
 jupyterhub
-dockerspawner
+# XXX need a fix that came after 0.2.0
+-e git+https://github.com/jupyter/dockerspawner.git@186b41c8826ec7e29637078c5292cac4ba19904b#egg=dockerspawner
 -e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=dummyauthenticator
