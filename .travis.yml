@@ -51,12 +51,6 @@ script:
 after_script:
   - if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$GIST_TOKEN" != "" ]] ; then make upload_screens -e M=travis-${TRAVIS_JOB_NUMBER}_${JHUB_VERSION}_v${TRAVIS_PYTHON_VERSION} ; fi
 
-#cache:
-    #apt: true
-    #directories:
-    # - $HOME/.cache/pip
-    # - $HOME/frontend-test-screenshots/
-
 notifications:
   email: false
   webhooks:
