@@ -1,6 +1,7 @@
 ipython[notebook]
 coveralls
 nose2
+pytest>=2.8
 GitPython==1.0.1
 selenium
 jupyterhub
