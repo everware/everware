@@ -15,8 +15,21 @@ Everware
 <div class="container" style="margin-top: 3%;">
   <div class="row">
     <div class="text-center">
-        <p>You are currently logged in through <b>{{ login_service }}</b>.</p>
-    </div>
+      <p>You are currently logged in through <b>{{ login_service }}</b>.</p>
+      {% if user.running %}
+      <p>Currently checked out repository: {{ repourl }}</p>
+          {% if fork_exists %}
+          <p>You have a repository with the same name, which we can push to!</p>
+              {% if repository_changed %}
+              <p>You have made changes. Do you want to <a id="fork" class="btn btn-sm btn-success" href="/hub/home?do_push=1">push</a>?</p>
+              {% else %}
+              <p>But you have to make changes to the checked out repository before you can push.</p>
+              {% endif %}
+          {% else %}
+            <p>You don't have a repository with the same name. Do you want to <a id="push" class="btn btn-sm btn-success" href="/hub/home?do_fork=1">fork</a> it?</p>
+          {% endif %}
+       {% endif %}
+     </div>
   </div>
   <div class="row">
     <div class="text-center">

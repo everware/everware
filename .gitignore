@@ -25,3 +25,5 @@ whitelist.txt
 *.pid
 # created by installing dummyauth
 src/*
+# py.test's .cache/ directory
+.cache/*
