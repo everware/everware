@@ -9,15 +9,19 @@ NPROC=2
 
 echo "In" `pwd`
 
-# Start a hub that our tests can interact with
-echo "Starting everware"
+OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug $1"
 
-OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug"
+# Start a hub that our tests can interact with
+echo "Starting everware-server($OPTS)"
 everware-server ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!
 sleep 3
 
-if [ `pgrep -f jupyterhub` == "" ] ; then echo "Error starting" && exit 1 ; fi
+if [[ `pgrep -f everware-server` == "" ]] ; then 
+    echo "Error starting"
+    tail $LOG 
+    exit 1
+fi
 
 echo "Start running frontend tests"
 if [ -z "$UPLOADDIR" ] ; then 
@@ -35,11 +39,9 @@ if [ -f $LOG ]; then
     docker ps -a
 fi
 
-for client_log in $UPLOADDIR/*.log ; do
-    echo ">>> Frontend test client log: $client_log"
-    cat $client_log
-    echo "<<< Frontend test client log: $client_log"
-done
+echo ">>> Frontend test client log"
+find $UPLOADDIR -name "*.log" | xargs cat
+echo "<<< Frontend test client log"
 
 kill ${HUB_PID}
 exit $FAIL

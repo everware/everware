@@ -90,7 +90,7 @@ logs: ${LOG} ## watch log file
 test: ## run all tests
 	export UPLOADDIR=${UPLOADDIR}; \
 		nose2 -v --start-dir everware ; \
-		build_tools/test_frontend.sh
+		build_tools/test_frontend.sh --Spawner.container_ip=${SPAWNER_IP}
 
 gistup: ## install gistup
 	git clone https://github.com/anaderi/gistup.git src/gistup
