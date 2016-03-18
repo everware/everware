@@ -50,7 +50,7 @@ help:
 install:  ## install everware
 	npm install
 	npm install configurable-http-proxy
-	${PIP} install $${PIP_OPTIONS} -r requirements.txt && \
+	${PIP} install $${PIP_OPTIONS} -U -r requirements.txt && \
 	${PIP} install -e . && \
 	${PYTHON} setup.py css && \
 	${PYTHON} setup.py js
