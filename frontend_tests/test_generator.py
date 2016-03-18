@@ -86,15 +86,14 @@ def test_generator():
 
 def run_scenario(username, scenarios):
     user = User(username)
-    try:
-        for s in scenarios:
+    for s in scenarios:
+        try:
             s(user)
-    except Exception as e:
-        make_screenshot(user.driver, "{}-{}.png".format(scenario, username))
-        print("oops,  Exception: {}\n{}".format(repr(e), ''.join(traceback.format_stack())))
-        raise e
-    finally:
-        user.tearDown()
+        except Exception as e:
+            make_screenshot(user.driver, "{}-{}.png".format(username, s.__name__))
+            print("Exception for {} {}: {}\n{}".format(
+                username, s.__name__, repr(e), ''.join(traceback.format_stack())))
+    user.tearDown()
 
 if __name__ == "__main__":
     nose2.main()
