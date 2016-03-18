@@ -44,7 +44,7 @@ def _github_fork_exists(username, url, token):
 
     result = re.findall('^https://github.com/([^/]+)/([^/]+).*', url)
     if not result:
-        raise ValueError('URL is not a github URL')
+        raise ValueError('URL (%s) is not a github URL' % url)
 
     owner, repo = result[0]
     api_url = "https://api.github.com/repos/%s/%s" % (username, repo)
@@ -128,7 +128,11 @@ class HomeHandler(BaseHandler):
             ))
             return
 
-        stat = yield user.spawner.poll()
+        try:
+            stat = yield user.spawner.poll()
+        except Exception as e:
+            self.log.warn("Error polling user(%s) conainer state" % repr(user))
+            stat = None
         self.log.debug("The container is {}".format(repr(stat)))
         if user.running and hasattr(user, "login_service") and user.login_service == "github":
             if do_fork:
