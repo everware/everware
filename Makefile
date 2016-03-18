@@ -69,20 +69,20 @@ clean:  ## clean user base
 
 run: clean  ## run everware server
 	source ./env.sh && \
-		${EXECUTOR} ${OPTIONS} | tee ${LOG}
+		${EXECUTOR} ${OPTIONS} 2>&1 | tee ${LOG}
 
 run-daemon: clean
 	source ./env.sh && \
-		${EXECUTOR} ${OPTIONS} >> ${LOG}  2> /dev/null &
+		${EXECUTOR} ${OPTIONS} >> ${LOG}  2>&1 &
 	pgrep -f ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
 stop:
 	rm ${PIDFILE} || true
-	pkill -9 -f ${EXECUTOR} || pkill -9 -f configurable-http-proxy
+	pkill -9 ${EXECUTOR} || pkill -9 node
 
 stop-zombie:
-	pkill -9 -f ${EXECUTOR} || pkill -9 -f configurable-http-proxy
+	pkill -9 ${EXECUTOR} || pkill -9 node
 
 logs: ${LOG} ## watch log file
 	tail -f ${LOG}
