@@ -27,6 +27,8 @@ from .image_handler import ImageHandler
 
 import ssl
 
+import json
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class CustomDockerSpawner(DockerSpawner):
@@ -62,15 +64,18 @@ class CustomDockerSpawner(DockerSpawner):
         if method in generator_methods:
             def lister(mm):
                 ret = []
-                try:
-                    for l in mm:
-                        ret.append(str(l))
-                        # include only high-level docker's log
-                        if 'stream' in l and not l['stream'].startswith(' --->'):
-                            # self._add_to_log(l['stream'], 2)
-                            self._cur_waiter.add_to_log(l['stream'], 2)
-                except JSONDecodeError as e:
-                    self.warn("Error parsing docker output (%s)" % repr(e))
+                for l in mm:
+                    for lj in l.decode().split('\r\n'):
+                        if len(lj) > 0:
+                            ret.append(lj)
+                            try:
+                                j = json.loads(lj)
+                            except json.JSONDecodeError as e:
+                                self.log.warn("Error decoding string to json: %s" % lj)
+                            else:
+                                if 'stream' in j and not j['stream'].startswith(' --->'):
+                                # self._add_to_log(l['stream'], 2)
+                                    self._cur_waiter.add_to_log(j['stream'], 2)
                 return ret
             return lister(m(*args, **kwargs))
         else:
@@ -230,7 +235,7 @@ class CustomDockerSpawner(DockerSpawner):
             self.repo_sha
         )
 
-        self._add_to_log('Building image')
+        self._add_to_log('Building image (%s)' % image_name)
 
         with self._image_handler.get_waiter(image_name) as self._cur_waiter:
             counter = yield self._cur_waiter.block()
@@ -247,7 +252,6 @@ class CustomDockerSpawner(DockerSpawner):
                 path=tmp_dir,
                 tag=image_name,
                 rm=True,
-                decode=True
             )
             self._user_log.extend(self._cur_waiter.building_log)
             full_output = "".join(str(line) for line in build_log)
@@ -301,7 +305,6 @@ class CustomDockerSpawner(DockerSpawner):
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
         env.update({'JPY_GITHUBURL': self.repo_url})
-
         return env
 
 

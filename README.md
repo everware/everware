@@ -78,6 +78,11 @@ brew install selenium-server-standalone
 brew install phantomjs
 ```
 
+## Final remarks
+
+if you aren't starting from a clean env, make sure [dockerspawner] is new enough
+
 [selenium]: http://www.seleniumhq.org/
 [phantomjs]: http://phantomjs.org/
 [jupyterhub]: https://github.com/jupyter/jupyterhub
+[dockerspawner]: https://github.com/jupyter/dockerspawner
