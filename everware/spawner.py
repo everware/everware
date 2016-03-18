@@ -68,11 +68,14 @@ class CustomDockerSpawner(DockerSpawner):
                     for lj in l.decode().split('\r\n'):
                         if len(lj) > 0:
                             ret.append(lj)
-                            j = json.loads(lj)
-                            # include only high-level docker's log
-                            if 'stream' in j and not j['stream'].startswith(' --->'):
-                            # self._add_to_log(l['stream'], 2)
-                                self._cur_waiter.add_to_log(j['stream'], 2)
+                            try:
+                                j = json.loads(lj)
+                            except json.JSONDecodeError as e:
+                                self.log.warn("Error decoding string to json: %s" % lj)
+                            else:
+                                if 'stream' in j and not j['stream'].startswith(' --->'):
+                                # self._add_to_log(l['stream'], 2)
+                                    self._cur_waiter.add_to_log(j['stream'], 2)
                 return ret
             return lister(m(*args, **kwargs))
         else:
