@@ -12,6 +12,9 @@ echo "In" `pwd`
 OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug $1"
 
 # Start a hub that our tests can interact with
+echo "Running docker busybox"
+docker run -d --name jupyter-user1 busybox sh -c 'read -n 1 -s'
+
 echo "Starting everware-server($OPTS)"
 everware-server ${OPTS} > $LOG 2>&1 &
 HUB_PID=$!

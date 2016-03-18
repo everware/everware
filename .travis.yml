@@ -29,6 +29,7 @@ before_install:
   - export UPLOADDIR=${HOME}/frontend-test-screenshots/${JHUB_VERSION}_${TRAVIS_PYTHON_VERSION}
   - make gistup
   - docker pull anaderi/rep-jupyterhub:latest  # to speed up image creation during tests
+  - docker pull busybox # to check handling of image with no jupyter inside
 
 install: 
   - npm install -g configurable-http-proxy

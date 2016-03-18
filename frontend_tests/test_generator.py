@@ -3,7 +3,7 @@ from selenium import webdriver
 import nose2
 import time
 import os
-from happy_scenarios import scenario_full, scenario_short, scenario_x
+from happy_scenarios import *
 from selenium.common.exceptions import NoSuchElementException
 import traceback
 
@@ -16,7 +16,7 @@ else:
     DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = [scenario_full, scenario_short]
+SCENARIOS = [scenario_full, scenario_short, scenario_no_jupyter, scenario_timeout]
 USERS = ["user1", "user2"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
