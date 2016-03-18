@@ -289,7 +289,7 @@ class CustomDockerSpawner(DockerSpawner):
             else:
                 message = str(e)
                 if message.startswith('Failed to get port'):
-                    message = 'Container doesn\'t have jupyter-singleuser inside'
+                    message = "Container doesn't have jupyter-singleuser inside"
                 self._add_to_log('Something went wrong during building. Error:\n%s' % message)
             raise e
 
