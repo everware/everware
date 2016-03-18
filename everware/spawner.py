@@ -305,7 +305,6 @@ class CustomDockerSpawner(DockerSpawner):
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
         env.update({'JPY_GITHUBURL': self.repo_url})
-
         return env
 
 

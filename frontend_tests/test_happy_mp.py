@@ -84,19 +84,15 @@ def test_generator():
         yield run_scenario, username, SCENARIOS
 
 
-def run_scenario(username, scenario):
+def run_scenario(username, scenarios):
     user = User(username)
     try:
-        if isinstance(scenario, str):
-            globals()[scenario](user)
-        if isinstance(scenario, list):
-            for s in scenario:
-                globals()[s](user)
+        for s in scenarios:
+            globals()[s](user)
     except Exception as e:
         make_screenshot(user.driver, "{}-{}.png".format(scenario, username))
         print("oops,  Exception: {}\n{}".format(repr(e), ''.join(traceback.format_stack())))
         raise e
-        # assert False, "Exception: {}\n{}".format(e.msg, ''.join(traceback.format_stack()))
     finally:
         user.tearDown()
 
