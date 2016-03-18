@@ -46,11 +46,10 @@ help:
 	@echo targets and corresponding dependencies:
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' -e 's/^/   /' | sed -e 's/##//'
 
-
 install:  ## install everware
 	npm install
 	npm install configurable-http-proxy
-	${PIP} install $${PIP_OPTIONS} -U -r requirements.txt && \
+	${PIP} install $${PIP_OPTIONS} -r requirements.txt && \
 	${PIP} install -e . && \
 	${PYTHON} setup.py css && \
 	${PYTHON} setup.py js
