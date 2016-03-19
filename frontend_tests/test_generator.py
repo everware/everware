@@ -16,9 +16,13 @@ else:
     DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = [scenario_full, scenario_short, scenario_no_jupyter, scenario_timeout]
+SCENARIOS = [
+    scenario_full, scenario_short,
+    scenario_no_jupyter, scenario_no_dockerfile,
+    scenario_timeout
+]
 USERS = ["user1", "user2"]
-TIMEOUT = 250
+TIMEOUT = 60
 UPLOADDIR = os.environ['UPLOADDIR']
 
 

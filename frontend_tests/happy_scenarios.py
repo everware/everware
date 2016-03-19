@@ -75,13 +75,10 @@ def scenario_no_jupyter(user):
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked")
     user.wait_for_element_present(By.ID, "resist")
-    assert driver.getPageSource().contains(
-        "Something went wrong during building."
-        "Error:\nContainer doesn't have jupyter-singleuser inside"
-    )
+    text = "Something went wrong during building."
+    "Error: Container doesn't have jupyter-singleuser inside"
+    assert text in driver.page_source
     user.log("correct, no jupyter in container")
-    driver.find_element_by_id("logout").click()
-    user.log("logout clicked")
 
 
 def scenario_timeout(user):
@@ -102,8 +99,9 @@ def scenario_timeout(user):
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked")
     user.wait_for_element_present(By.ID, "resist")
-    assert driver.getPageSource().contains("Building took too long") or \
-            driver.getPageSource().contains("This image is too heavy to build")
+    assert "Building took too long" in driver.page_source or \
+            "This image is too heavy to build" in driver.page_source
+    user.log('correct, timeout happened')
     driver.find_element_by_id("resist").click()
     user.log("resist clicked")
     driver.find_element_by_id("repository_input").clear()
@@ -113,8 +111,29 @@ def scenario_timeout(user):
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked (second try)")
     user.wait_for_element_present(By.ID, "resist")
-    assert driver.getPageSource().contains("This image is too heavy to build")
-    driver.find_element_by_id("logout").click()
-    user.log("logout clicked")
+    assert "This image is too heavy to build" in driver.page_source
 
+
+def scenario_no_dockerfile(user):
+    driver = user.get_driver()
+    driver.get(user.base_url + "/hub/login")
+    user.log("login")
+    driver.find_element_by_id("username_input").clear()
+    driver.find_element_by_id("username_input").send_keys(user.login)
+    driver.find_element_by_id("password_input").clear()
+    driver.find_element_by_id("password_input").send_keys(user.password)
+    driver.find_element_by_id("login_submit").click()
+    user.wait_for_element_present(By.ID, "start")
+    driver.find_element_by_id("start").click()
+    driver.find_element_by_id("repository_input").clear()
+    driver.find_element_by_id("repository_input").send_keys(
+        'https://github.com/astiunov/coursera_algo'
+    )
+    driver.find_element_by_xpath("//input[@value='Spawn']").click()
+    user.log("spawn clicked")
+    user.wait_for_element_present(By.ID, "resist")
+    text = "Something went wrong during building."
+    "Error: Your repo doesn't include Dockerfile"
+    assert text in driver.page_source
+    user.log("correct, no dockerfile")
 
