@@ -15,6 +15,9 @@ about [forking a repository][gh-fork] and [making a Pull Request][gh-pull].
 
 To contribute to this repository:
 
+1. create an issue to explain what problem you are tackling and discuss
+   how you plan to tackle it. Or comment on an existing issue saying you
+   want to tackle it.
 1. fork [the project repository](https://github.com/everware/everware/).
    Click on the 'Fork' button near the top of the page. This creates a copy of
    the code under your account on the GitHub server.
@@ -26,7 +29,7 @@ To contribute to this repository:
 2. create a new branch in your clone `git checkout -b my-new-branch`. Never
    work in the ``master`` branch!
 4. Work on this copy on your computer using Git to do the version
-   control. When you're done editing, do:
+   control. When you're done editing, run:
 
           $ git add modified_files
           $ git commit
@@ -35,9 +38,32 @@ To contribute to this repository:
 
           $ git push -u origin my-new-branch
 
-Finally, go to the web page of your fork of the `everware` repo,
+Finally, go to the web page of your fork of the `everware` repository,
 and click 'Pull request' to send your changes to the maintainers for
-review. This will send an email to the committers.
+review. This will send an email to the committers. A valid PR includes
+the following items:
+
+* a description of the problem you are solving
+* a discussion why you made the choices you made
+* contains the minimal set of changes needed to solve the problem (do
+  not mix several issues, rather create separate PRs)
+* unit and frontend tests for your changes
+* the code should follow the style of the project
+* the code should contain documentation in the form of docstrings
+  and comments
+
+We encourage you to start your PR as soon as possible to get feedback early.
+Mark it as `[WIP] your subject` if it is not ready for merging. We will try and
+respond as quickly as possible, but we are all volunteers so it might take 24h.
+Maintainers, please leave some time for others to think and respond before
+merging.
+
+We prefer "getting it right" and having a maintainable project over chasing
+features or doing things in a hurry.
+
+Expect to get feedback and suggestions for improvement. This is not a sign that
+you are stupid, instead it shows the others care about your changes and want to
+make them better and help you out with things you missed.
 
 There is one additional rule: no one can merge their own pull requests, someone
 else has to press the button.
