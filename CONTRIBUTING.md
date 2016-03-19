@@ -51,6 +51,7 @@ the following items:
 * the code should follow the style of the project
 * the code should contain documentation in the form of docstrings
   and comments
+* no commits merging master into your branch, instead rebase your branch
 
 We encourage you to start your PR as soon as possible to get feedback early.
 Mark it as `[WIP] your subject` if it is not ready for merging. We will try and
