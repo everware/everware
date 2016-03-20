@@ -43,7 +43,7 @@ and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers. A valid PR includes
 the following items:
 
-* a description of the problem you are solving
+* a description of the problem you are solving or reference to existing issue
 * a discussion why you made the choices you made
 * contains the minimal set of changes needed to solve the problem (do
   not mix several issues, rather create separate PRs)
@@ -52,6 +52,10 @@ the following items:
 * the code should contain documentation in the form of docstrings
   and comments
 * no commits merging master into your branch, instead rebase your branch
+
+These are guidelines and not hard rules, so if you feel one of them does not
+apply, write a short sentence in the PR's description explaining why you
+skipped it.
 
 We encourage you to start your PR as soon as possible to get feedback early.
 Mark it as `[WIP] your subject` if it is not ready for merging. We will try and
