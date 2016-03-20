@@ -280,24 +280,25 @@ class CustomDockerSpawner(DockerSpawner):
                 image=image_name
             )
             self._add_to_log('Adding to proxy')
+        except gen.TimeoutError:
+            self._is_failed = True
+            if self._cur_waiter:
+                self._user_log.extend(self._cur_waiter.building_log)
+                self._cur_waiter.timeout_happened()
+            self._is_building = False
+            self._add_to_log(
+                'Building took too long (> %.3f secs)' % self.start_timeout,
+                level=2
+            )
+            raise
         except Exception as e:
             self._is_failed = True
-            if isinstance(e, gen.TimeoutError):
-                if self._cur_waiter:
-                    self._user_log.extend(self._cur_waiter.building_log)
-                    self._cur_waiter.timeout_happened()
-                self._is_building = False
-                self._add_to_log(
-                    'Building took too long (> %.3f secs)' % self.start_timeout,
-                    level=2
-                )
-            else:
-                message = str(e)
-                if message.startswith('Failed to get port'):
-                    message = "Container doesn't have jupyter-singleuser inside"
-                elif 'Cannot locate specified Dockerfile' in message:
-                    message = "Your repo doesn't include Dockerfile"
-                self._add_to_log('Something went wrong during building. Error: %s' % message)
+            message = str(e)
+            if message.startswith('Failed to get port'):
+                message = "Container doesn't have jupyter-singleuser inside"
+            elif 'Cannot locate specified Dockerfile' in message:
+                message = "Your repo doesn't include Dockerfile"
+            self._add_to_log('Something went wrong during building. Error: %s' % message)
             raise e
 
     @gen.coroutine

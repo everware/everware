@@ -75,8 +75,8 @@ def scenario_no_jupyter(user):
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked")
     user.wait_for_element_present(By.ID, "resist")
-    text = "Something went wrong during building."
-    "Error: Container doesn't have jupyter-singleuser inside"
+    text = ("Something went wrong during building."
+            "Error: Container doesn't have jupyter-singleuser inside")
     assert text in driver.page_source
     user.log("correct, no jupyter in container")
 
@@ -132,8 +132,8 @@ def scenario_no_dockerfile(user):
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked")
     user.wait_for_element_present(By.ID, "resist")
-    text = "Something went wrong during building."
-    "Error: Your repo doesn't include Dockerfile"
+    text = ("Something went wrong during building."
+            "Error: Your repo doesn't include Dockerfile")
     assert text in driver.page_source
     user.log("correct, no dockerfile")
 

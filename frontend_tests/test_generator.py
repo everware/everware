@@ -3,7 +3,7 @@ from selenium import webdriver
 import nose2
 import time
 import os
-from happy_scenarios import *
+import happy_scenarios as hs
 from selenium.common.exceptions import NoSuchElementException
 import traceback
 
@@ -17,9 +17,9 @@ else:
 
 # Test matrix
 SCENARIOS = [
-    scenario_full, scenario_short,
-    scenario_no_jupyter, scenario_no_dockerfile,
-    scenario_timeout
+    hs.scenario_full, hs.scenario_short,
+    hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
+    hs.scenario_timeout
 ]
 USERS = ["user1", "user2"]
 TIMEOUT = 250
