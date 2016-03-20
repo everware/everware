@@ -43,7 +43,7 @@ and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers. A valid PR includes
 the following items:
 
-* a description of the problem you are solving or reference to existing issue
+* a description of the problem you are solving or reference to an existing issue
 * a discussion why you made the choices you made
 * contains the minimal set of changes needed to solve the problem (do
   not mix several issues, rather create separate PRs)
@@ -51,7 +51,10 @@ the following items:
 * the code should follow the style of the project
 * the code should contain documentation in the form of docstrings
   and comments
-* no commits merging master into your branch, instead rebase your branch
+* [do not merge master]
+  (https://www.atlassian.com/git/tutorials/merging-vs-rebasing/conceptual-overview)
+  into your feature branch, instead [rebase your branch]
+  (https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request).
 
 These are guidelines and not hard rules, so if you feel one of them does not
 apply, write a short sentence in the PR's description explaining why you
@@ -67,11 +70,11 @@ We prefer "getting it right" and having a maintainable project over chasing
 features or doing things in a hurry.
 
 Expect to get feedback and suggestions for improvement. This is not a sign that
-you are stupid, instead it shows the others care about your changes and want to
+you are stupid, instead it shows the others care about your changes, want to
 make them better and help you out with things you missed.
 
-There is one additional rule: no one can merge their own pull requests, someone
-else has to press the button.
+**There is one additional rule:** no one can merge their own pull requests,
+someone else has to press the button.
 
 [issues]: https://github.com/everware/everware/issues
 [license]: LICENSE
