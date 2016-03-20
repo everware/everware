@@ -127,7 +127,7 @@ def scenario_no_dockerfile(user):
     driver.find_element_by_id("start").click()
     driver.find_element_by_id("repository_input").clear()
     driver.find_element_by_id("repository_input").send_keys(
-        'https://github.com/astiunov/coursera_algo'
+        'https://github.com/everware/runnable_examples'
     )
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked")
