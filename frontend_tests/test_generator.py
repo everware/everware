@@ -22,7 +22,7 @@ SCENARIOS = [
     scenario_timeout
 ]
 USERS = ["user1", "user2"]
-TIMEOUT = 60
+TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
 
 
