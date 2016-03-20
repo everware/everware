@@ -97,6 +97,7 @@ def run_scenario(username, scenarios):
             make_screenshot(user.driver, "{}-{}.png".format(username, s.__name__))
             print("Exception for {} {}: {}\n{}".format(
                 username, s.__name__, repr(e), ''.join(traceback.format_stack())))
+            raise e
     user.tearDown()
 
 if __name__ == "__main__":
