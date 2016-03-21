@@ -3,7 +3,7 @@ from selenium import webdriver
 import nose2
 import time
 import os
-from happy_scenarios import scenario_full, scenario_short, scenario_x
+import happy_scenarios as hs
 from selenium.common.exceptions import NoSuchElementException
 import traceback
 
@@ -16,7 +16,11 @@ else:
     DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = [scenario_full, scenario_short]
+SCENARIOS = [
+    hs.scenario_timeout, # need to be in beginning
+    hs.scenario_full, hs.scenario_short,
+    hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
+]
 USERS = ["user1", "user2"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
@@ -93,6 +97,7 @@ def run_scenario(username, scenarios):
             make_screenshot(user.driver, "{}-{}.png".format(username, s.__name__))
             print("Exception for {} {}: {}\n{}".format(
                 username, s.__name__, repr(e), ''.join(traceback.format_stack())))
+            raise e
     user.tearDown()
 
 if __name__ == "__main__":

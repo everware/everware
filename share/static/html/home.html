@@ -36,20 +36,20 @@ Everware
       {% if user.running %}
       <a id="stop" class="btn btn-lg btn-danger">Stop My Server</a>
       {% endif %}
-      {% if not user.stop_pending %}
+  {% if not user.stop_pending %}
       <a id="start" class="btn btn-lg btn-success"
-	 {% if user.running %}
-	 href="/user/{{user.name}}/"
-	 {% else %}
-	 href="{{base_url}}spawn"
-	 {% endif %}
-	 >
-	{% if not user.running %}
-	Start
-	{% endif %}
-	My Server
+       {% if user.running %}
+       href="/user/{{user.name}}/"
+       {% else %}
+       href="{{base_url}}spawn"
+       {% endif %}
+      >
+  {% if not user.running %}
+  Start
+  {% endif %}
+  My Server
       </a>
-      {% endif %}
+  {% endif %}
       {% if user.admin %}
       <a id="admin" class="btn btn-lg btn-primary" href="{{base_url}}admin">Admin</a>
       {% endif %}
