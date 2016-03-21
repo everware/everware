@@ -11,7 +11,7 @@ echo "In" `pwd`
 
 OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug $1"
 
-docker ps -a --format "{{.Command}}" | grep -v sleep | sort >old_cont
+docker ps -a -q | sort >old_cont
 
 # Start a hub that our tests can interact with
 echo "Starting everware-server($OPTS)"
@@ -43,7 +43,12 @@ fi
 
 ADDED_CONT=0
 
-docker ps -a --format "{{.Command}}" | grep -v sleep | sort >new_cont
+# echo ">>>>>>> Checking sleep container"
+# docker ps -a -q | head -1 | xargs docker inspect
+# docker ps -a -q | head -1 | xargs docker logs
+# echo "<<<<<<< Done"
+
+docker ps -a -q | sort >new_cont
 diff old_cont new_cont || ADDED_CONT=1
 
 if [ $ADDED_CONT -eq 1 ]; then

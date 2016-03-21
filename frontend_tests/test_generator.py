@@ -17,9 +17,9 @@ else:
 
 # Test matrix
 SCENARIOS = [
+    hs.scenario_timeout, # need to be in beginning
     hs.scenario_full, hs.scenario_short,
     hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
-    hs.scenario_timeout
 ]
 USERS = ["user1", "user2"]
 TIMEOUT = 250
