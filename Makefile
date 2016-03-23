@@ -59,9 +59,9 @@ install:  ## install everware
 	if [ ! -f whitelist.txt ] ; then cp whitelist.txt.orig whitelist.txt ; fi
 
 reload:  ## reload everware whitelist
-	PID=`pgrep -f -n '${EXECUTOR}'` ;\
-		if [ -z "$${PID}" ] ; then echo "Cannot find ${PIDFILE}" ; exit 1 ; fi
-	pkill -1 -f -n '${EXECUTOR}'
+	PID=`pgrep '${EXECUTOR}'` ;\
+		if [ -z "$${PID}" ] ; then echo "Cannot find running ${EXECUTOR}" ; exit 1 ; fi
+	pkill -1 '${EXECUTOR}'
 
 clean:  ## clean user base
 	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
@@ -74,15 +74,13 @@ run: clean  ## run everware server
 run-daemon: clean
 	source ./env.sh && \
 		${EXECUTOR} ${OPTIONS} >> ${LOG}  2>&1 &
-	pgrep -f ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
+	pgrep ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
 stop:
-	rm ${PIDFILE} || true
-	pkill -9 ${EXECUTOR} || pkill -9 node
-
-stop-zombie:
-	pkill -9 ${EXECUTOR} || pkill -9 node
+	-rm ${PIDFILE}
+	-pkill -9 ${EXECUTOR}
+	-pkill -9 node
 
 logs: ${LOG} ## watch log file
 	tail -f ${LOG}
