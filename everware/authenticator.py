@@ -154,7 +154,6 @@ class GitHubOAuthHandler(BaseHandler):
             else:
                 self.redirect(self.hub.server.base_url + '/home')
         else:
-            # todo: custom error page?
             raise web.HTTPError(403)
 
 
@@ -226,7 +225,7 @@ class GitHubOAuthenticator(Authenticator):
         resp = yield http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
         
-        username = resp_json["login"]
+        username = self.normalize_username(resp_json["login"])
         if self.whitelist and username not in self.whitelist:
             username = None
         raise gen.Return((username, access_token))
@@ -302,7 +301,7 @@ class BitbucketOAuthenticator(Authenticator):
         resp = yield http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
-        username = resp_json["username"]
+        username = self.normalize_username(resp_json["username"])
         whitelisted = yield self.check_whitelist(username, headers)
         if not whitelisted:
             username = None
