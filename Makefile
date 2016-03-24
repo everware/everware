@@ -13,7 +13,6 @@ LOG := everware.log
 PIDFILE := everware.pid
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
-IS_DOCKER_MACHINE := $(shell which docker-machine > /dev/null ; echo $$?)
 UPLOADDIR ?= ~/upload_screens
 PYTHON_MAJOR = $(shell python -c 'import sys; print(sys.version_info[0])')
 IS_PYTHON3 = $(shell which python3)
@@ -30,11 +29,12 @@ endif
 
 EXECUTOR = everware-server
 
-ifeq (0, $(IS_DOCKER_MACHINE))
-	SPAWNER_IP = "192.168.99.100"
-else
+ifeq ($(shell uname -s),Linux)
 	SPAWNER_IP = "127.0.0.1"
+else 
+	SPAWNER_IP = "192.168.99.100"
 endif
+
 
 .PHONY: install reload clean run run-daemon stop test tail
 
