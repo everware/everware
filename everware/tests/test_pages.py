@@ -26,3 +26,24 @@ def test_authed_user_bypasses_login(app):
     print(url)
     print(app.hub.server.base_url)
     assert r.url == ujoin(url, app.hub.server.base_url, 'home')
+
+def test_username_case(app):
+    # A logged in user should go straight to the control panel
+    cookies = app.login_user('River')
+    r = requests.get(public_url(app), cookies=cookies)
+    r.raise_for_status()
+    assert 'Logged in as river' in r.text
+
+def test_whitelist(app):
+    url = public_url(app)
+    r = requests.post(
+        ujoin(url, app.hub.server.base_url, 'oauth_callback'),
+        data={
+            'username': 'wrong',
+            'password': 'wrong'
+        }
+    )
+    assert r.status_code == 403
+    text = ('Your username is not whitelisted on this server. '
+            'Please contact the system administrator.')
+    assert text in r.text
