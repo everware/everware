@@ -7,13 +7,15 @@ from everware.authenticator import GitHubOAuthenticator
 from everware.authenticator import GitHubLoginHandler
 from everware.authenticator import GitHubOAuthHandler
 from everware.authenticator import WelcomeHandler
+from tornado import web
+
 
 
 class MockGitHubOAuthHandler(GitHubOAuthHandler):
     def post(self):
         self._mock_username = self.get_argument('username')
         self._mock_password = self.get_argument('password')
-
+        
         username, token = self.authenticator.authenticate(self)
 
         if username:
@@ -41,12 +43,13 @@ class MockGitHubOAuthenticator(GitHubOAuthenticator):
         username = handler._mock_username
         password = handler._mock_password
         if username != password:
-            return None
-
+            return None, None
+        
+        username = self.normalize_username(username)
         if self.whitelist and username not in self.whitelist:
-            return None
+            return None, None
 
-        return (handler._mock_username, '1234')
+        return (username, '1234')
 
     def get_handlers(self, app):
         # replace oauth callback handler with a mock
