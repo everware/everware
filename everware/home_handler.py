@@ -128,31 +128,35 @@ class HomeHandler(BaseHandler):
             ))
             return
 
-        if user.running and hasattr(user, "login_service") and user.login_service == "github":
-            if do_fork:
-                self.log.info('Will fork %s' % user.spawner.repo_url)
-                yield _fork_github_repo(
-                        user.spawner.repo_url,
-                        user.token,
-                    )
-                self.redirect('/hub/home')
-                return
-            if do_push:
-                self.log.info('Will push to fork')
-                yield _push_github_repo(
-                        user,
-                        user.spawner.repo_url,
-                        user.token,
-                    )
-                self.redirect('/hub/home')
-                return
-            repo_url = user.spawner.repo_url
-            fork_exists = yield _github_fork_exists(
-                                    user.name,
-                                    user.spawner.repo_url,
-                                    user.token,
-                                )
-            repository_changed = yield _repository_changed(user)
+        branch_name = commit_sha = None
+        if user.running:
+            branch_name = user.spawner.branch_name
+            commit_sha = user.spawner.commit_sha
+            if getattr(user, "login_service", "") == "github":
+                if do_fork:
+                    self.log.info('Will fork %s' % user.spawner.repo_url)
+                    yield _fork_github_repo(
+                            user.spawner.repo_url,
+                            user.token,
+                        )
+                    self.redirect('/hub/home')
+                    return
+                if do_push:
+                    self.log.info('Will push to fork')
+                    yield _push_github_repo(
+                            user,
+                            user.spawner.repo_url,
+                            user.token,
+                        )
+                    self.redirect('/hub/home')
+                    return
+                repo_url = user.spawner.repo_url
+                fork_exists = yield _github_fork_exists(
+                                        user.name,
+                                        user.spawner.repo_url,
+                                        user.token,
+                                    )
+                repository_changed = yield _repository_changed(user)
         else:
             repo_url = ''
             fork_exists = False
@@ -169,6 +173,8 @@ class HomeHandler(BaseHandler):
             login_service=loginservice,
             fork_exists=fork_exists,
             repository_changed=repository_changed,
+            branch_name=branch_name,
+            commit_sha=commit_sha
         )
 
         self.finish(html)

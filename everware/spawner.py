@@ -21,13 +21,13 @@ from tornado.ioloop import IOLoop
 
 from escapism import escape
 
-import git
-
 from .image_handler import ImageHandler
 
 import ssl
 
 import json
+
+from .git_executor import GitExecutor
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -38,6 +38,7 @@ class CustomDockerSpawner(DockerSpawner):
         self._is_building = False
         self._image_handler = ImageHandler()
         self._cur_waiter = None
+        self._git_executor = None
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
 
@@ -81,39 +82,6 @@ class CustomDockerSpawner(DockerSpawner):
         else:
             return m(*args, **kwargs)
 
-    _git_executor = None
-    @property
-    def git_executor(self):
-        """single global git executor"""
-        cls = self.__class__
-        if cls._git_executor is None:
-            cls._git_executor = ThreadPoolExecutor(1)
-        return cls._git_executor
-
-    _git_client = None
-    @property
-    def git_client(self):
-        """single global git client instance"""
-        cls = self.__class__
-        if cls._git_client is None:
-            cls._git_client = git.Git()
-        return cls._git_client
-
-    def _git(self, method, *args, **kwargs):
-        """wrapper for calling git methods
-
-        to be passed to ThreadPoolExecutor
-        """
-        m = getattr(self.git_client, method)
-        return m(*args, **kwargs)
-
-    def git(self, method, *args, **kwargs):
-        """Call a git method in a background thread
-
-        returns a Future
-        """
-        return self.git_executor.submit(self._git, method, *args, **kwargs)
-
     def clear_state(self):
         state = super(CustomDockerSpawner, self).clear_state()
         self.container_id = ''
@@ -143,15 +111,19 @@ class CustomDockerSpawner(DockerSpawner):
 
     @property
     def repo_url(self):
-        return self.user_options.get('repo_url', '')
+        return getattr(
+            self._git_executor,
+            'processed_repo_url',
+            self.user_options.get('repo_url', '')
+        )
 
     @property
-    def escaped_repo_url(self):
-        trans = str.maketrans(':/-.', "____")
-        repo_url = self.repo_url.translate(trans).lower()
-        if repo_url.endswith('.git'):
-            repo_url = repo_url[:-4]
-        return re.sub("_+", "_", repo_url)
+    def branch_name(self):
+        return self._git_executor.branch_name
+
+    @property
+    def commit_sha(self):
+        return self._git_executor.repo_sha
 
     @property
     def container_name(self):
@@ -220,17 +192,16 @@ class CustomDockerSpawner(DockerSpawner):
                 return image_name
 
         tmp_dir = mkdtemp(suffix='-everware')
+        self._git_executor = GitExecutor(self.repo_url, tmp_dir)
         self._add_to_log('Cloning repository %s' % self.repo_url)
         self.log.info('Cloning repo %s' % self.repo_url)
-        yield self.git('clone', self.repo_url, tmp_dir)
+        yield self._git_executor.exec()
         # use git repo URL and HEAD commit sha to derive
         # the image name
-        repo = git.Repo(tmp_dir)
-        self.repo_sha = repo.rev_parse("HEAD")
 
         image_name = "everware/{}-{}".format(
-            self.escaped_repo_url,
-            self.repo_sha
+            self._git_executor.escaped_repo_url,
+            self._git_executor.repo_sha
         )
 
         self._add_to_log('Building image (%s)' % image_name)
@@ -308,7 +279,10 @@ class CustomDockerSpawner(DockerSpawner):
 
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
-        env.update({'JPY_GITHUBURL': self.repo_url})
+        env.update({
+            'JPY_GITHUBURL': self._git_executor.processed_repo_url,
+            'JPY_REPOPOINTER': self._git_executor.repo_sha
+        })
         return env
 
 

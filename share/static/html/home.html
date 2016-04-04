@@ -15,9 +15,12 @@ Everware
 <div class="container" style="margin-top: 3%;">
   <div class="row">
     <div class="text-center">
-      <p>You are currently logged in through <b>{{ login_service }}</b>.</p>
+      <p>You are currently logged in through <strong>{{ login_service }}</strong>.</p>
       {% if user.running %}
-      <p>Currently checked out repository: {{ repourl }}</p>
+      <p>
+        Currently checked out repository: {{ repourl }}<br>
+        You are on branch <strong>{{ branch_name }}</strong>, commit <strong>{{ commit_sha }}</strong>
+      </p>
           {% if fork_exists %}
           <p>You have a repository with the same name, which we can push to!</p>
               {% if repository_changed %}
