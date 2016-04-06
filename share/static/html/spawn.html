@@ -12,21 +12,23 @@ Everware
 {% block main %}
 
 <div id="login-main">
-<header class="jumbotron masthead" style="padding: 1px">
+<header class="jumbotron masthead" style="padding: 1px; margin-bottom: 1%">
     <h1 style="font-size: 55px">everware</h1>
     <p style="font-size: 26px">Sharing is caring</p>
 </header>
 
 <div class="container">
-  <!--div class="row text-center">
-    <h1>Spawner options</h1>
-  </div-->
-  <div class="row col-sm-offset-2 col-sm-8">
-      {% if error_message %}
-        <p class="spawn-error-msg text-danger">
-          Error: {{error_message}}
-        </p>
-      {% endif %}
+  <div class="row text-center">
+    <div class="spawn-error-msg text-danger" id="error_text"
+    {% if not error_message %}
+    style="display: none;"
+    >
+    </div>
+    {% else %}
+    >
+      Error: {{error_message}}
+    </div>
+    {% endif %}
     <form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form">
       {{spawner_options_form | safe}}
       <br>
@@ -67,6 +69,20 @@ Everware
 require(["jquery"], function ($) {
   // add bootstrap form-control class to inputs
   $("#spawn_form").find("input, select, textarea, button").addClass("form-control");
+  function showError(message) {
+    $("#error_text").text(message);
+    $("#error_text").show();
+  }
+  $("#spawn_form").on('submit', function (event) {
+    var repo_url = $('#repository_input').val();
+    if (!repo_url) {
+      showError('You have to provide the URL to a git repository.');
+      return false;
+    } else if (repo_url.startsWith('git://')) {
+      showError("git protocol isn't supported yet");
+      return false;
+    }
+  });
 });
 </script>
 {% endblock %}

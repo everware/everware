@@ -114,8 +114,11 @@ class CustomDockerSpawner(DockerSpawner):
         return getattr(
             self._git_executor,
             'processed_repo_url',
-            self.user_options.get('repo_url', '')
         )
+
+    @property
+    def form_repo_url(self):
+        return self.user_options.get('repo_url', '')
 
     @property
     def branch_name(self):
@@ -182,8 +185,8 @@ class CustomDockerSpawner(DockerSpawner):
     @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
-        if self.repo_url.startswith('docker:'):
-            image_name = self.repo_url.replace('docker:', '')
+        if self.form_repo_url.startswith('docker:'):
+            image_name = self.form_repo_url.replace('docker:', '')
             image = yield self.get_image(image_name)
             if image is None:
                 raise Exception('Image %s doesn\'t exist' % image_name)
@@ -192,7 +195,7 @@ class CustomDockerSpawner(DockerSpawner):
                 return image_name
 
         tmp_dir = mkdtemp(suffix='-everware')
-        self._git_executor = GitExecutor(self.repo_url, tmp_dir)
+        self._git_executor = GitExecutor(self.form_repo_url, tmp_dir)
         self._add_to_log('Cloning repository %s' % self.repo_url)
         self.log.info('Cloning repo %s' % self.repo_url)
         yield self._git_executor.exec()
@@ -281,7 +284,8 @@ class CustomDockerSpawner(DockerSpawner):
         env = super(CustomDockerSpawner, self).get_env()
         env.update({
             'JPY_GITHUBURL': self._git_executor.processed_repo_url,
-            'JPY_REPOPOINTER': self._git_executor.repo_sha
+            'JPY_REPOPOINTER': self._git_executor.repo_sha,
+            'JPY_WORKDIR': '/notebooks'
         })
         return env
 

@@ -5,8 +5,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class GitExecutor:
-
     def __init__(self, repo_url, tmp_dir):
+        """parse repo_url to parts:
+        _processed: url to clone from
+        _repo_pointer: position to reset"""
+
+        if repo_url.startswith('git://'):
+            raise ValueError("git protocol isn't supported yet")
         self._repo_url = repo_url
         self._repo_dir = tmp_dir
         self._repo_pointer = None
@@ -18,18 +23,17 @@ class GitExecutor:
                 repo_url
             )
             if not parts:
-                raise ValueError('Incorrect repo url')
+                raise ValueError('Incorrect repository url')
             self._processed_repo_url = parts.group(1)
             if parts.group(3):
                 self._repo_pointer = parts.group(3)[1:]
-        if self._processed_repo_url.startswith('https') and\
-                self._processed_repo_url.endswith('.git'):
+        if (self._processed_repo_url.startswith('https') and
+            self._processed_repo_url.endswith('.git')):
             self._processed_repo_url = self._processed_repo_url[:-4]
         if not self._repo_pointer:
             self._repo_pointer = 'HEAD'
 
     _git_executor = None
-
     @property
     def git_executor(self):
         """single global git executor"""
@@ -39,7 +43,6 @@ class GitExecutor:
         return cls._git_executor
 
     _git_client = None
-
     @property
     def git_client(self):
         """single global git client instance"""
