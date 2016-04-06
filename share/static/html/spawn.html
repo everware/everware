@@ -78,7 +78,7 @@ require(["jquery"], function ($) {
     if (!repo_url) {
       showError('You have to provide the URL to a git repository.');
       return false;
-    } else if (repo_url.startsWith('git://')) {
+    } else if (repo_url.lastIndexOf('git://', 0) == 0) {
       showError("git protocol isn't supported yet");
       return false;
     }

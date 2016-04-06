@@ -3,8 +3,8 @@ from .. import git_executor
 def test_parser():
     tests = [
         (
-            'git://github.com/aladagemre/django-notification.git@2927346f4c513a217ac8ad076e494dd1adbf70e1',
-            'git://github.com/aladagemre/django-notification.git',
+            'https://github.com/aladagemre/django-notification.git@2927346f4c513a217ac8ad076e494dd1adbf70e1',
+            'https://github.com/aladagemre/django-notification',
             '2927346f4c513a217ac8ad076e494dd1adbf70e1'
         ),
         (

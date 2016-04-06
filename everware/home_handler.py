@@ -131,6 +131,9 @@ class HomeHandler(BaseHandler):
             return
 
         branch_name = commit_sha = None
+        repo_url = ''
+        fork_exists = False
+        repository_changed = False
         if user.running:
             branch_name = user.spawner.branch_name
             commit_sha = user.spawner.commit_sha
@@ -161,11 +164,6 @@ class HomeHandler(BaseHandler):
                                         user.token,
                                     )
                 repository_changed = yield _repository_changed(user)
-        else:
-            repo_url = ''
-            fork_exists = False
-            repository_changed = False
-
 
         if hasattr(user, 'login_service'):
             loginservice = user.login_service
