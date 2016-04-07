@@ -134,10 +134,10 @@ class HomeHandler(BaseHandler):
         repo_url = ''
         fork_exists = False
         repository_changed = False
-        if user.running:
+        if user.running and hasattr(user, 'login_service'):
             branch_name = user.spawner.branch_name
             commit_sha = user.spawner.commit_sha
-            if getattr(user, "login_service", "") == "github":
+            if user.login_service == "github":
                 if do_fork:
                     self.log.info('Will fork %s' % user.spawner.repo_url)
                     yield _fork_github_repo(

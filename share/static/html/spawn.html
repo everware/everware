@@ -29,7 +29,7 @@ Everware
       Error: {{error_message}}
     </div>
     {% endif %}
-    <form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form">
+    <form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form" style="width: 50%">
       {{spawner_options_form | safe}}
       <br>
       <input type="submit" value="Spawn" class="btn btn-primary">
@@ -70,7 +70,7 @@ require(["jquery"], function ($) {
   // add bootstrap form-control class to inputs
   $("#spawn_form").find("input, select, textarea, button").addClass("form-control");
   function showError(message) {
-    $("#error_text").text(message);
+    $("#error_text").text("Error: " + message);
     $("#error_text").show();
   }
   $("#spawn_form").on('submit', function (event) {
@@ -79,7 +79,7 @@ require(["jquery"], function ($) {
       showError('You have to provide the URL to a git repository.');
       return false;
     } else if (repo_url.lastIndexOf('git://', 0) == 0) {
-      showError("git protocol isn't supported yet");
+      showError("git protocol isn't supported yet. Please use the HTTPS URL scheme");
       return false;
     }
   });
