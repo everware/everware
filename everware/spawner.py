@@ -114,7 +114,7 @@ class CustomDockerSpawner(DockerSpawner):
         
         the user might have submitted
         """
-        return self.git_executor.processed_repo_url
+        return getattr(self.git_executor, 'processed_repo_url', None)
 
     @property
     def form_repo_url(self):
@@ -288,10 +288,13 @@ class CustomDockerSpawner(DockerSpawner):
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
         env.update({
-            'JPY_GITHUBURL': self.repo_url,
-            'JPY_REPOPOINTER': self.commit_sha,
             'JPY_WORKDIR': '/notebooks'
         })
+        if self.repo_url:
+            env.update({
+                'JPY_GITHUBURL': self.repo_url,
+                'JPY_REPOPOINTER': self.commit_sha,
+            })
         return env
 
 
