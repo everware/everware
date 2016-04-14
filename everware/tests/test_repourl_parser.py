@@ -1,4 +1,4 @@
-from .. import git_executor
+from .. import GitMixin
 
 def test_parser():
     tests = [
@@ -34,7 +34,9 @@ def test_parser():
         )
     ]
 
+    parser = GitMixin()
+
     for url, repo_url, repo_pointer in tests:
-        parser = git_executor.GitExecutor(url, '')
-        assert parser.processed_repo_url == repo_url, 'in url %s' % url
+        parser.parse_url(url, '')
+        assert parser.repo_url == repo_url, 'in url %s' % url
         assert parser._repo_pointer == repo_pointer, 'in url %s' % url
