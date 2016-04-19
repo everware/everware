@@ -1,21 +1,10 @@
 {% extends "page.html" %}
 
-{% block title %}
-Everware
-{% endblock %}
-
 {% block stylesheet %}
-    <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
-    <style type="text/css"></style>
+<link rel="stylesheet" href="{{ static_url("css/custom.css") }}" type="text/css"/>
 {% endblock %}
 
 {% block main %}
-
-<div id="login-main">
-<header class="jumbotron masthead" style="padding: 1px">
-    <h1 style="font-size: 55px">everware</h1>
-    <p style="font-size: 26px">Sharing is caring</p>
-</header>
 
 <div class="container">
   <div class="row row-centered">
@@ -28,13 +17,5 @@ Everware
     </div>
   </div>
 </div>
-
-<footer class="footer">
-  <div class="footer-inside">
-    <div class="col-sm-8">
-        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
-    </div>
-  </div>
-</footer>
 
 {% endblock %}

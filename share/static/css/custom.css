@@ -1,0 +1,12 @@
+.masthead {
+	padding: 1px;
+	margin-bottom: 1%;
+}
+
+#login-main > .masthead > h1 {
+	font-size: 55px;
+}
+
+#login-main > .masthead > p {
+	font-size: 26px;
+}

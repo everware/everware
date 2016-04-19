@@ -1,21 +1,10 @@
 {% extends "page.html" %}
 
-{% block title %}
-Everware
-{% endblock %}
-
 {% block stylesheet %}
-    <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
-    <style type="text/css"></style>
+<link rel="stylesheet" href="{{ static_url("css/custom.css") }}" type="text/css"/>
 {% endblock %}
 
 {% block main %}
-
-<div id="login-main">
-<header class="jumbotron masthead" style="padding: 1px; margin-bottom: 1%">
-    <h1 style="font-size: 55px">everware</h1>
-    <p style="font-size: 26px">Sharing is caring</p>
-</header>
 
 <div class="container">
   <div class="row text-center">
@@ -23,12 +12,11 @@ Everware
     {% if not error_message %}
     style="display: none;"
     >
-    </div>
     {% else %}
     >
       Error: {{error_message}}
-    </div>
     {% endif %}
+    </div>
     <form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form" style="width: 50%">
       {{spawner_options_form | safe}}
       <br>
@@ -52,15 +40,6 @@ Everware
     </div>
   </div>
 </div>
-
-<footer class="footer">
-  <div class="footer-inside">
-    <div class="col-sm-8">
-        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
-    </div>
-    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
-  </div>
-</footer>
 
 {% endblock %}
 
