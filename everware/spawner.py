@@ -353,6 +353,32 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
             raise e
 
     @gen.coroutine
+    def stop(self, now=False):
+        """Stop the container
+
+        Consider using pause/unpause when docker-py adds support
+        """
+        self.log.info(
+            "Stopping container %s (id: %s)",
+            self.container_name, self.container_id[:7])
+        try:
+            yield self.docker('stop', self.container_id)
+        except APIError as e:
+            message = str(e)
+            self.log.warn("Can't stop the container: %s" % message)
+            if 'container destroyed' not in message:
+                raise
+        else:
+            if self.remove_containers:
+                self.log.info(
+                    "Removing container %s (id: %s)",
+                    self.container_name, self.container_id[:7])
+                # remove the container, as well as any associated volumes
+                yield self.docker('remove_container', self.container_id, v=True)
+
+        self.clear_state()
+
+    @gen.coroutine
     def is_running(self):
         status = yield self.poll()
         return status is None
