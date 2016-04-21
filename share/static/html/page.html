@@ -27,12 +27,12 @@
 <head>
     <meta charset="utf-8">
 
-    <title>{% block title %}Jupyter Hub{% endblock %}</title>
+    <title>{% block title %}Everware{% endblock %}</title>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    {% block stylesheet %}
     <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
+    {% block stylesheet %}
     {% endblock %}
     <script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
     <script>
@@ -80,30 +80,26 @@
   </div>
 </noscript>
 
-<!--
-<div id="header" class="navbar navbar-static-top">
-  <div class="container">
-  <span id="jupyterhub-logo" class="pull-left"><a href="{{base_url}}"><img src='{{static_url("images/jupyter.png") }}' alt='JupyterHub' class='jpy-logo' title='Home'/></a></span>
-
-  {% block login_widget %}
-
-    <span id="login_widget">
-      {% if user %}
-        <a id="logout" class="navbar-btn btn-sm btn btn-default pull-right" href="{{logout_url}}"> <i class="fa fa-sign-out"></i> Logout</a>
-      {% else %}
-        <a id="login" class="btn-sm btn navbar-btn btn-default pull-right" href="{{login_url}}">Login</a>
-      {% endif %}
-    </span>
-
-  {% endblock %}
-
-  {% block header %}
-  {% endblock %}
-  </div>
-</div>
--->
+<div id="login-main">
+<header class="jumbotron masthead">
+    <h1>everware</h1>
+    <p>Sharing is caring</p>
+</header>
 
 {% block main %}
+{% endblock %}
+
+{% block footer %}
+<footer class="footer">
+  <div class="footer-inside">
+    <div class="col-sm-8">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+    </div>
+  </div>
+  {% if user %}
+    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
+  {% endif %}
+</footer>
 {% endblock %}
 
 {% call modal('Error', btn_label='OK') %}

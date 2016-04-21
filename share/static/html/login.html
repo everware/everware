@@ -5,11 +5,6 @@
 
 {% block main %}
 {% block login %}
-<div id="login-main">
-<header class="jumbotron masthead">
-    <h1>everware</h1>
-    <p>Sharing is caring</p>
-</header>
 
 <div class="container">
 {% if custom_html %}
@@ -32,16 +27,6 @@
       {{login_error}}
     </p>
     {% endif %}
-    <!--div class="form-group">
-        <input
-          type="text"
-          class="form-control"
-          name="repourl"
-          id="repo_input"
-          tabindex="1"
-          placeholder="URL of git repository"
-        />
-    </div-->
     <div class="form-group">
       <label class="col-sm-3 control-label" for="username_input">Username</label>
       <div class="col-sm-8">
@@ -103,14 +88,9 @@
 </div>
 {% endblock login %}
 
-<footer class="footer">
-<div class="container">
-    <div class="col-sm-12">
-        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
-    </div>
-</div>
-</footer>
+{% endblock %}
 
+{% block footer %}
 {% endblock %}
 
 {% block script %}
