@@ -6,6 +6,7 @@ import os
 import happy_scenarios as hs
 from selenium.common.exceptions import NoSuchElementException
 import traceback
+import re
 
 
 REPO = "https://github.com/everware/everware-cpp-example.git"
@@ -75,6 +76,15 @@ class User:
                 break
             time.sleep(1)
         else: assert False, "time out waiting for (%s, %s)" % (how, what)
+
+    def wait_for_pattern_in_page(self, pattern, timeout=TIMEOUT):
+        for i in range(timeout):
+            page_source = self.driver.page_source
+            if re.search(pattern, page_source):
+                break
+            time.sleep(1)
+        else:
+            assert False, "time out waiting for pattern %s" % pattern
 
 
     def is_element_present(self, how, what):
