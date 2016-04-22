@@ -4,6 +4,7 @@ import nose2
 import time
 import os
 import happy_scenarios as hs
+import nonstop_scenarios as ns
 from selenium.common.exceptions import NoSuchElementException
 import traceback
 import re
@@ -17,11 +18,17 @@ else:
     DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = [
-    hs.scenario_timeout, # need to be in beginning
-    hs.scenario_full, hs.scenario_short,
-    hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
-]
+if os.environ.get('NOT_REMOVE'):
+    SCENARIOS = [
+        ns.scenario_simple,
+    ]
+else:
+    SCENARIOS = [
+        hs.scenario_timeout, # need to be in beginning
+        hs.scenario_full, hs.scenario_short,
+        hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
+    ]
+
 USERS = ["user1", "user2"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
