@@ -38,7 +38,7 @@ def scenario_simple(user):
     user.wait_for_element_present(By.ID, "repository_input")
     driver.find_element_by_id("repository_input").clear()
     driver.find_element_by_id("repository_input").send_keys(
-        'https://github.com/everware/everware-dimuon-example'
+        'https://github.com/betatim/everware-demo'
     )
     driver.find_element_by_xpath("//input[@value='Spawn']").click()
     user.log("spawn clicked (second time)")
