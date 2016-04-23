@@ -29,7 +29,7 @@ before_install:
   - export UPLOADDIR=${HOME}/frontend-test-screenshots/${JHUB_VERSION}_${TRAVIS_PYTHON_VERSION}
   - make gistup
   - docker pull anaderi/rep-jupyterhub:latest  # to speed up image creation during tests
-  - docker pull betatim/everware_cern_analysis:31102015
+  - docker pull yandex/rep:0.6.4
   - docker pull busybox # to check handling of image with no jupyter inside
 
 install: 
