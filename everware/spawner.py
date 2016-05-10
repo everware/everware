@@ -130,6 +130,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self._is_building = False
         self._image_handler = ImageHandler()
         self._cur_waiter = None
+        self._is_empty = False
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
 
@@ -219,6 +220,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
     @property
     def need_remove(self):
         return self.user_options.get('need_remove', True)
+
+    @property
+    def is_empty(self):
+        return self._is_empty
 
     @gen.coroutine
     def get_container(self):
@@ -341,6 +346,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self._user_log = []
         self._is_failed = False
         self._is_building = True
+        self._is_empty = False
         try:
             f = self.build_image()
             image_name = yield gen.with_timeout(
@@ -386,6 +392,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
 
         Consider using pause/unpause when docker-py adds support
         """
+        self._is_empty = True
         self.log.info(
             "Stopping container %s (id: %s)",
             self.container_name, self.container_id[:7])

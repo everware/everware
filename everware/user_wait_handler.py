@@ -25,6 +25,9 @@ class UserSpawnHandler(BaseHandler):
                 is_running = yield current_user.spawner.is_running()
                 if not current_user.spawn_pending and not is_failed and is_running:
                     is_done = True
+                if current_user.spawner.is_empty and not is_failed:
+                    self.redirect(url_path_join(self.hub.server.base_url, 'home'))
+                    return
             else:
                 log_lines = []
             if is_log_request:

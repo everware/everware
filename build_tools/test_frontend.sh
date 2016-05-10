@@ -34,14 +34,6 @@ if [ -z "$UPLOADDIR" ] ; then
 fi
 [ -d $UPLOADDIR ] && rm -rf $UPLOADDIR/*
 nose2 -v -N $NPROC --start-dir=frontend_tests || FAIL=1
-
-if [ -f $LOG ]; then
-    echo ">>> Frontend test hub log:"
-    cat $LOG
-    echo "<<< Frontend test hub log:"
-    docker ps -a
-fi
-
 ADDED_CONT=0
 
 docker ps -a -q | sort >new_cont
@@ -55,13 +47,20 @@ if [ $ADDED_CONT -eq 1 ]; then
     cat new_cont
 fi
 
+if [ -f $LOG ] && [ $FAIL -eq 1 ]; then
+    echo ">>> Frontend test hub log:"
+    cat $LOG
+    echo "<<< Frontend test hub log:"
+    docker ps -a
+fi
+
 rm old_cont new_cont
 pkill -f everware-server
 pkill -f node
 if [ $FAIL -eq 1 ]; then
     exit $FAIL
 fi
-sleep 15
+sleep 30
 
 # spawn container to substitute in tests
 echo "Spawning running container"
@@ -81,7 +80,7 @@ export NOT_REMOVE=1
 
 nose2 -v -N $NPROC --start-dir=frontend_tests || FAIL=1
 
-if [ -f $LOG ]; then
+if [ -f $LOG ] && [ $FAIL -eq 1 ]; then
     echo ">>> Frontend test hub log (not remove containers):"
     cat $LOG
     echo "<<< Frontend test hub log (not remove containers):"
