@@ -130,6 +130,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self._is_building = False
         self._image_handler = ImageHandler()
         self._cur_waiter = None
+        self._is_empty = False
         super(CustomDockerSpawner, self).__init__(**kwargs)
 
 
@@ -189,12 +190,18 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
               name="repository_url"
               tabindex="1"
               autofocus="autofocus"
-            />
+            style="margin-bottom: 3px;" />
+            <input type="checkbox" name="need_remove" id="need_remove" checked
+            style="height: initial; width: initial; float: left;" />
+            <label for="need_remove" style="float: left; margin-left: 3px;">
+                Remove old container if it exists (recommended) </label>
         """
 
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
+        need_remove = formdata.get('need_remove', ['on'])[0].strip()
+        options['need_remove'] = need_remove == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
 
@@ -209,6 +216,14 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
     def container_name(self):
         return "{}-{}".format(self.container_prefix,
                               self.escaped_name)
+
+    @property
+    def need_remove(self):
+        return self.user_options.get('need_remove', True)
+
+    @property
+    def is_empty(self):
+        return self._is_empty
 
     @gen.coroutine
     def get_container(self):
@@ -313,11 +328,25 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         return image_name
 
     @gen.coroutine
+    def remove_old_container(self):
+        try:
+            yield self.docker(
+                'remove_container',
+                self.container_id,
+                v=True,
+                force=True
+            )
+        except APIError as e:
+            self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
+
+
+    @gen.coroutine
     def start(self, image=None):
         """start the single-user server in a docker container"""
         self._user_log = []
         self._is_failed = False
         self._is_building = True
+        self._is_empty = False
         try:
             f = self.build_image()
             image_name = yield gen.with_timeout(
@@ -325,6 +354,11 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
                 f
             )
             self._is_building = False
+            current_container = yield self.get_container()
+            if self.need_remove and current_container:
+                self.log.info('Removing old container %s' % self.container_name)
+                self._add_to_log('Removing old container')
+                yield self.remove_old_container()
             self.log.info("Starting container from image: %s" % image_name)
             self._add_to_log('Creating container')
             yield super(CustomDockerSpawner, self).start(
@@ -351,6 +385,33 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
                 message = "Your repo doesn't include Dockerfile"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
             raise e
+
+    @gen.coroutine
+    def stop(self, now=False):
+        """Stop the container
+
+        Consider using pause/unpause when docker-py adds support
+        """
+        self._is_empty = True
+        self.log.info(
+            "Stopping container %s (id: %s)",
+            self.container_name, self.container_id[:7])
+        try:
+            yield self.docker('stop', self.container_id)
+        except APIError as e:
+            message = str(e)
+            self.log.warn("Can't stop the container: %s" % message)
+            if 'container destroyed' not in message:
+                raise
+        else:
+            if self.remove_containers:
+                self.log.info(
+                    "Removing container %s (id: %s)",
+                    self.container_name, self.container_id[:7])
+                # remove the container, as well as any associated volumes
+                yield self.docker('remove_container', self.container_id, v=True)
+
+        self.clear_state()
 
     @gen.coroutine
     def is_running(self):

@@ -55,7 +55,7 @@ def scenario_full(user):
     user.wait_for_element_present(By.ID, "stop")
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
-    user.wait_for_element_present(By.ID, "start")
+    user.wait_for_pattern_in_page(r"Start\s+My\s+Server")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 
@@ -92,7 +92,7 @@ def scenario_no_jupyter(user):
     user.wait_for_element_present(By.ID, "stop")
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
-    user.wait_for_element_present(By.ID, "start")
+    user.wait_for_pattern_in_page(r"Start\s+My\s+Server")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
 

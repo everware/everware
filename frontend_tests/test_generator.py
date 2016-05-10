@@ -4,8 +4,10 @@ import nose2
 import time
 import os
 import happy_scenarios as hs
+import nonstop_scenarios as ns
 from selenium.common.exceptions import NoSuchElementException
 import traceback
+import re
 
 
 REPO = "https://github.com/everware/everware-cpp-example.git"
@@ -16,11 +18,17 @@ else:
     DRIVER = "firefox"
 
 # Test matrix
-SCENARIOS = [
-    hs.scenario_timeout, # need to be in beginning
-    hs.scenario_full, hs.scenario_short,
-    hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
-]
+if os.environ.get('NOT_REMOVE'):
+    SCENARIOS = [
+        ns.scenario_simple,
+    ]
+else:
+    SCENARIOS = [
+        hs.scenario_timeout, # need to be in beginning
+        hs.scenario_full, hs.scenario_short,
+        hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
+    ]
+
 USERS = ["user1", "user2"]
 TIMEOUT = 250
 UPLOADDIR = os.environ['UPLOADDIR']
@@ -75,6 +83,15 @@ class User:
                 break
             time.sleep(1)
         else: assert False, "time out waiting for (%s, %s)" % (how, what)
+
+    def wait_for_pattern_in_page(self, pattern, timeout=TIMEOUT):
+        for i in range(timeout):
+            page_source = self.driver.page_source
+            if re.search(pattern, page_source):
+                break
+            time.sleep(1)
+        else:
+            assert False, "time out waiting for pattern %s" % pattern
 
 
     def is_element_present(self, how, what):
