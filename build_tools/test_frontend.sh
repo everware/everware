@@ -28,8 +28,8 @@ fi
 echo "Start running frontend tests"
 if [ -z "$UPLOADDIR" ] ; then
 	echo "no UPLOADDIR defined"
-    pkill -f everware-server
-    pkill -f node
+    pkill everware-server
+    pkill node
 	exit 1
 fi
 [ -d $UPLOADDIR ] && rm -rf $UPLOADDIR/*
@@ -55,8 +55,8 @@ if [ -f $LOG ] && [ $FAIL -eq 1 ]; then
 fi
 
 rm old_cont new_cont
-pkill -f everware-server
-pkill -f node
+pkill everware-server
+pkill node
 if [ $FAIL -eq 1 ]; then
     exit $FAIL
 fi
@@ -68,6 +68,7 @@ docker run --name jupyter-user1 --rm busybox sh -c 'sleep 3600' &
 
 echo "Starting everware-server($NONSTOP_OPTS)"
 everware-server ${NONSTOP_OPTS} > $LOG 2>&1 &
+sleep 3
 
 if [[ `pgrep -f everware-server` == "" ]] ; then
     echo "Error starting (non stop)"
@@ -91,6 +92,6 @@ echo ">>> Frontend test client log"
 find $UPLOADDIR -name "*.log" | xargs cat
 echo "<<< Frontend test client log"
 
-pkill -f everware-server
-pkill -f node
+pkill everware-server
+pkill node
 exit $FAIL
