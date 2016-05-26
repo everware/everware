@@ -1,5 +1,6 @@
 from tornado import web, gen
 import jupyterhub.handlers.pages as default_handlers
+import sys
 
 class SpawnHandler(default_handlers.SpawnHandler):
 
@@ -9,6 +10,11 @@ class SpawnHandler(default_handlers.SpawnHandler):
         try:
             options = user.spawner.options_from_form(form_options)
             yield self.spawn_single_user(user, options=options)
+            # if user set another access token (for example he logged with github
+            # and clones from bitbucket)
+            # Or clones from a private repo
+            if user.spawner.token:
+                user.token = user.spawner.token
         except Exception as e:
             self.log.error("Failed to spawn single-user server with form", exc_info=True)
 
