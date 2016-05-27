@@ -50,6 +50,12 @@ class GitMixin:
             elif re.match(r'\w+:x-oauth-basic', token):
                 token, _ = token.split(':')
             self._token = token
+            self._processed_repo_url = '{proto}://{service}/{owner}/{repo}'.format(
+                proto=self._protocol,
+                service=self._service,
+                owner=self._owner,
+                repo=self._repo
+            )
 
     _git_executor = None
     @property
