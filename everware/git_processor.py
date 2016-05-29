@@ -33,21 +33,19 @@ class GitMixin:
         if not self._repo_pointer:
             self._repo_pointer = 'HEAD'
 
-        url_parts = re.match(r'^(.+?)://([^/]+)/([^/]+)/(.+)$', self._processed_repo_url)
+        url_parts = re.match(r'^(.+?)://([^/]+)/([^/]+)/(.+)/?$', self._processed_repo_url)
         if not url_parts:
             raise ValueError('Incorrect repository url')
         self._protocol, self._service, self._owner, self._repo = url_parts.groups()
         self._token = None
 
-        for not_supported_protocol in ('git', 'ssh'):
+        for not_supported_protocol in ('ssh',):
             if not_supported_protocol in self._protocol.lower():
                 raise ValueError("%s isn't supported yet" % not_supported_protocol)
 
         if '@' in self._service:
             token, self._service = self._service.split('@')
-            if re.match(r'x-token-auth:\w+', token): # bitbucket
-                _, token = token.split(':')
-            elif re.match(r'\w+:x-oauth-basic', token):
+            if re.match(r'\w+:x-oauth-basic', token):
                 token, _ = token.split(':')
             self._token = token
             self._processed_repo_url = '{proto}://{service}/{owner}/{repo}'.format(
@@ -92,7 +90,16 @@ class GitMixin:
 
     @gen.coroutine
     def prepare_local_repo(self):
-        yield self.git('clone', self._processed_repo_url, self._repo_dir)
+        cur_service = self._service
+        if self.token:
+            cur_service = self.token + '@' + cur_service
+        clone_url = '{proto}://{service}/{owner}/{repo}'.format(
+            proto=self._protocol,
+            service=cur_service,
+            owner=self._owner,
+            repo=self._repo
+        )
+        yield self.git('clone', clone_url, self._repo_dir)
         repo = git.Repo(self._repo_dir)
         repo.git.reset('--hard', self._repo_pointer)
         self._repo_sha = repo.rev_parse('HEAD')
