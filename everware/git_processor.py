@@ -27,8 +27,7 @@ class GitMixin:
             self._processed_repo_url = parts.group(1)
             if parts.group(3):
                 self._repo_pointer = parts.group(3)[1:]
-        if (self._processed_repo_url.startswith('https') and
-            self._processed_repo_url.endswith('.git')):
+        if self._processed_repo_url.endswith('.git'):
             self._processed_repo_url = self._processed_repo_url[:-4]
         if not self._repo_pointer:
             self._repo_pointer = 'HEAD'
