@@ -55,7 +55,7 @@ class HomeHandler(BaseHandler):
             branch_name = user.spawner.branch_name
             commit_sha = user.spawner.commit_sha
             repo_url = user.spawner.repo_url
-        if user.running and getattr(user, 'login_service') == 'github':
+        if user.running and getattr(user, 'login_service', '') == 'github':
             if do_fork:
                 self.log.info('Will fork %s' % user.spawner.repo_url)
                 yield fork_repo(

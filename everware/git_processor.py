@@ -89,15 +89,7 @@ class GitMixin:
 
     @gen.coroutine
     def prepare_local_repo(self):
-        cur_service = self._service
-        if self.token:
-            cur_service = self.token + '@' + cur_service
-        clone_url = '{proto}://{service}/{owner}/{repo}'.format(
-            proto=self._protocol,
-            service=cur_service,
-            owner=self._owner,
-            repo=self._repo
-        )
+        clone_url = self.repo_url_with_token
         yield self.git('clone', clone_url, self._repo_dir)
         repo = git.Repo(self._repo_dir)
         repo.git.reset('--hard', self._repo_pointer)
@@ -140,4 +132,17 @@ class GitMixin:
     @property
     def token(self):
         return self._token
+
+    @property
+    def repo_url_with_token(self):
+        cur_service = self._service
+        if self.token:
+            cur_service = self.token + '@' + cur_service
+        return '{proto}://{service}/{owner}/{repo}'.format(
+            proto=self._protocol,
+            service=cur_service,
+            owner=self._owner,
+            repo=self._repo
+        )
+
 

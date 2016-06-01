@@ -325,7 +325,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         })
         if self.repo_url:
             env.update({
-                'JPY_GITHUBURL': self.repo_url,
+                'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
             })
         return env
