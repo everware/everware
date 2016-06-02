@@ -32,10 +32,13 @@ class DefaultWhitelistHandler(LoggingConfigurable):
         self.filename = filename
         self.authenticator = authenticator
         if os.path.exists(filename):
-            authenticator.whitelist = set(x.rstrip() for x in open(filename))
+            whitelist = set(x.rstrip() for x in open(filename))
+            self.log.info('Found whitelist %s' % filename)
+            self.log.info('Logins:\n' + '\n'.join('\t%s' % cur_name for cur_name in whitelist))
         else:
-            authenticator.whitelist = set()
-        config.Authenticator.whitelist = authenticator.whitelist
+            whitelist = set()
+            self.log.warn("Whitelist %s wasn't found" % filename)
+        config.Authenticator.whitelist = whitelist
         signal.signal(signal.SIGHUP, self.reload_whitelist)
 
 
@@ -49,7 +52,7 @@ class DefaultWhitelistHandler(LoggingConfigurable):
                 '\n'.join(self.authenticator.whitelist)
             )
         else:
-            self.log.info("whitelist file (%s) not found" % self.filename)
+            self.log.warn("whitelist file (%s) not found" % self.filename)
 
 
 class GitHubMixin(OAuth2Mixin):
