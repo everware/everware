@@ -1,7 +1,3 @@
-import re
-import pwd
-import zipfile
-from io import BytesIO
 from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
@@ -11,116 +7,20 @@ from concurrent.futures import ThreadPoolExecutor
 from docker.errors import APIError
 
 from dockerspawner import DockerSpawner
-from textwrap import dedent
 from traitlets import (
     Integer,
     Unicode,
 )
 from tornado import gen
-from tornado.ioloop import IOLoop
 
 import ssl
 import json
-import git
-
-from escapism import escape
 
 from .image_handler import ImageHandler
+from .git_processor import GitMixin
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
-
-class GitMixin:
-    def parse_url(self, repo_url, tmp_dir):
-        """parse repo_url to parts:
-        _processed: url to clone from
-        _repo_pointer: position to reset"""
-
-        if repo_url.startswith('git://'):
-            raise ValueError("git protocol isn't supported yet")
-        self._repo_url = repo_url
-        self._repo_dir = tmp_dir
-        self._repo_pointer = None
-        if '@' in repo_url:
-            self._processed_repo_url, self._repo_pointer = repo_url.split('@')
-        else:
-            parts = re.match(
-                r'(^.+?://[^/]+/[^/]+/.+?)(?:/|$)(tree|commit)?(/[^/]+)?',
-                repo_url
-            )
-            if not parts:
-                raise ValueError('Incorrect repository url')
-            self._processed_repo_url = parts.group(1)
-            if parts.group(3):
-                self._repo_pointer = parts.group(3)[1:]
-        if (self._processed_repo_url.startswith('https') and
-            self._processed_repo_url.endswith('.git')):
-            self._processed_repo_url = self._processed_repo_url[:-4]
-        if not self._repo_pointer:
-            self._repo_pointer = 'HEAD'
-
-    _git_executor = None
-    @property
-    def git_executor(self):
-        """single global git executor"""
-        cls = self.__class__
-        if cls._git_executor is None:
-            cls._git_executor = ThreadPoolExecutor(20)
-        return cls._git_executor
-
-    _git_client = None
-    @property
-    def git_client(self):
-        """single global git client instance"""
-        cls = self.__class__
-        if cls._git_client is None:
-            cls._git_client = git.Git()
-        return cls._git_client
-
-    def _git(self, method, *args, **kwargs):
-        """wrapper for calling git methods
-
-        to be passed to ThreadPoolExecutor
-        """
-        m = getattr(self.git_client, method)
-        return m(*args, **kwargs)
-
-    def git(self, method, *args, **kwargs):
-        """Call a git method in a background thread
-
-        returns a Future
-        """
-        return self.git_executor.submit(self._git, method, *args, **kwargs)
-
-    @gen.coroutine
-    def prepare_local_repo(self):
-        yield self.git('clone', self._processed_repo_url, self._repo_dir)
-        repo = git.Repo(self._repo_dir)
-        repo.git.reset('--hard', self._repo_pointer)
-        self._repo_sha = repo.rev_parse('HEAD')
-        self._branch_name = repo.active_branch.name
-
-    @property
-    def escaped_repo_url(self):
-        repo_url = re.sub(r'^.+?://', '', self._processed_repo_url)
-        if repo_url.endswith('.git'):
-            repo_url = repo_url[:-4]
-        trans = str.maketrans(':/-.', "____")
-        repo_url = repo_url.translate(trans).lower()
-        return re.sub(r'_+', '_', repo_url)
-
-    @property
-    def repo_url(self):
-        return self._processed_repo_url
-
-    @property
-    def commit_sha(self):
-        return self._repo_sha
-
-    @property
-    def branch_name(self):
-        return self._branch_name
 
 
 class CustomDockerSpawner(DockerSpawner, GitMixin):
@@ -425,7 +325,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         })
         if self.repo_url:
             env.update({
-                'JPY_GITHUBURL': self.repo_url,
+                'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
             })
         return env
