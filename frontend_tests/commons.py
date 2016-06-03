@@ -23,7 +23,7 @@ def fill_repo_info(driver, user, repo):
     user.wait_for_element_present(By.ID, "repository_input")
     driver.find_element_by_id("repository_input").clear()
     driver.find_element_by_id("repository_input").send_keys(repo)
-    driver.find_element_by_xpath("//input[@value='Spawn']").click()
+    driver.find_element_by_xpath("//input[@value='Launch notebook']").click()
 
 
 class User:

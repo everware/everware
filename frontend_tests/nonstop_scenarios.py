@@ -21,7 +21,7 @@ def scenario_simple(user):
     user.wait_for_element_present(By.ID, "stop")
     driver.find_element_by_id("stop").click()
     user.log("stop clicked")
-    user.wait_for_pattern_in_page(r"Start\s+My\s+Server")
+    user.wait_for_pattern_in_page(r"Launch\s+a\s+notebook")
 
     driver.find_element_by_id("start").click()
     commons.fill_repo_info(driver, user, 'https://github.com/everware/travis-test-repo')
