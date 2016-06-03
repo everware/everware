@@ -4,94 +4,58 @@
 # The tests run by this script are "frontend" testing
 
 LOG="/tmp/frontend_test_hub.log"
-FAIL=0
 NPROC=2
+TESTS_DIR="frontend_tests"
+WAIT_FOR_START=3
+WAIT_FOR_STOP=25
 
-echo "In" `pwd`
+function kill_everware {
+    echo "Stopping everware"
+    pkill -TERM -f everware-server
+    sleep $WAIT_FOR_STOP
+}
 
-OPTS="-f build_tools/frontend_test_config.py --no-ssl --debug $1"
-NONSTOP_OPTS="-f build_tools/nonstop_frontend_test_config.py --no-ssl --debug $1"
-
-docker ps -a -q | sort >old_cont
-
-# Start a hub that our tests can interact with
-echo "Starting everware-server($OPTS)"
-everware-server ${OPTS} > $LOG 2>&1 &
-sleep 3
-
-if [[ `pgrep -f everware-server` == "" ]] ; then
-    echo "Error starting"
-    tail $LOG
-    exit 1
-fi
-
-echo "Start running frontend tests"
 if [ -z "$UPLOADDIR" ] ; then
 	echo "no UPLOADDIR defined"
-    pkill everware-server
-    pkill node
 	exit 1
 fi
-[ -d $UPLOADDIR ] && rm -rf $UPLOADDIR/*
-nose2 -v -N $NPROC --start-dir=frontend_tests || FAIL=1
-ADDED_CONT=0
+[ -d "$UPLOADDIR" ] && rm -rf "$UPLOADDIR"/*
 
-docker ps -a -q | sort >new_cont
-diff old_cont new_cont || ADDED_CONT=1
+echo "Start running frontend tests"
 
-if [ $ADDED_CONT -eq 1 ]; then
-    FAIL=1
-    echo "Old containers:"
-    cat old_cont
-    echo "New containers:"
-    cat new_cont
-fi
+for run_type in "normal" "nonstop"; do
+    SCENARIOS=`python3 $TESTS_DIR/test_generator.py $run_type`
+    RUN_OPTIONS="-f build_tools/frontend_test_${run_type}_config.py --no-ssl --debug $1"
+    echo "Running $run_type scenarios"
 
-if [ -f $LOG ] && [ $FAIL -eq 1 ]; then
-    echo ">>> Frontend test hub log:"
-    cat $LOG
-    echo "<<< Frontend test hub log:"
-    docker ps -a
-fi
+    for scenario in ${SCENARIOS}; do
+        echo "Running scenario $scenario"
+        everware-server $RUN_OPTIONS > $LOG 2>&1 &
+        sleep $WAIT_FOR_START
+        if [[ -z `pgrep -f everware-server` ]] ; then
+            echo "Error starting"
+            tail $LOG
+            exit 1
+        fi
 
-rm old_cont new_cont
-pkill everware-server
-pkill node
-if [ $FAIL -eq 1 ]; then
-    exit $FAIL
-fi
-sleep 30
+        export EVERWARE_MODULE=$run_type
+        export EVERWARE_SCENARIO=$scenario
+        nose2 -v -N $NPROC --start-dir=$TESTS_DIR || FAIL=1
+        if [[ $FAIL -eq 1 ]]; then
+            kill_everware
+            echo ">>> Frontend test hub log:"
+            cat $LOG
+            echo "<<< Frontend test hub log:"
+            exit $FAIL
+        fi
 
-# spawn container to substitute in tests
-echo "Spawning running container"
-docker run --name jupyter-user1 --rm busybox sh -c 'sleep 3600' &
-
-echo "Starting everware-server($NONSTOP_OPTS)"
-everware-server ${NONSTOP_OPTS} > $LOG 2>&1 &
-sleep 3
-
-if [[ `pgrep -f everware-server` == "" ]] ; then
-    echo "Error starting (non stop)"
-    tail $LOG
-    exit 1
-fi
-
-sleep 3
-export NOT_REMOVE=1
-
-nose2 -v -N $NPROC --start-dir=frontend_tests || FAIL=1
-
-if [ -f $LOG ] && [ $FAIL -eq 1 ]; then
-    echo ">>> Frontend test hub log (not remove containers):"
-    cat $LOG
-    echo "<<< Frontend test hub log (not remove containers):"
-fi
+        kill_everware
+        if [[ -n `pgrep -f everware-server` ]]; then
+            echo "Error stopping"
+            cat $LOG
+            exit 1
+        fi
+    done
+done
 
 
-echo ">>> Frontend test client log"
-find $UPLOADDIR -name "*.log" | xargs cat
-echo "<<< Frontend test client log"
-
-pkill everware-server
-pkill node
-exit $FAIL

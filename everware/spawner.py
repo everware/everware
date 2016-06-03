@@ -329,7 +329,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         env.update({
             'JPY_WORKDIR': '/notebooks'
         })
-        if self.repo_url:
+        if getattr(self, '_processed_repo_url', None): # if server was spawned via docker: link
             env.update({
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
