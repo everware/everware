@@ -1,12 +1,42 @@
-.masthead {
-	padding: 1px;
-	margin-bottom: 1%;
+
+.everware-content {
+    margin-top: 120px;
+    max-width: 960px;
 }
 
-#login-main > .masthead > h1 {
-	font-size: 55px;
+.everware-logo {
+    position: absolute;
+    left: 20px;
+    top: 20px;
 }
 
-#login-main > .masthead > p {
-	font-size: 26px;
+.everware-logo h1 {
+    float: right;
+    position: relative;
+    top: -5px;
+    left: -5px;
+}
+
+.everware-logo img {
+    float: left;
+    width: 90px;
+    height: 90px;
+}
+
+.everware-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 20px 8px;
+    float: left;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+a:hover {
+    text-decoration: none;
+}
+a {
+    text-decoration: none;
 }

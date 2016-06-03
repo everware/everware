@@ -31,10 +31,15 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
+    <link rel="stylesheet" href="{{ static_url("components/material-design-lite/material.min.css") }}" type="text/css"/>
+    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.teal-blue.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:400,100,500,300italic,500italic,700italic,900,300">
     {% block stylesheet %}
     {% endblock %}
+    <link rel="stylesheet" href="{{ static_url("css/custom.css") }}" type="text/css"/>
     <script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
     <script>
       require.config({
           {% if version_hash %}
@@ -71,42 +76,43 @@
 
 </head>
 
-<body>
+<body class="mdl-color--grey-100 mdl-color-text--grey-700 mdl-base">
+<div class="mdl-layout mdl-js-layout everware-page">
+  <main class="mdl-layout__content">
 
-<noscript>
-  <div id='noscript'>
-    Everware requires JavaScript.<br>
-    Please enable it to proceed.
-  </div>
-</noscript>
-
-<div id="login-main">
-<header class="jumbotron masthead">
-    <h1>everware</h1>
-    <p>Sharing is caring</p>
-</header>
-
-{% block main %}
-{% endblock %}
-
-{% block footer %}
-<footer class="footer">
-  <div class="footer-inside">
-    <div class="col-sm-8">
-        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+  <div class="everware-content">
+    <div class="everware-logo">
+      <img src="{{ static_url("images/everware-logo-teal.svg") }} "/>
+      <h1 class="mdl-typography--display-2">
+        <span class="mdl-color-text--teal">ever</span>ware
+      </h1>
     </div>
-  </div>
-  {% if user %}
-    <div style="float: right;">Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
-  {% endif %}
-</footer>
-{% endblock %}
+    
+    <noscript>
+      <div id='noscript'>
+        Everware requires JavaScript.<br>
+        Please enable it to proceed.
+      </div>
+    </noscript>
 
-{% call modal('Error', btn_label='OK') %}
-  <div class="ajax-error">
-    The error
+    {% block main %}
+    {% endblock %}
   </div>
-{% endcall %}
+
+  {% block footer %}
+  <footer class="mdl-mini-footer everware-footer">
+      <div class="mdl-mini-footer__left-section">
+        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+      </div>
+      <div class="mdl-mini-footer__right-section">
+      {% if user %}
+        <div>Logged in as {{user.name}} (<a id="logout" href="{{logout_url}}">Logout</a>)</div>
+      {% endif %}
+      </div>
+  </footer>
+  {% endblock %}
+  </main>
+</div>
 
 {% block script %}
 {% endblock %}

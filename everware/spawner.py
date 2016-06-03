@@ -80,21 +80,27 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
 
     def _options_form_default(self):
         return """
-            <label for="username_input">Git repository:</label>
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <input
               id="repository_input"
               type="text"
               autocapitalize="off"
               autocorrect="off"
-              class="form-control"
               name="repository_url"
               tabindex="1"
               autofocus="autofocus"
+              class="mdl-textfield__input"
             style="margin-bottom: 3px;" />
-            <input type="checkbox" name="need_remove" id="need_remove" checked
-            style="height: initial; width: initial; float: left;" />
-            <label for="need_remove" style="float: left; margin-left: 3px;">
-                Remove old container if it exists (recommended) </label>
+            <label class="mdl-textfield__label" for="repository_input">Git repository</label>
+          </div>
+          <label for="need_remove" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
+            <input type="checkbox"
+                   name="need_remove"
+                   class="mdl-checkbox__input"
+                   id="need_remove"
+                   checked />
+            <span class="mdl-checkbox__label">Remove previous container if it exists</span>
+          </label>
         """
 
     def options_from_form(self, formdata):

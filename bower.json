@@ -6,6 +6,7 @@
     "font-awesome": "components/font-awesome#~4.1",
     "jquery": "components/jquery#~2.0",
     "moment": "~2.7",
-    "requirejs": "~2.1"
+    "requirejs": "~2.1",
+    "material-design-lite": "^1.1.3"
   }
 }
