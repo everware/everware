@@ -1,121 +1,52 @@
-# -*- coding: utf-8 -*-
-from selenium import webdriver
 import nose2
-import time
+
+import sys
 import os
-import happy_scenarios as hs
-import nonstop_scenarios as ns
-from selenium.common.exceptions import NoSuchElementException
-import traceback
-import re
 
-
-REPO = "https://github.com/everware/everware-cpp-example.git"
-
-if os.environ.get('TRAVIS') == 'true':
-    DRIVER = "phantomjs"
-else:
-    DRIVER = "firefox"
+import normal_scenarios
+import nonstop_scenarios
+import commons
+from settings import *
 
 # Test matrix
-if os.environ.get('NOT_REMOVE'):
-    SCENARIOS = [
-        ns.scenario_simple,
-    ]
-else:
-    SCENARIOS = [
-        hs.scenario_timeout, # need to be in beginning
-        hs.scenario_full, hs.scenario_short,
-        hs.scenario_no_jupyter, hs.scenario_no_dockerfile,
-    ]
+SCENARIOS = [
+    normal_scenarios.scenario_timeout,
+    normal_scenarios.scenario_full,
+    normal_scenarios.scenario_short,
+    normal_scenarios.scenario_no_jupyter,
+    normal_scenarios.scenario_no_dockerfile,
+    nonstop_scenarios.scenario_simple
+]
 
 USERS = ["user1", "user2"]
-TIMEOUT = 250
-UPLOADDIR = os.environ['UPLOADDIR']
-
 
 def make_screenshot(driver, name):
     os.makedirs(UPLOADDIR, exist_ok=True)
     driver.save_screenshot(os.path.join(UPLOADDIR, name))
 
 
-class User:
-    def __init__(self, login=None, repo=REPO, driver_type=DRIVER):
-        self.login = login
-        self.repo = repo
-        self.password = ""
-        self.log("init")
-
-        self.driver_type = driver_type
-        self.driver = None
-        self.base_url = "http://localhost:8000/"
-        self.verificationErrors = []
-        self.accept_next_alert = True
-
-
-    def get_driver(self):
-        if self.driver is None:
-            if self.driver_type == "phantomjs":
-                os.makedirs(UPLOADDIR, exist_ok=True)
-                self.driver = webdriver.PhantomJS(
-                    service_log_path=os.path.join(UPLOADDIR, "phantom_%s.log" % self.login))
-                self.driver.set_window_size(1024, 768)
-            if self.driver_type == "firefox":
-                self.driver = webdriver.Firefox()
-            self.driver.implicitly_wait(TIMEOUT)
-        return self.driver
-
-
-    def tearDown(self):
-        if hasattr(self, 'driver'):
-            self.driver.quit()
-            self.driver = None
-
-    def log(self, message):
-        print("{}:     {}".format(self.login, message))
-
-
-    def wait_for_element_present(self, how, what, displayed=True, timeout=TIMEOUT):
-        for i in range(timeout):
-            element = self.driver.find_element(by=how, value=what)
-            if element is not None and element.is_displayed() == displayed:
-                time.sleep(1)  # let handlers attach to the button
-                break
-            time.sleep(1)
-        else: assert False, "time out waiting for (%s, %s)" % (how, what)
-
-    def wait_for_pattern_in_page(self, pattern, timeout=TIMEOUT):
-        for i in range(timeout):
-            page_source = self.driver.page_source
-            if re.search(pattern, page_source):
-                break
-            time.sleep(1)
-        else:
-            assert False, "time out waiting for pattern %s" % pattern
-
-
-    def is_element_present(self, how, what):
-        try: self.driver.find_element(by=how, value=what)
-        except NoSuchElementException as e: return False
-        return True
-
-
 def test_generator():
+    module_name = '%s_scenarios' % os.environ['EVERWARE_MODULE']
+    method_name = os.environ['EVERWARE_SCENARIO']
+    scenario = getattr(sys.modules[module_name], method_name)
     for username in USERS:
-        yield run_scenario, username, SCENARIOS
+        yield run_scenario, username, scenario
 
 
-def run_scenario(username, scenarios):
-    user = User(username)
-    for s in scenarios:
-        try:
-            s(user)
-        except Exception as e:
-            make_screenshot(user.driver, "{}-{}.png".format(username, s.__name__))
-            print("Exception for {} {}: {}\n{}".format(
-                username, s.__name__, repr(e), ''.join(traceback.format_stack())))
-            raise e
-    user.tearDown()
+def run_scenario(username, scenario):
+    user = commons.User(username)
+    try:
+        scenario(user)
+    except Exception as e:
+        make_screenshot(user.driver, "{}-{}.png".format(username, scenario.__name__))
+        raise
+    finally:
+        user.tearDown()
 
-if __name__ == "__main__":
-    nose2.main()
+if __name__ == '__main__':
+    run_type = sys.argv[1]
+    print(' '.join(
+        cur.__name__
+        for cur in SCENARIOS
+        if cur.__module__ == '%s_scenarios' % run_type
+    ))
