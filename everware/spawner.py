@@ -80,7 +80,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
 
     def _options_form_default(self):
         return """
-          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%">
             <input
               id="repository_input"
               type="text"
