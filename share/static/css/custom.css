@@ -1,12 +1,13 @@
 
 .everware-content {
+    margin-left: 5%;
     margin-top: 120px;
-    max-width: 960px;
+    width: 100%;
 }
 
 .everware-logo {
     position: absolute;
-    left: 20px;
+    /*left: 20px;*/
     top: 20px;
 }
 

@@ -13,7 +13,7 @@ require(["jquery", "jhapi"], function ($, JHAPI) {
     }, 5000);
     
     $("#stop").click(function () {
-        $("#wait").show();
+        $("#wait").removeProp('hidden');
         $("#start").hide();
         api.stop_server(user, {
             success: function () {
