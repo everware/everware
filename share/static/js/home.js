@@ -10,7 +10,7 @@ require(["jquery", "jhapi"], function ($, JHAPI) {
 
     var id = setInterval(function () {
         window.location.reload();
-    }, 5000);
+    }, 7000);
     
     $("#stop").click(function () {
         $("#wait").removeProp('hidden');
@@ -22,6 +22,9 @@ require(["jquery", "jhapi"], function ($, JHAPI) {
                 }, 3000);*/
             }
         });
+        setTimeout(function () {
+            window.location.reload();
+        }, 2000);
     });
     
 });
