@@ -32,14 +32,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="stylesheet" href="{{ static_url("components/material-design-lite/material.min.css") }}" type="text/css"/>
-    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.teal-blue.min.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:400,100,500,300italic,500italic,700italic,900,300">
+    <link rel="icon" href="{{ static_url("images/favicon.ico") }}" sizes="32x32" type="image/ico"/>
+    <!--link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.teal-blue.min.css" /-->
+    <link rel="stylesheet" href="{{ static_url("css/material.teal-blue.min.css") }}" type="text/css" /-->
+    <!--link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" /-->
+    <link rel="stylesheet" href="{{ static_url("css/material_icons.css") }}" type="text/css" /-->
+    <!--link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:400,100,500,300italic,500italic,700italic,900,300"-->
+    <link rel="stylesheet" href="{{ static_url("css/fonts.css") }}" type="text/css" /-->
     {% block stylesheet %}
     {% endblock %}
     <link rel="stylesheet" href="{{ static_url("css/custom.css") }}" type="text/css"/>
     <script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
-    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+    <!--script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script-->
+    <script defer src="{{ static_url("js/material.min.js") }}"></script>
     <script>
       require.config({
           {% if version_hash %}

@@ -34,7 +34,6 @@ function make_list(log, is_failed) {
     }
     var result = [], is_done = [];
     var cur_level = -1;
-    console.log(log);
     log.forEach(function(item) {
         var level = item.level;
         if (level != cur_level) {
@@ -86,7 +85,7 @@ require(["jquery"], function ($) {
     function write_log_lines(log, is_failed) {
         var res = make_list(log, is_failed);
         $('#log-lines').html(res[0]);
-        $('head style').html(res[1]);
+        $('head').append('<style type="text/css">' + res[1] + '</style>');
     }
     var need_wait = {{need_wait}};
     var user_name = "{{user.name}}";
