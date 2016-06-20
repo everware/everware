@@ -200,10 +200,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         # use git repo URL and HEAD commit sha to derive
         # the image name
 
-        image_name = "everware/{}-{}".format(
-            self.escaped_repo_url,
-            self.commit_sha
-        )
+        image_name = self.generate_image_name()
 
         self._add_to_log('Building image (%s)' % image_name)
 
@@ -232,6 +229,13 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
                 raise Exception(full_output)
 
         return image_name
+
+    def generate_image_name(self):
+        return "everware/{}-{}".format(
+            self.escaped_repo_url,
+            self.commit_sha
+        )
+
 
     @gen.coroutine
     def remove_old_container(self):
@@ -353,6 +357,15 @@ class CustomSwarmSpawner(CustomDockerSpawner):
                 name, = container['Names']
                 node, container_name = name.lstrip("/").split("/")
                 raise gen.Return(node)
+
+
+    def generate_image_name(self):
+        return "everware/{}-{}-{}".format(
+            self.escaped_repo_url,
+            self.user.name,
+            self.commit_sha
+        )
+
 
     @gen.coroutine
     def start(self, image=None, extra_create_kwargs=None):
