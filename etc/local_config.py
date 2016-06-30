@@ -4,5 +4,3 @@
 c = get_config()
 load_subconfig('etc/base_config.py')
 load_subconfig('etc/github_auth.py')
-load_subconfig('etc/github_reloading_whitelist.py')
-c.Spawner.http_timeout = 600
