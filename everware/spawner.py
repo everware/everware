@@ -197,9 +197,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self._add_to_log('Cloning repository %s' % self.repo_url)
         self.log.info('Cloning repo %s' % self.repo_url)
         yield self.prepare_local_repo()
+
         # use git repo URL and HEAD commit sha to derive
         # the image name
-
         image_name = self.generate_image_name()
 
         self._add_to_log('Building image (%s)' % image_name)

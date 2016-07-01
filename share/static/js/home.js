@@ -7,24 +7,18 @@ require(["jquery", "jhapi"], function ($, JHAPI) {
     var base_url = window.jhdata.base_url;
     var user = window.jhdata.user;
     var api = new JHAPI(base_url);
-
-    var id = setInterval(function () {
-        window.location.reload();
-    }, 7000);
     
     $("#stop").click(function () {
-        $("#wait").removeProp('hidden');
+        $("#wait").show();
         $("#start").hide();
+        $("#stop").hide();
         api.stop_server(user, {
             success: function () {
-                /*setTimeout(function() {
+                setTimeout(function() {
                     window.location.reload();
-                }, 3000);*/
+                }, 2000);
             }
         });
-        setTimeout(function () {
-            window.location.reload();
-        }, 2000);
     });
     
 });
