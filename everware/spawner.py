@@ -1,6 +1,7 @@
 from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
+from shutil import rmtree
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -193,40 +194,40 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
                 return image_name
 
         tmp_dir = mkdtemp(suffix='-everware')
-        self.parse_url(self.form_repo_url, tmp_dir)
-        self._add_to_log('Cloning repository %s' % self.repo_url)
-        self.log.info('Cloning repo %s' % self.repo_url)
-        yield self.prepare_local_repo()
+        try:
+            self.parse_url(self.form_repo_url, tmp_dir)
+            self._add_to_log('Cloning repository %s' % self.repo_url)
+            self.log.info('Cloning repo %s' % self.repo_url)
+            yield self.prepare_local_repo()
 
-        # use git repo URL and HEAD commit sha to derive
-        # the image name
-        image_name = self.generate_image_name()
+            # use git repo URL and HEAD commit sha to derive
+            # the image name
+            image_name = self.generate_image_name()
 
-        self._add_to_log('Building image (%s)' % image_name)
+            self._add_to_log('Building image (%s)' % image_name)
 
-        with self._image_handler.get_waiter(image_name) as self._cur_waiter:
-            if self._cur_waiter.last_exception:
-                raise self._cur_waiter.last_exception
-            yield self._cur_waiter.block()
-            last_exception = self._cur_waiter.last_exception
-            if last_exception is not None:
-                raise last_exception
-            image = yield self.get_image(image_name)
-            if image is not None:
-                return image_name
-            self.log.debug("Building image {}".format(image_name))
-            build_log = yield self.docker(
-                'build',
-                path=tmp_dir,
-                tag=image_name,
-                rm=True,
-            )
-            self._user_log.extend(self._cur_waiter.building_log)
-            full_output = "".join(str(line) for line in build_log)
-            self.log.debug(full_output)
-            image = yield self.get_image(image_name)
-            if image is None:
-                raise Exception(full_output)
+            with self._image_handler.get_waiter(image_name) as self._cur_waiter:
+                yield self._cur_waiter.block()
+                image = yield self.get_image(image_name)
+                if image is not None:
+                    return image_name
+                self.log.debug("Building image {}".format(image_name))
+                build_log = yield self.docker(
+                    'build',
+                    path=tmp_dir,
+                    tag=image_name,
+                    rm=True,
+                )
+                self._user_log.extend(self._cur_waiter.building_log)
+                full_output = "".join(str(line) for line in build_log)
+                self.log.debug(full_output)
+                image = yield self.get_image(image_name)
+                if image is None:
+                    raise Exception(full_output)
+        except:
+            raise
+        finally:
+            rmtree(tmp_dir, ignore_errors=True)
 
         return image_name
 
