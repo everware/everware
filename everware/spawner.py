@@ -79,6 +79,27 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         state = super(CustomDockerSpawner, self).clear_state()
         self.container_id = ''
 
+    def get_state(self):
+        state = DockerSpawner.get_state(self)
+        state.update(GitMixin.get_state(self))
+        state.update(dict(
+            name=self.user.name,
+        ))
+        if hasattr(self.user, 'token'):
+            state.update(dict(token=self.user.token))
+        if hasattr(self.user, 'login_service'):
+            state.update(dict(login_service=self.user.login_service))
+        return state
+
+    def load_state(self, state):
+        DockerSpawner.load_state(self, state)
+        GitMixin.load_state(self, state)
+        for key in ('name', 'token', 'login_service'):
+            if key in state:
+                setattr(self.user, key, state[key])
+        self.user.stop_pending = False
+        self.user.spawn_pending = False
+
     def _options_form_default(self):
         return """
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%">

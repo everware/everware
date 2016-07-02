@@ -5,6 +5,9 @@ from tornado import gen
 
 
 class GitMixin:
+    STATE_VARS = ['_repo_url', '_repo_dir', '_repo_pointer', '_processed_repo_url',
+            '_protocol', '_service', '_owner', '_repo', '_token', '_repo_sha', '_branch_name']
+
     def parse_url(self, repo_url, tmp_dir=None):
         """parse repo_url to parts:
         _processed: url to clone from
@@ -93,7 +96,7 @@ class GitMixin:
         yield self.git('clone', clone_url, self._repo_dir)
         repo = git.Repo(self._repo_dir)
         repo.git.reset('--hard', self._repo_pointer)
-        self._repo_sha = repo.rev_parse('HEAD')
+        self._repo_sha = repo.rev_parse('HEAD').hexsha
         self._branch_name = repo.active_branch.name
 
     @property
@@ -145,4 +148,12 @@ class GitMixin:
             repo=self._repo
         )
 
+    def get_state(self):
+        result = {key: getattr(self, key, '') for key in self.STATE_VARS}
+        return result
+
+    def load_state(self, state):
+        for key in self.STATE_VARS:
+            if key in state:
+                setattr(self, key, state[key])
 
