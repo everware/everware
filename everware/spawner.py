@@ -6,6 +6,7 @@ from shutil import rmtree
 from concurrent.futures import ThreadPoolExecutor
 
 from docker.errors import APIError
+from smtplib import SMTPException
 
 from dockerspawner import DockerSpawner
 from traitlets import (
@@ -16,15 +17,17 @@ from tornado import gen
 
 import ssl
 import json
+import os
 
 from .image_handler import ImageHandler
 from .git_processor import GitMixin
+from .email_notificator import EmailNotificator
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-class CustomDockerSpawner(DockerSpawner, GitMixin):
+class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -32,7 +35,8 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        super(CustomDockerSpawner, self).__init__(**kwargs)
+        DockerSpawner.__init__(self, **kwargs)
+        EmailNotificator.__init__(self)
 
 
     # We override the executor here to increase the number of threads
@@ -196,6 +200,13 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
     def is_failed(self):
         return self._is_failed
 
+    def set_failed(self):
+        self._is_failed = True
+
+    @property
+    def is_building(self):
+        return self._is_building
+
     def _add_to_log(self, message, level=1):
         self._user_log.append({
             'text': message,
@@ -302,11 +313,11 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
             if self._cur_waiter:
                 self._user_log.extend(self._cur_waiter.building_log)
                 self._cur_waiter.timeout_happened()
-            self._is_building = False
             self._add_to_log(
                 'Building took too long (> %.3f secs)' % self.start_timeout,
                 level=2
             )
+            yield self.notify_about_fail("Timeout limit %.3f exceeded" % self.start_timeout)
             raise
         except Exception as e:
             self._is_failed = True
@@ -316,7 +327,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
             elif 'Cannot locate specified Dockerfile' in message:
                 message = "Your repo doesn't include Dockerfile"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
+            yield self.notify_about_fail(message)
             raise e
+        finally:
+            self._is_building = False
 
     @gen.coroutine
     def stop(self, now=False):
@@ -344,6 +358,25 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
                 yield self.docker('remove_container', self.container_id, v=True)
 
         self.clear_state()
+
+    @gen.coroutine
+    def notify_about_fail(self, reason):
+        email = os.environ.get('EMAIL_SUPPORT_ADDR')
+        if not email:
+            return
+        self._user_log[-1]['text'] += """. We are notified about this error, please try again later.
+            If it doesn't help, please contact everware support (%s).""" % email
+        subject = "Everware: failed to spawn %s's server" % self.user.name
+        message = "Failed to spawn %s's server from %s due to %s" % (
+            self.user.name,
+            self._repo_url, # use raw url (with commit sha and etc.)
+            reason
+        )
+        from_email = os.environ['EMAIL_FROM_ADDR']
+        try:
+            yield self.executor.submit(self.send_email, from_email, email, subject, message)
+        except SMTPException as exc:
+            self.log.warn("Can't send a email due to %s" % str(exc))
 
     @gen.coroutine
     def is_running(self):
