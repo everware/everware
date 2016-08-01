@@ -2,9 +2,11 @@ import smtplib
 
 class EmailNotificator:
     def __init__(self):
-        self._smtp = smtplib.SMTP('localhost')
+        self._smtp = None
 
     def send_email(self, from_, to, subject, message):
+        if self._smtp is None:
+            self._smtp = smtplib.SMTP('localhost')
         mail = """From: From Person <{from_}>
 To: To Person <{to}>
 Subject: {subject}

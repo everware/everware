@@ -36,8 +36,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         self._cur_waiter = None
         self._is_empty = False
         DockerSpawner.__init__(self, **kwargs)
-        if os.environ.get('EMAIL_SUPPORT_ADDR'):
-            EmailNotificator.__init__(self)
+        EmailNotificator.__init__(self)
 
 
     # We override the executor here to increase the number of threads
