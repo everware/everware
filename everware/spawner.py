@@ -200,9 +200,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def is_failed(self):
         return self._is_failed
 
-    def set_failed(self):
-        self._is_failed = True
-
     @property
     def is_building(self):
         return self._is_building
@@ -327,6 +324,26 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             elif 'Cannot locate specified Dockerfile' in message:
                 message = "Your repo doesn't include Dockerfile"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
+            yield self.notify_about_fail(message)
+            raise e
+
+        # copied from jupyterhub, because if user's server didn't appear, it
+        # means that spawn was unsuccessful, need to set is_failed
+        try:
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+        except TimeoutError:
+            self._is_failed = True
+            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
+            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
+                user=self.user.name,
+                timeout=self.http_timeout
+            ))
+            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
+            raise
+        except Exception as e:
+            self._is_failed = True
+            message = str(e)
+            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
         finally:

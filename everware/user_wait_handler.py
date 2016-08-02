@@ -19,23 +19,16 @@ class UserSpawnHandler(BaseHandler):
             if current_user.spawner:
                 spawner = current_user.spawner
                 is_running = yield spawner.is_running()
-                if current_user.stop_pending and not spawner.is_failed:
-                    spawner.set_failed()
-                    message = "Failed to add to proxy"
-                    spawner._add_to_log(message)
-                    yield spawner.notify_about_fail(message)
                 log_lines = spawner.user_log
                 is_failed = spawner.is_failed
                 if not current_user.spawn_pending and not is_failed and is_running:
                     is_done = True
                 if spawner.is_empty and not is_failed:
-                    self.log.info('first redirect')
                     self.redirect(url_path_join(self.hub.server.base_url, 'home'))
                     return
             else:
                 log_lines = []
             if current_user.stop_pending and not is_failed:
-                self.log.info('second redirect')
                 self.redirect(url_path_join(self.hub.server.base_url, 'home'))
                 return
             if is_log_request:
