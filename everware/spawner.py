@@ -326,11 +326,16 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self._add_to_log('Something went wrong during building. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
+        finally:
+            self._is_building = False
 
         # copied from jupyterhub, because if user's server didn't appear, it
         # means that spawn was unsuccessful, need to set is_failed
         try:
             yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            ip, port = yield from self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
         except TimeoutError:
             self._is_failed = True
             self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
@@ -346,8 +351,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
-        finally:
-            self._is_building = False
 
     @gen.coroutine
     def stop(self, now=False):
