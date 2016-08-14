@@ -13,23 +13,24 @@ class UserSpawnHandler(BaseHandler):
         current_user = self.get_current_user()
         if current_user and current_user.name == name:
             # logged in, work with spawner
-            if current_user.stop_pending:
-                self.redirect(url_path_join(self.hub.server.base_url, 'home'))
-                return
             is_log_request = self.get_argument('get_logs', False)
             is_failed = False
             is_done = False
             if current_user.spawner:
-                log_lines = current_user.spawner.user_log
-                is_failed = current_user.spawner.is_failed
-                is_running = yield current_user.spawner.is_running()
+                spawner = current_user.spawner
+                is_running = yield spawner.is_running()
+                log_lines = spawner.user_log
+                is_failed = spawner.is_failed
                 if not current_user.spawn_pending and not is_failed and is_running:
                     is_done = True
-                if current_user.spawner.is_empty and not is_failed:
+                if spawner.is_empty and not is_failed:
                     self.redirect(url_path_join(self.hub.server.base_url, 'home'))
                     return
             else:
                 log_lines = []
+            if current_user.stop_pending and not is_failed:
+                self.redirect(url_path_join(self.hub.server.base_url, 'home'))
+                return
             if is_log_request:
                 resp = {
                     'log': log_lines
