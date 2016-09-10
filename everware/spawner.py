@@ -412,6 +412,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             env.update({
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
+                'API': 'api_from_openml'
             })
         return env
 
