@@ -1,4 +1,4 @@
-
+from .version import __version__
 from .spawner import *
 from .authenticator import *
 from .user_spawn_handler import *
