@@ -23,7 +23,7 @@ from jupyterhub.utils import url_path_join
 
 from traitlets import Unicode, Set
 from traitlets.config import LoggingConfigurable
-from .version import __version__
+from .__init__ import __version__
 
 class DefaultWhitelistHandler(LoggingConfigurable):
 

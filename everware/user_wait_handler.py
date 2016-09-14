@@ -4,7 +4,7 @@ from jupyterhub.handlers.pages import BaseHandler
 from IPython.html.utils import url_path_join
 from tornado.httputil import url_concat
 from tornado.escape import json_encode
-from .version import __version__
+from .__init__ import __version__
 
 class UserSpawnHandler(BaseHandler):
 
