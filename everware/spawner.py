@@ -22,7 +22,7 @@ import os
 from .image_handler import ImageHandler
 from .git_processor import GitMixin
 from .email_notificator import EmailNotificator
-from .__init__ import __version__
+from . import version
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -413,7 +413,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             env.update({
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
-                'EVER_VERSION':__version__,
+                'EVER_VERSION': version,
             })
         return env
 
