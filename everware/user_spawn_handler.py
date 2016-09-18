@@ -1,7 +1,7 @@
 from tornado import web, gen
 import jupyterhub.handlers.pages as default_handlers
 import sys
-from .__init__ import __version__
+from . import version
 
 class SpawnHandler(default_handlers.SpawnHandler):
 
@@ -11,7 +11,7 @@ class SpawnHandler(default_handlers.SpawnHandler):
             user=user,
             spawner_options_form=user.spawner.options_form,
             error_message=message,
-            __version__=__version__,
+            version=version,
         )
 
     @gen.coroutine

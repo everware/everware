@@ -23,7 +23,7 @@ from jupyterhub.utils import url_path_join
 
 from traitlets import Unicode, Set
 from traitlets.config import LoggingConfigurable
-from .__init__ import __version__
+from . import version
 
 class DefaultWhitelistHandler(LoggingConfigurable):
 
@@ -74,11 +74,12 @@ class WelcomeHandler(BaseHandler):
                 repourl=url_escape(self.get_argument('repourl', default='')),
                 username=username,
                 login_error=login_error,
-                __version__=__version__
-        )
+                version=version,
+                )
     
     def get(self):
         next_url = self.get_argument('next', '')
+        api_key = self.get_argument('api_key', default='')
         if not next_url.startswith('/'):
             # disallow non-absolute next URLs (e.g. full URLs)
             next_url = ''
