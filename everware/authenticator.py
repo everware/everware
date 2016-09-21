@@ -23,7 +23,7 @@ from jupyterhub.utils import url_path_join
 
 from traitlets import Unicode, Set
 from traitlets.config import LoggingConfigurable
-
+from . import __version__
 
 class DefaultWhitelistHandler(LoggingConfigurable):
 
@@ -74,6 +74,7 @@ class WelcomeHandler(BaseHandler):
                 repourl=url_escape(self.get_argument('repourl', default='')),
                 username=username,
                 login_error=login_error,
+                version=__version__
         )
     
     def get(self):

@@ -4,7 +4,7 @@ from jupyterhub.handlers.pages import BaseHandler
 from IPython.html.utils import url_path_join
 from tornado.httputil import url_concat
 from tornado.escape import json_encode
-
+from . import __version__
 
 class UserSpawnHandler(BaseHandler):
 
@@ -50,7 +50,8 @@ class UserSpawnHandler(BaseHandler):
                 html = self.render_template(
                     "spawn_pending.html",
                     user=current_user,
-                    need_wait=int(is_done)
+                    need_wait=int(is_done),
+                    version=__version__
                 )
                 self.finish(html)
         else:
