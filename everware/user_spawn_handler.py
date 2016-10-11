@@ -37,10 +37,13 @@ class SpawnHandler(default_handlers.SpawnHandler):
             self.redirect('/user/%s' % name)
             return
         repourl = self.get_argument('repourl', '')
+        api_token = self.get_argument('api_token', '')
         if repourl:
             options = {
-                'repository_url': [repourl, ]
+                'repository_url': [repourl, ],
+                'api_token': api_token,
             }
+
             self._spawn(user, options)
         elif user.spawner.options_form:
             self.finish(self._render_form())

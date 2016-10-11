@@ -79,7 +79,7 @@ class WelcomeHandler(BaseHandler):
     
     def get(self):
         next_url = self.get_argument('next', '')
-        api_key = self.get_argument('api_key', default='')
+
         if not next_url.startswith('/'):
             # disallow non-absolute next URLs (e.g. full URLs)
             next_url = ''
@@ -113,10 +113,13 @@ class OAuthLoginHandler(BaseHandler):
         self.log.info('oauth redirect: %r', redirect_uri)
 
         repourl = self.get_argument('repourl', '')
+        api_token = self.get_argument('api_token', '')
 
         state = {'unique': 42}
         if repourl:
             state['repourl'] = repourl
+        if api_token:
+            state['api_token'] = api_token
 
         self.authorize_redirect(
             redirect_uri=redirect_uri,
@@ -124,6 +127,8 @@ class OAuthLoginHandler(BaseHandler):
             scope=['repo'],
             response_type='code',
             extra_params={'state': self.create_signed_value('state', repr(state))})
+
+    
 
 
 class GitHubLoginHandler(OAuthLoginHandler, GitHubMixin):

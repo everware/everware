@@ -133,17 +133,22 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
+        options['api_token'] = formdata.get('api_token', [''])
         need_remove = formdata.get('need_remove', ['on'])[0].strip()
         options['need_remove'] = need_remove == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
-
         return options
 
     @property
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
         return self.user_options.get('repo_url', '')
+        
+    @property
+    def form_api_token_(self):
+        """Api_token for user."""
+        return self.user_options.get('api_token', 'def')
 
     @property
     def container_name(self):
@@ -414,6 +419,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
                 'EVER_VERSION': version,
+                'API_TOKEN': self.form_api_token_,
             })
         return env
 
