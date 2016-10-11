@@ -146,9 +146,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         return self.user_options.get('repo_url', '')
         
     @property
-    def form_api_token_(self):
+    def form_api_token(self):
         """Api_token for user."""
-        return self.user_options.get('api_token', 'def')
+        return self.user_options.get('api_token', '')
 
     @property
     def container_name(self):
@@ -419,6 +419,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
                 'EVER_VERSION': __version__,
+                'API_TOKEN': self.form_api_token,
             })
         return env
 
