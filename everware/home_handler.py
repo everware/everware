@@ -5,7 +5,7 @@ from docker.errors import NotFound
 from jupyterhub.handlers.base import BaseHandler
 from IPython.html.utils import url_path_join
 from tornado.httputil import url_concat
-from . import version
+from . import __version__
 from .github_agent import *
 
 @gen.coroutine
@@ -101,7 +101,7 @@ class HomeHandler(BaseHandler):
             branch_name=branch_name,
             commit_sha=commit_sha,
             notify_message=notify_message,
-            version=version
+            version=__version__
         )
 
         self.finish(html)
