@@ -51,7 +51,7 @@ class UserSpawnHandler(BaseHandler):
                     "spawn_pending.html",
                     user=current_user,
                     need_wait=int(is_done),
-                    __version__=__version__
+                    version =__version__
                 )
                 self.finish(html)
         else:
