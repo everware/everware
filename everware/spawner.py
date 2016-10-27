@@ -133,7 +133,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
-        options['api_token'] = formdata.get('api_token', [''])
+        options.update(formdata)
         need_remove = formdata.get('need_remove', ['on'])[0].strip()
         options['need_remove'] = need_remove == 'on'
         if not options['repo_url']:
@@ -419,8 +419,8 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
                 'EVER_VERSION': __version__,
-                'API_TOKEN': self.form_api_token,
             })
+            env.update(self.user_options)
         return env
 
 

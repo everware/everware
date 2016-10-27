@@ -4,7 +4,6 @@ Custom Authenticator to use GitHub OAuth with JupyterHub
 Most of the code c/o Kyle Kelley (@rgbkrk)
 """
 
-
 import json
 import os
 import urllib
@@ -25,8 +24,8 @@ from traitlets import Unicode, Set
 from traitlets.config import LoggingConfigurable
 from . import __version__
 
-class DefaultWhitelistHandler(LoggingConfigurable):
 
+class DefaultWhitelistHandler(LoggingConfigurable):
     def __init__(self, filename, config, authenticator):
         super().__init__()
         self.filename = filename
@@ -40,7 +39,6 @@ class DefaultWhitelistHandler(LoggingConfigurable):
             self.log.warn("Whitelist %s wasn't found" % filename)
         config.Authenticator.whitelist = whitelist
         signal.signal(signal.SIGHUP, self.reload_whitelist)
-
 
     def reload_whitelist(self, signal, frame):
         if os.path.exists(self.filename):
@@ -70,13 +68,13 @@ class WelcomeHandler(BaseHandler):
 
     def _render(self, login_error=None, username=None):
         return self.render_template('login.html',
-                next=url_escape(self.get_argument('next', default='')),
-                repourl=url_escape(self.get_argument('repourl', default='')),
-                username=username,
-                login_error=login_error,
-                version=__version__
-        )
-    
+                                    next=url_escape(self.get_argument('next', default='')),
+                                    repourl=url_escape(self.get_argument('repourl', default='')),
+                                    username=username,
+                                    login_error=login_error,
+                                    version=__version__
+                                    )
+
     def get(self):
         next_url = self.get_argument('next', '')
 
@@ -92,13 +90,13 @@ class WelcomeHandler(BaseHandler):
                     next_url = self.hub.server.base_url
             # set new login cookie
             # because single-user cookie may have been cleared or incorrect
-            #self.set_login_cookie(self.get_current_user())
+            # self.set_login_cookie(self.get_current_user())
             self.redirect('/oauth_login', permanent=False)
         else:
             self.finish(self._render())
 
-class OAuthLoginHandler(BaseHandler):
 
+class OAuthLoginHandler(BaseHandler):
     def get(self):
         guess_uri = '{proto}://{host}{path}'.format(
             proto=self.request.protocol,
@@ -108,7 +106,7 @@ class OAuthLoginHandler(BaseHandler):
                 'oauth_callback'
             )
         )
-        
+
         redirect_uri = self.authenticator.oauth_callback_url or guess_uri
         self.log.info('oauth redirect: %r', redirect_uri)
 
@@ -118,8 +116,7 @@ class OAuthLoginHandler(BaseHandler):
         state = {'unique': 42}
         if repourl:
             state['repourl'] = repourl
-        if api_token:
-            state['api_token'] = api_token
+        state.update({param: self.get_argument(param) for param in self.request.arguments})
 
         self.authorize_redirect(
             redirect_uri=redirect_uri,
@@ -127,8 +124,6 @@ class OAuthLoginHandler(BaseHandler):
             scope=['repo'],
             response_type='code',
             extra_params={'state': self.create_signed_value('state', repr(state))})
-
-    
 
 
 class GitHubLoginHandler(OAuthLoginHandler, GitHubMixin):
@@ -160,7 +155,7 @@ class GitHubOAuthHandler(BaseHandler):
             user.login_service = "github"
             if 'repourl' in state:
                 self.log.debug("Redirect with %s", state)
-                self.redirect(self.hub.server.base_url +'/home?'+urllib.parse.urlencode(state))
+                self.redirect(self.hub.server.base_url + '/home?' + urllib.parse.urlencode(state))
             else:
                 self.redirect(self.hub.server.base_url + '/home')
         else:
@@ -172,7 +167,6 @@ class BitbucketOAuthHandler(GitHubOAuthHandler):
 
 
 class GitHubOAuthenticator(Authenticator):
-    
     login_service = "GitHub"
     oauth_callback_url = Unicode('', config=True)
     client_id = Unicode(os.environ.get('GITHUB_CLIENT_ID', ''),
@@ -182,14 +176,14 @@ class GitHubOAuthenticator(Authenticator):
 
     def login_url(self, base_url):
         return url_path_join(base_url, 'login')
-    
+
     def get_handlers(self, app):
         return [
             (r'/login', WelcomeHandler),
             (r'/oauth_login', GitHubLoginHandler),
             (r'/oauth_callback', GitHubOAuthHandler),
         ]
-    
+
     @gen.coroutine
     def authenticate(self, handler):
         code = handler.get_argument("code", False)
@@ -197,44 +191,44 @@ class GitHubOAuthenticator(Authenticator):
             raise web.HTTPError(400, "oauth callback made without a token")
         # TODO: Configure the curl_httpclient for tornado
         http_client = AsyncHTTPClient()
-        
+
         # Exchange the OAuth code for a GitHub Access Token
         #
         # See: https://developer.github.com/v3/oauth/
-        
+
         # GitHub specifies a POST request yet requires URL parameters
         params = dict(
             client_id=self.client_id,
             client_secret=self.client_secret,
             code=code
         )
-        
+
         url = url_concat("https://github.com/login/oauth/access_token",
                          params)
-        
+
         req = HTTPRequest(url,
                           method="POST",
                           headers={"Accept": "application/json"},
-                          body='' # Body is required for a POST...
+                          body=''  # Body is required for a POST...
                           )
-        
+
         resp = yield http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-        
+
         access_token = resp_json['access_token']
-        
+
         # Determine who the logged in user is
-        headers={"Accept": "application/json",
-                 "User-Agent": "JupyterHub",
-                 "Authorization": "token {}".format(access_token)
-        }
+        headers = {"Accept": "application/json",
+                   "User-Agent": "JupyterHub",
+                   "Authorization": "token {}".format(access_token)
+                   }
         req = HTTPRequest("https://api.github.com/user",
                           method="GET",
                           headers=headers
                           )
         resp = yield http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-        
+
         username = self.normalize_username(resp_json["login"])
         if self.whitelist and username not in self.whitelist:
             username = None
@@ -242,7 +236,6 @@ class GitHubOAuthenticator(Authenticator):
 
 
 class BitbucketOAuthenticator(Authenticator):
-
     login_service = "Bitbucket"
     oauth_callback_url = Unicode(os.environ.get('OAUTH_CALLBACK_URL', ''),
                                  config=True)
@@ -285,7 +278,7 @@ class BitbucketOAuthenticator(Authenticator):
         self.log.info(url)
 
         bb_header = {"Content-Type":
-                     "application/x-www-form-urlencoded;charset=utf-8"}
+                         "application/x-www-form-urlencoded;charset=utf-8"}
         req = HTTPRequest(url,
                           method="POST",
                           auth_username=self.client_id,
@@ -348,13 +341,11 @@ class BitbucketOAuthenticator(Authenticator):
 
 
 class LocalGitHubOAuthenticator(LocalAuthenticator, GitHubOAuthenticator):
-
     """A version that mixes in local system user creation"""
     pass
 
 
 class LocalBitbucketOAuthenticator(LocalAuthenticator,
                                    BitbucketOAuthenticator):
-
     """A version that mixes in local system user creation"""
     pass
