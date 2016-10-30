@@ -2,16 +2,19 @@ from tornado import web, gen
 import jupyterhub.handlers.pages as default_handlers
 import sys
 from . import __version__
+from .test_metrica import GAnaliticsIdentificator
 
 class SpawnHandler(default_handlers.SpawnHandler):
 
     def _render_form(self, message=''):
         user = self.get_current_user()
+        Gc = GAnaliticsIdentificator()
         return self.render_template('spawn.html',
             user=user,
             spawner_options_form=user.spawner.options_form,
             error_message=message,
             version=__version__,
+            g_analitics_id=Gc.g_analitics_id
         )
 
     @gen.coroutine

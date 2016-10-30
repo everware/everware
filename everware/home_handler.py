@@ -92,8 +92,7 @@ class HomeHandler(BaseHandler):
             loginservice = user.login_service
         else:
             loginservice = 'none'
-        Gc = GAnaliticsIdentificator.instance()
-        print("AAAAVVVVVVAAAAA" + Gc.g_analitics_id)
+        Gc = GAnaliticsIdentificator()
         html = self.render_template('home.html',
             user=user,
             repourl=repo_url,
