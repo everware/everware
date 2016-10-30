@@ -7,6 +7,7 @@ from IPython.html.utils import url_path_join
 from tornado.httputil import url_concat
 from . import __version__
 from .github_agent import *
+from .test_metrica import GAnaliticsIdentificator
 
 @gen.coroutine
 def is_repository_changed(user):
@@ -91,6 +92,8 @@ class HomeHandler(BaseHandler):
             loginservice = user.login_service
         else:
             loginservice = 'none'
+        Gc = GAnaliticsIdentificator()
+        print("AAAAVVVVVVAAAAA" + Gc.g_analitics_id)
         html = self.render_template('home.html',
             user=user,
             repourl=repo_url,
@@ -100,7 +103,8 @@ class HomeHandler(BaseHandler):
             branch_name=branch_name,
             commit_sha=commit_sha,
             notify_message=notify_message,
-            version=__version__
+            version=__version__,
+            g_analitics_id=Gc.g_analitics_id
         )
 
         self.finish(html)
