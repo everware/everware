@@ -146,11 +146,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         return self.user_options.get('repo_url', '')
         
     @property
-    def form_api_token(self):
-        """Api_token for user."""
-        return self.user_options.get('api_token', '')
-
-    @property
     def container_name(self):
         return "{}-{}".format(self.container_prefix,
                               self.escaped_name)

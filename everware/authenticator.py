@@ -111,7 +111,6 @@ class OAuthLoginHandler(BaseHandler):
         self.log.info('oauth redirect: %r', redirect_uri)
 
         repourl = self.get_argument('repourl', '')
-        api_token = self.get_argument('api_token', '')
 
         state = {'unique': 42}
         if repourl:
