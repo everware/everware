@@ -38,14 +38,14 @@ class HomeHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
         repourl = self.get_argument('repourl', '')
+        all_arguments = {param: self.get_argument(param) for param in self.request.arguments}
+
         do_fork = self.get_argument('do_fork', False)
         do_push = self.get_argument('do_push', False)
         notify_message = self.get_argument('message', '')
         if repourl:
             self.redirect(url_concat(
-                url_path_join(self.hub.server.base_url, 'spawn'), {
-                    'repourl': repourl
-                }
+                url_path_join(self.hub.server.base_url, 'spawn'), all_arguments
             ))
             return
 
