@@ -1,11 +1,13 @@
 from tornado import web, gen
+from tornado.escape import url_escape
 
 from docker.errors import NotFound
 from jupyterhub.handlers.base import BaseHandler
 from IPython.html.utils import url_path_join
 from tornado.httputil import url_concat
-
+from . import __version__
 from .github_agent import *
+from .metrica import MetricaIdsMixin
 
 @gen.coroutine
 def is_repository_changed(user):
@@ -37,13 +39,14 @@ class HomeHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
         repourl = self.get_argument('repourl', '')
+        all_arguments = {param: self.get_argument(param) for param in self.request.arguments}
+
         do_fork = self.get_argument('do_fork', False)
         do_push = self.get_argument('do_push', False)
+        notify_message = self.get_argument('message', '')
         if repourl:
             self.redirect(url_concat(
-                url_path_join(self.hub.server.base_url, 'spawn'), {
-                    'repourl': repourl
-                }
+                url_path_join(self.hub.server.base_url, 'spawn'), all_arguments
             ))
             return
 
@@ -58,20 +61,25 @@ class HomeHandler(BaseHandler):
         if user.running and getattr(user, 'login_service', '') == 'github':
             if do_fork:
                 self.log.info('Will fork %s' % user.spawner.repo_url)
-                yield fork_repo(
+                result = yield fork_repo(
                     user.spawner,
                     user.token
                 )
-                self.redirect('/hub/home')
+                self.redirect(url_concat('/hub/home', dict(message='Successfully forked')))
                 return
             if do_push:
                 self.log.info('Will push to fork')
-                yield push_repo(
+                result = yield push_repo(
                     user,
                     user.spawner,
                     user.token
                 )
-                self.redirect('/hub/home')
+                result = str(result, 'ascii')
+                self.log.info('Got after push: %s' % result)
+                message = 'Successfully pushed'
+                if 'Update through everware' not in result:
+                    message = result
+                self.redirect(url_concat('/hub/home', dict(message='Push result: %s' % message)))
                 return
             fork_exists = yield does_fork_exist(
                 user.name,
@@ -84,6 +92,9 @@ class HomeHandler(BaseHandler):
             loginservice = user.login_service
         else:
             loginservice = 'none'
+        metrica = MetricaIdsMixin()
+        g_id = metrica.g_analitics_id
+        ya_id = metrica.ya_metrica_id
         html = self.render_template('home.html',
             user=user,
             repourl=repo_url,
@@ -91,7 +102,11 @@ class HomeHandler(BaseHandler):
             fork_exists=fork_exists,
             repository_changed=repository_changed,
             branch_name=branch_name,
-            commit_sha=commit_sha
+            commit_sha=commit_sha,
+            notify_message=notify_message,
+            version=__version__,
+            g_analitics_id=g_id,
+            ya_metrica_id=ya_id
         )
 
         self.finish(html)

@@ -50,17 +50,26 @@
     </div>
   </div>
   {% if user.running or user.stop_pending %}
-    <div class="row" id="wait" style="margin-top: 2%; font-size: larger"
+    <div class="row" id="wait" style="margin-top: 2%; font-size: larger;
       {% if not user.stop_pending %}
-        hidden
+        display: none;
       {% endif %}
-      >
+      ">
       <div class="text-center">
         <img src="{{ static_url("images/loading.gif") }}">
         Stopping server... Please, wait.
       </div>
     </div>
   {% endif %}
+  <div id="notif" style="margin-top: 1%; color:
+    {% if not 'Successfully' in notify_message %}
+    red"
+    {% else %}
+    green"
+    {% endif %}
+  >
+    {{notify_message}}
+  </div>
 </div>
 
 {% endblock %}

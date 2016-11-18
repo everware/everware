@@ -32,14 +32,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="stylesheet" href="{{ static_url("components/material-design-lite/material.min.css") }}" type="text/css"/>
-    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.teal-blue.min.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:400,100,500,300italic,500italic,700italic,900,300">
+    <link rel="icon" href="{{ static_url("images/favicon.ico") }}" sizes="32x32" type="image/ico"/>
+    <!--link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.teal-blue.min.css" /-->
+    <link rel="stylesheet" href="{{ static_url("css/material.teal-blue.min.css") }}" type="text/css" /-->
+    <!--link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" /-->
+    <link rel="stylesheet" href="{{ static_url("css/material_icons.css") }}" type="text/css" /-->
+    <!--link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:400,100,500,300italic,500italic,700italic,900,300"-->
+    <link rel="stylesheet" href="{{ static_url("css/fonts.css") }}" type="text/css" /-->
     {% block stylesheet %}
     {% endblock %}
     <link rel="stylesheet" href="{{ static_url("css/custom.css") }}" type="text/css"/>
     <script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
-    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+    <!--script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script-->
+    <script defer src="{{ static_url("js/material.min.js") }}"></script>
     <script>
       require.config({
           {% if version_hash %}
@@ -70,6 +75,50 @@
         {% endif %}
       }
     </script>
+
+    {% if g_analitics_id %}
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', "{{ g_analitics_id }}", 'auto');
+      ga('send', 'pageview');
+
+    </script>
+    {% endif %}
+
+    {% if ya_metrica_id %}
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function (d, w, c) {
+            (w[c] = w[c] || []).push(function() {
+                try {
+                    w.yaCounter{{ ya_metrica_id }} = new Ya.Metrika({
+                        id:{{ ya_metrica_id }},
+                        clickmap:true,
+                        trackLinks:true,
+                        accurateTrackBounce:true
+                    });
+                } catch(e) { }
+            });
+
+            var n = d.getElementsByTagName("script")[0],
+                s = d.createElement("script"),
+                f = function () { n.parentNode.insertBefore(s, n); };
+            s.type = "text/javascript";
+            s.async = true;
+            s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+            if (w.opera == "[object Opera]") {
+                d.addEventListener("DOMContentLoaded", f, false);
+            } else { f(); }
+        })(document, window, "yandex_metrika_callbacks");
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/{{ ya_metrica_id }}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+    {% endif %}
 
     {% block meta %}
     {% endblock %}
@@ -102,7 +151,7 @@
   {% block footer %}
   <footer class="mdl-mini-footer everware-footer">
       <div class="mdl-mini-footer__left-section">
-        Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
+         v{{version}} Powered by <a href="https://jupyter.org/">Jupyter</a> and <a href="https://www.docker.com/">Docker</a>
       </div>
       <div class="mdl-mini-footer__right-section">
       {% if user %}

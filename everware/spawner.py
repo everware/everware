@@ -1,10 +1,12 @@
 from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
+from shutil import rmtree
 
 from concurrent.futures import ThreadPoolExecutor
 
 from docker.errors import APIError
+from smtplib import SMTPException
 
 from dockerspawner import DockerSpawner
 from traitlets import (
@@ -15,15 +17,18 @@ from tornado import gen
 
 import ssl
 import json
+import os
 
 from .image_handler import ImageHandler
 from .git_processor import GitMixin
+from .email_notificator import EmailNotificator
+from . import __version__
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-class CustomDockerSpawner(DockerSpawner, GitMixin):
+class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -31,7 +36,8 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        super(CustomDockerSpawner, self).__init__(**kwargs)
+        DockerSpawner.__init__(self, **kwargs)
+        EmailNotificator.__init__(self)
 
 
     # We override the executor here to increase the number of threads
@@ -78,6 +84,27 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         state = super(CustomDockerSpawner, self).clear_state()
         self.container_id = ''
 
+    def get_state(self):
+        state = DockerSpawner.get_state(self)
+        state.update(GitMixin.get_state(self))
+        state.update(dict(
+            name=self.user.name,
+        ))
+        if hasattr(self.user, 'token'):
+            state.update(dict(token=self.user.token))
+        if hasattr(self.user, 'login_service'):
+            state.update(dict(login_service=self.user.login_service))
+        return state
+
+    def load_state(self, state):
+        DockerSpawner.load_state(self, state)
+        GitMixin.load_state(self, state)
+        for key in ('name', 'token', 'login_service'):
+            if key in state:
+                setattr(self.user, key, state[key])
+        self.user.stop_pending = False
+        self.user.spawn_pending = False
+
     def _options_form_default(self):
         return """
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%">
@@ -106,18 +133,18 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
+        options.update(formdata)
         need_remove = formdata.get('need_remove', ['on'])[0].strip()
         options['need_remove'] = need_remove == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
-
         return options
 
     @property
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
         return self.user_options.get('repo_url', '')
-
+        
     @property
     def container_name(self):
         return "{}-{}".format(self.container_prefix,
@@ -174,6 +201,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
     def is_failed(self):
         return self._is_failed
 
+    @property
+    def is_building(self):
+        return self._is_building
+
     def _add_to_log(self, message, level=1):
         self._user_log.append({
             'text': message,
@@ -193,45 +224,49 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
                 return image_name
 
         tmp_dir = mkdtemp(suffix='-everware')
-        self.parse_url(self.form_repo_url, tmp_dir)
-        self._add_to_log('Cloning repository %s' % self.repo_url)
-        self.log.info('Cloning repo %s' % self.repo_url)
-        yield self.prepare_local_repo()
-        # use git repo URL and HEAD commit sha to derive
-        # the image name
+        try:
+            self.parse_url(self.form_repo_url, tmp_dir)
+            self._add_to_log('Cloning repository %s' % self.repo_url)
+            self.log.info('Cloning repo %s' % self.repo_url)
+            yield self.prepare_local_repo()
 
-        image_name = "everware/{}-{}".format(
+            # use git repo URL and HEAD commit sha to derive
+            # the image name
+            image_name = self.generate_image_name()
+
+            self._add_to_log('Building image (%s)' % image_name)
+
+            with self._image_handler.get_waiter(image_name) as self._cur_waiter:
+                yield self._cur_waiter.block()
+                image = yield self.get_image(image_name)
+                if image is not None:
+                    return image_name
+                self.log.debug("Building image {}".format(image_name))
+                build_log = yield self.docker(
+                    'build',
+                    path=tmp_dir,
+                    tag=image_name,
+                    rm=True,
+                )
+                self._user_log.extend(self._cur_waiter.building_log)
+                full_output = "".join(str(line) for line in build_log)
+                self.log.debug(full_output)
+                image = yield self.get_image(image_name)
+                if image is None:
+                    raise Exception(full_output)
+        except:
+            raise
+        finally:
+            rmtree(tmp_dir, ignore_errors=True)
+
+        return image_name
+
+    def generate_image_name(self):
+        return "everware/{}-{}".format(
             self.escaped_repo_url,
             self.commit_sha
         )
 
-        self._add_to_log('Building image (%s)' % image_name)
-
-        with self._image_handler.get_waiter(image_name) as self._cur_waiter:
-            if self._cur_waiter.last_exception:
-                raise self._cur_waiter.last_exception
-            yield self._cur_waiter.block()
-            last_exception = self._cur_waiter.last_exception
-            if last_exception is not None:
-                raise last_exception
-            image = yield self.get_image(image_name)
-            if image is not None:
-                return image_name
-            self.log.debug("Building image {}".format(image_name))
-            build_log = yield self.docker(
-                'build',
-                path=tmp_dir,
-                tag=image_name,
-                rm=True,
-            )
-            self._user_log.extend(self._cur_waiter.building_log)
-            full_output = "".join(str(line) for line in build_log)
-            self.log.debug(full_output)
-            image = yield self.get_image(image_name)
-            if image is None:
-                raise Exception(full_output)
-
-        return image_name
 
     @gen.coroutine
     def remove_old_container(self):
@@ -276,11 +311,11 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
             if self._cur_waiter:
                 self._user_log.extend(self._cur_waiter.building_log)
                 self._cur_waiter.timeout_happened()
-            self._is_building = False
             self._add_to_log(
                 'Building took too long (> %.3f secs)' % self.start_timeout,
                 level=2
             )
+            yield self.notify_about_fail("Timeout limit %.3f exceeded" % self.start_timeout)
             raise
         except Exception as e:
             self._is_failed = True
@@ -290,6 +325,32 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
             elif 'Cannot locate specified Dockerfile' in message:
                 message = "Your repo doesn't include Dockerfile"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
+            yield self.notify_about_fail(message)
+            raise e
+        finally:
+            self._is_building = False
+
+        # copied from jupyterhub, because if user's server didn't appear, it
+        # means that spawn was unsuccessful, need to set is_failed
+        try:
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            ip, port = yield from self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
+        except TimeoutError:
+            self._is_failed = True
+            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
+            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
+                user=self.user.name,
+                timeout=self.http_timeout
+            ))
+            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
+            raise
+        except Exception as e:
+            self._is_failed = True
+            message = str(e)
+            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
+            yield self.notify_about_fail(message)
             raise e
 
     @gen.coroutine
@@ -320,6 +381,25 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
         self.clear_state()
 
     @gen.coroutine
+    def notify_about_fail(self, reason):
+        email = os.environ.get('EMAIL_SUPPORT_ADDR')
+        if not email:
+            return
+        self._user_log[-1]['text'] += """. We are notified about this error, please try again later.
+            If it doesn't help, please contact everware support (%s).""" % email
+        subject = "Everware: failed to spawn %s's server" % self.user.name
+        message = "Failed to spawn %s's server from %s due to %s" % (
+            self.user.name,
+            self._repo_url, # use raw url (with commit sha and etc.)
+            reason
+        )
+        from_email = os.environ['EMAIL_FROM_ADDR']
+        try:
+            yield self.executor.submit(self.send_email, from_email, email, subject, message)
+        except SMTPException as exc:
+            self.log.warn("Can't send a email due to %s" % str(exc))
+
+    @gen.coroutine
     def is_running(self):
         status = yield self.poll()
         return status is None
@@ -333,7 +413,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin):
             env.update({
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
+                'EVER_VERSION': __version__,
             })
+            env.update(self.user_options)
         return env
 
 
@@ -353,6 +435,15 @@ class CustomSwarmSpawner(CustomDockerSpawner):
                 name, = container['Names']
                 node, container_name = name.lstrip("/").split("/")
                 raise gen.Return(node)
+
+
+    def generate_image_name(self):
+        return "everware/{}-{}-{}".format(
+            self.escaped_repo_url,
+            self.user.name,
+            self.commit_sha
+        )
+
 
     @gen.coroutine
     def start(self, image=None, extra_create_kwargs=None):
