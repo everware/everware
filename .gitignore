@@ -27,3 +27,4 @@ whitelist.txt
 src/*
 # py.test's .cache/ directory
 .cache/*
+.idea/*
