@@ -5,6 +5,7 @@ from IPython.html.utils import url_path_join
 from tornado.httputil import url_concat
 from tornado.escape import json_encode
 from . import __version__
+from .metrica import MetricaIdsMixin
 
 class UserSpawnHandler(BaseHandler):
 
@@ -47,11 +48,16 @@ class UserSpawnHandler(BaseHandler):
             else:
                 if is_done:
                     self.set_login_cookie(current_user)
+                metrica = MetricaIdsMixin()
+                g_id = metrica.g_analitics_id
+                ya_id = metrica.ya_metrica_id
                 html = self.render_template(
                     "spawn_pending.html",
                     user=current_user,
                     need_wait=int(is_done),
-                    version=__version__
+                    version=__version__,
+                    g_analitics_id=g_id,
+                    ya_metrica_id=ya_id
                 )
                 self.finish(html)
         else:
