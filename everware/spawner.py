@@ -185,6 +185,8 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         else:
             tag_processor = lambda tag: tag.split(':')[0]
         for img in images:
+            if not img['RepoTags']:
+                continue
             tags = (tag_processor(tag) for tag in img['RepoTags'])
             if image_name in tags:
                 return img
