@@ -248,6 +248,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                     'build',
                     path=tmp_dir,
                     tag=image_name,
+                    pull=True,
                     rm=True,
                 )
                 self._user_log.extend(self._cur_waiter.building_log)
