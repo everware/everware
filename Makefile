@@ -74,9 +74,10 @@ run-dockermachine: clean  ## run everware server on MacOS
 		${EXECUTOR} -f etc/local_dockermachine_config.py --no-ssl 2>&1 | tee ${LOG}
 
 run-daemon: clean ## run everware in daemon mode, linux only, SSL required
+	[ -f ${LOG} ] && mv ${LOG} ${LOG}.`date +%Y%m%d-%s`
 	source ./env.sh && \
-		${EXECUTOR} -f etc/local_config.py >> ${LOG}  2>&1 &
-	pgrep ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
+		${EXECUTOR} -f etc/local_config.py --debug --no-ssl >> ${LOG}  2>&1 &
+	pgrep ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && rm ${PIDFILE} && exit 1 )
 	echo "Started. Log saved to ${LOG}"
 
 stop:
