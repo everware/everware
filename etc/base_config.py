@@ -5,12 +5,15 @@
 # spawn with custom docker containers
 c.JupyterHub.spawner_class = 'everware.CustomDockerSpawner'
 
+
 c.Spawner.tls = False
 c.Spawner.debug = True
 c.Spawner.start_timeout = 1000
+c.Spawner.http_timeout = 60
 c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True
+#c.Authenticator.admin_users = set('anaderi')
 
 # The docker containers need access to the Hub API, so the default
 # loopback address doesn't work

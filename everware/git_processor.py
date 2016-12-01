@@ -16,7 +16,7 @@ class GitMixin:
         self._repo_url = repo_url
         self._repo_dir = tmp_dir
         self._repo_pointer = None
-        if re.search(r'@\w+/?$', repo_url):
+        if re.search(r'@[\w/]+?$', repo_url):
             self._processed_repo_url, self._repo_pointer = repo_url.rsplit('@', 1)
             if self._repo_pointer.endswith('/'):
                 self._repo_pointer = self._repo_pointer[:-1]
