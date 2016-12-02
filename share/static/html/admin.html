@@ -1,0 +1,119 @@
+{% extends "admin_base.html" %}
+
+{% macro th(label, key='', colspan=1) %}
+<th data-sort="{{key}}" colspan="{{colspan}}">{{label}}
+  {% if key %}
+  <a href="#"><i class="fa {% if sort.get(key) == 'asc' -%}
+                               fa-sort-asc
+                           {%- elif sort.get(key) == 'desc' -%}
+                               fa-sort-desc
+                           {%- else -%}
+                               fa-sort
+                           {%- endif %} sort-icon">
+  </i></a>
+  {% endif %}
+</th>
+{% endmacro %}
+
+{% block main %}
+
+<div class="container">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        {% block thead %}
+        {{ th("User (%i)" % users|length, 'name') }}
+        {{ th("Admin", 'admin') }}
+        {{ th("Last Seen", 'last_activity') }}
+        {{ th("Running (%i)" % running|length, 'running', colspan=2) }}
+        {% endblock thead %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="user-row add-user-row">
+        <td colspan="12">
+          <a id="add-user" class="col-xs-5 btn btn-default">Add User</a>
+          <a id="shutdown-hub" class="col-xs-5 col-xs-offset-2 btn btn-danger">Shutdown Hub</a>
+        </td>
+      </tr>
+  {% for u in users %}
+    <tr class="user-row" data-user="{{u.name}}" data-admin="{{u.admin}}">
+      {% block user_row scoped %}
+      <td class="name-col col-sm-2">{{u.name}}</td>
+      <td class="admin-col col-sm-2">{% if u.admin %}admin{% endif %}</td>
+      <td class="time-col col-sm-3">{{u.last_activity.isoformat() + 'Z'}}</td>
+      <td class="server-col col-sm-2 text-center">
+        <span class="stop-server btn btn-xs btn-danger {% if not u.running %}hidden{% endif %}">stop server</span>
+        <span class="start-server btn btn-xs btn-success {% if u.running %}hidden{% endif %}">start server</span>
+      </td>
+      <td class="server-col col-sm-1 text-center">
+        {% if admin_access %}
+        <span class="access-server btn btn-xs btn-success {% if not u.running %}hidden{% endif %}">access server</span>
+        {% endif %}
+      </td>
+      <td class="edit-col col-sm-1 text-center">
+        <span class="edit-user btn btn-xs btn-primary">edit</span>
+      </td>
+      <td class="edit-col col-sm-1 text-center">
+        {% if u.name != user.name %}
+        <span class="delete-user btn btn-xs btn-danger">delete</span>
+        {% endif %}
+      </td>
+      {% endblock user_row %}
+    </tr>
+  {% endfor %}
+  </tbody>
+  </table>
+</div>
+
+{% call modal('Delete User', btn_class='btn-danger delete-button') %}
+  Are you sure you want to delete user <span class="delete-username">USER</span>?
+  This operation cannot be undone.
+{% endcall %}
+
+{% call modal('Shutdown Hub', btn_label='Shutdown', btn_class='btn-danger shutdown-button') %}
+  Are you sure you want to shutdown the Hub?
+  You can choose to leave the proxy and/or single-user servers running by unchecking the boxes below:
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="shutdown-proxy-checkbox">Shutdown proxy
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="shutdown-servers-checkbox">Shutdown single-user-servers
+    </label>
+  </div>
+{% endcall %}
+
+{% macro user_modal(name, multi=False) %}
+{% call modal(name, btn_class='btn-primary save-button') %}
+<div class="form-group">
+  <{%- if multi -%}
+    textarea
+    {%- else -%}
+    input type="text"
+    {%- endif %}
+    class="form-control username-input"
+    placeholder="{%- if multi -%} usernames separated by lines{%- else -%} username {%-endif-%}">
+  {%- if multi -%}</textarea>{%- endif -%}
+</div>
+<div class="checkbox">
+  <label>
+    <input type="checkbox" class="admin-checkbox">Admin
+  </label>
+</div>
+{% endcall %}
+{% endmacro %}
+
+{{ user_modal('Edit User') }}
+
+{{ user_modal('Add User', multi=True) }}
+
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+require(["admin"]);
+</script>
+{% endblock %}

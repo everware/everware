@@ -1,0 +1,118 @@
+{% macro modal(title, btn_label=None, btn_class="btn-primary") %}
+{% set key = title.replace(' ', '-').lower() %}
+{% set btn_label = btn_label or title %}
+<div class="modal fade" id="{{key}}-dialog" tabindex="-1" role="dialog" aria-labelledby="{{key}}-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="{{key}}-label">{{title}}</h4>
+      </div>
+      <div class="modal-body">
+        {{ caller() }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn {{btn_class}}" data-dismiss="modal" data-dismiss="modal">{{btn_label}}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <title>{% block title %}Jupyter Hub{% endblock %}</title>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    {% block stylesheet %}
+    <link rel="stylesheet" href="{{ static_url("css/style.min.css") }}" type="text/css"/>
+    {% endblock %}
+    <script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
+    <script>
+      require.config({
+          {% if version_hash %}
+          urlArgs: "v={{version_hash}}",
+          {% endif %}
+          baseUrl: '{{static_url("js", include_version=False)}}',
+          paths: {
+            components: '../components',
+            jquery: '../components/jquery/jquery.min',
+            bootstrap: '../components/bootstrap/js/bootstrap.min',
+            moment: "../components/moment/moment",
+          },
+          shim: {
+            bootstrap: {
+              deps: ["jquery"],
+              exports: "bootstrap"
+            },
+          }
+      });
+    </script>
+    
+    <script type="text/javascript">
+      window.jhdata = {
+        base_url: "{{base_url}}",
+        prefix: "{{prefix}}",
+        {% if user %}
+        user: "{{user.name}}",
+        {% endif %}
+      }
+    </script>
+
+    {% block meta %}
+    {% endblock %}
+
+</head>
+
+<body>
+
+<noscript>
+  <div id='noscript'>
+    Jupyter Hub requires JavaScript.<br>
+    Please enable it to proceed.
+  </div>
+</noscript>
+
+<div id="header" class="navbar navbar-static-top">
+  <div class="container">
+  <span id="jupyterhub-logo" class="pull-left"><a href="{{base_url}}"><img src='{{base_url}}logo' alt='JupyterHub' class='jpy-logo' title='Home'/></a></span>
+
+  {% block login_widget %}
+
+    <span id="login_widget">
+      {% if user %}
+        <a id="logout" class="navbar-btn btn-sm btn btn-default pull-right" href="{{logout_url}}"> <i class="fa fa-sign-out"></i> Logout</a>
+      {% else %}
+        <a id="login" class="btn-sm btn navbar-btn btn-default pull-right" href="{{login_url}}">Login</a>
+      {% endif %}
+    </span>
+
+  {% endblock %}
+
+  {% block header %}
+  {% endblock %}
+  </div>
+</div>
+
+{% block main %}
+{% endblock %}
+
+{% call modal('Error', btn_label='OK') %}
+  <div class="ajax-error">
+    The error
+  </div>
+{% endcall %}
+
+{% block script %}
+{% endblock %}
+
+</body>
+
+</html>
