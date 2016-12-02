@@ -6,6 +6,14 @@ from .metrica import MetricaIdsMixin
 
 class SpawnHandler(default_handlers.SpawnHandler):
 
+    @gen.coroutine
+    def count_running_users(self):
+        running_users = 0
+        for user_id, user in self.users.items():
+            if user.running:
+                running_users += 1
+        return running_users
+
     def _render_form(self, message=''):
         user = self.get_current_user()
         metrica = MetricaIdsMixin()
@@ -22,9 +30,13 @@ class SpawnHandler(default_handlers.SpawnHandler):
 
     @gen.coroutine
     def _spawn(self, user, form_options):
+        running_users = yield self.count_running_users()
         self.redirect('/user/%s' % user.name)
         try:
             options = user.spawner.options_from_form(form_options)
+            options.update({
+                'running_users': running_users
+            })
             yield self.spawn_single_user(user, options=options)
             # if user set another access token (for example he logged with github
             # and clones from bitbucket)

@@ -18,6 +18,7 @@ from tornado import gen
 import ssl
 import json
 import os
+import sys
 
 from .image_handler import ImageHandler
 from .git_processor import GitMixin
@@ -29,6 +30,10 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
+    max_users_running = Integer(
+        config=True
+    )
+
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -144,7 +149,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
         return self.user_options.get('repo_url', '')
-        
+
     @property
     def container_name(self):
         return "{}-{}".format(self.container_prefix,
@@ -283,6 +288,12 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         except APIError as e:
             self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
 
+    def are_too_many_users(self):
+        if not hasattr(self, 'max_users_running'):
+            return False
+        running_users = self.user_options.get('running_users', -1)  
+        self.log.info('{} running_users'.format(running_users))
+        return running_users >= self.max_users_running
 
     @gen.coroutine
     def start(self, image=None):
@@ -292,6 +303,8 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         self._is_building = True
         self._is_empty = False
         try:
+            if self.are_too_many_users():
+                raise Exception('Sorry, there are too many users')
             f = self.build_image()
             image_name = yield gen.with_timeout(
                 timedelta(seconds=self.start_timeout),
@@ -327,7 +340,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 message = "Container doesn't have jupyter-singleuser inside"
             elif 'Cannot locate specified Dockerfile' in message:
                 message = "Your repo doesn't include Dockerfile"
-            self._add_to_log('Something went wrong during building. Error: %s' % message)
+            if message.startswith('Sorry'):
+                self._add_to_log(message)
+            else:
+                self._add_to_log('Something went wrong during building. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
         finally:
@@ -379,7 +395,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                     "Removing container %s (id: %s)",
                     self.container_name, self.container_id[:7])
                 # remove the container, as well as any associated volumes
-                yield self.docker('remove_container', self.container_id, v=True)
+                yield self.docker('remove_container', self.container_id, v=True, force=True)
 
         self.clear_state()
 
