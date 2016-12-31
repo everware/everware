@@ -145,7 +145,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
         return self.user_options.get('repo_url', '')
-        
+
     @property
     def container_name(self):
         return "{}-{}".format(self.container_prefix,
@@ -166,7 +166,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     @gen.coroutine
     def get_container(self):
 
-        self.log.debug("Getting container: %s", self.container_name)
+        # self.log.debug("Getting container: %s", self.container_name)
         try:
             container = yield self.docker(
                 'inspect_container', self.container_name
@@ -174,7 +174,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self.container_id = container['Id']
         except APIError as e:
             if e.response.status_code == 404:
-                self.log.info("Container '%s' is gone", self.container_name)
+                # self.log.info("Container '%s' is gone", self.container_name)
                 container = None
                 # my container is gone, forget my id
                 self.container_id = ''
@@ -238,7 +238,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 self.repo_url
             ))
             self.log.info('Cloning repo %s' % self.repo_url)
-            yield self.prepare_local_repo()
+            dockerfile_exists = yield self.prepare_local_repo()
+            if not dockerfile_exists:
+                self._add_to_log('No dockerfile. Use the default one')
 
             # use git repo URL and HEAD commit sha to derive
             # the image name
@@ -290,6 +292,31 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             )
         except APIError as e:
             self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
+
+    @gen.coroutine
+    def wait_up(self):
+        # copied from jupyterhub, because if user's server didn't appear, it
+        # means that spawn was unsuccessful, need to set is_failed
+        try:
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            ip, port = yield from self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
+        except TimeoutError:
+            self._is_failed = True
+            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
+            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
+                user=self.user.name,
+                timeout=self.http_timeout
+            ))
+            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
+            raise
+        except Exception as e:
+            self._is_failed = True
+            message = str(e)
+            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
+            yield self.notify_about_fail(message)
+            raise e
 
 
     @gen.coroutine

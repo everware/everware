@@ -10,6 +10,7 @@ c.Spawner.tls = False
 c.Spawner.debug = True
 c.Spawner.start_timeout = 1000
 c.Spawner.http_timeout = 60
+c.Spawner.poll_interval = 5
 c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True
