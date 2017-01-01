@@ -93,7 +93,6 @@ function make_list(log, is_failed) {
 }
 require(["jquery"], function ($) {
     var old_color = $('#log-lines-header').css('background');
-    console.log(old_color);
     $('#log-lines-header').click(function () {
         var content = $('#log-lines');
         if (!content.is(':visible'))
