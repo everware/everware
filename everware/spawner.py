@@ -228,7 +228,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         tmp_dir = mkdtemp(suffix='-everware')
         try:
             self.parse_url(self.form_repo_url, tmp_dir)
-            self._add_to_log('Cloning repository %s' % self.repo_url)
+            self._add_to_log('Cloning repository <a href="%s">%s</a>' % (
+                self.repo_url,
+                self.repo_url
+            ))
             self.log.info('Cloning repo %s' % self.repo_url)
             yield self.prepare_local_repo()
 
@@ -355,6 +358,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
+
 
     @gen.coroutine
     def stop(self, now=False):
