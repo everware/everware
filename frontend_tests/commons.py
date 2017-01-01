@@ -86,7 +86,7 @@ class User:
     def is_element_present(self, how, what, displayed):
         try:
             element = self.driver.find_element(by=how, value=what)
-            return element and element.is_displayed() == displayed:
+            return element and element.is_displayed() == displayed
         except NoSuchElementException as e: return False
 
 
