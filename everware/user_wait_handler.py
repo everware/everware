@@ -47,13 +47,19 @@ class UserSpawnHandler(BaseHandler):
             else:
                 if is_up:
                     self.set_login_cookie(current_user)
+                    target = '%s://%s/user/%s' % (
+                        self.request.protocol,
+                        self.request.host,
+                        current_user.name
+                    )
+                    self.log.info('redirecting to %s' % target)
+                    self.redirect(target)
+                    return
                 metrica = MetricaIdsMixin()
                 g_id = metrica.g_analitics_id
                 ya_id = metrica.ya_metrica_id
                 html = self.render_template(
                     "spawn_pending.html",
-                    user=current_user,
-                    is_up=int(is_up),
                     version=__version__,
                     g_analitics_id=g_id,
                     ya_metrica_id=ya_id

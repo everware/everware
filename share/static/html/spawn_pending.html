@@ -55,7 +55,7 @@ function make_list(log, is_failed) {
         }
         is_done.push(true);
         var cur_line = item.text;
-        if (!cur_line.startsWith('Cloning repository'))
+        if (cur_line.lastIndexOf('Cloning repository', 0) !== 0)
             cur_line = escapeHTML(cur_line);
         result.push('<li>' + cur_line + '</li>');
     });
@@ -109,8 +109,6 @@ require(["jquery"], function ($) {
         $('#log-lines').html(res[0]);
         $('head').append('<style type="text/css">' + res[1] + '</style>');
     }
-    var is_up = {{is_up}};
-    var user_name = "{{user.name}}";
     function reload_page() {
         window.location.reload();
     }
@@ -135,12 +133,8 @@ require(["jquery"], function ($) {
             }
         });
     }
-    if (is_up) {
-        window.location.replace('/user/' + user_name);
-    } else {
-        update_log();
-        var id = setInterval(update_log, 2000);
-    }
+    update_log();
+    var id = setInterval(update_log, 2000);
 });
 </script>
 {% endblock %}

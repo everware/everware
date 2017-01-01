@@ -6,6 +6,7 @@ from settings import *
 
 import time
 import re
+import sys
 
 def login(user):
     driver = user.get_driver()
@@ -49,7 +50,6 @@ class User:
                 self.driver.set_window_size(1024, 768)
             if self.driver_type == "firefox":
                 self.driver = webdriver.Firefox()
-            self.driver.implicitly_wait(TIMEOUT)
         return self.driver
 
 
@@ -64,12 +64,14 @@ class User:
 
     def wait_for_element_present(self, how, what, displayed=True, timeout=TIMEOUT):
         for i in range(timeout):
-            element = self.driver.find_element(by=how, value=what)
-            if element is not None and element.is_displayed() == displayed:
+            if self.is_element_present(how, what, displayed):
                 time.sleep(1)  # let handlers attach to the button
                 break
             time.sleep(1)
-        else: assert False, "time out waiting for (%s, %s)" % (how, what)
+        else:
+            print(self.driver.get_log('har'), file=sys.stderr)
+            print(self.driver.get_log('browser'), file=sys.stderr)
+            assert False, "time out waiting for (%s, %s)" % (how, what)
 
     def wait_for_pattern_in_page(self, pattern, timeout=TIMEOUT):
         for i in range(timeout):
@@ -81,9 +83,10 @@ class User:
             assert False, "time out waiting for pattern %s" % pattern
 
 
-    def is_element_present(self, how, what):
-        try: self.driver.find_element(by=how, value=what)
+    def is_element_present(self, how, what, displayed):
+        try:
+            element = self.driver.find_element(by=how, value=what)
+            return element and element.is_displayed() == displayed:
         except NoSuchElementException as e: return False
-        return True
 
 
