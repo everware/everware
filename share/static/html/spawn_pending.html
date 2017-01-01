@@ -110,10 +110,10 @@ require(["jquery"], function ($) {
         $('#log-lines').html(res[0]);
         $('head').append('<style type="text/css">' + res[1] + '</style>');
     }
-    var need_wait = {{need_wait}};
+    var is_up = {{is_up}};
     var user_name = "{{user.name}}";
     function reload_page() {
-        window.location.replace('/user/' + user_name);
+        window.location.reload();
     }
     function update_log() {
         $.getJSON('#', {
@@ -121,26 +121,27 @@ require(["jquery"], function ($) {
         }, function (data) {
             if ('done' in data) {
                 clearInterval(id);
-                if (need_wait) {
-                    write_log_lines(data.log, false);
-                    setTimeout(reload_page, 3000);
-                } else
-                    window.location.reload();
+                write_log_lines(data.log, false);
+                setTimeout(reload_page, 1000);
             } else {
                 var is_failed = false;
                 if ('failed' in data) {
                     clearInterval(id);
                     is_failed = true;
+                    $('#log-lines-header').trigger('click');
+                    $('#big_spinner').css('display', 'none');
                     $("#resist").show();
                 }
                 write_log_lines(data.log, is_failed);
             }
         });
     }
-    console.log(need_wait);
-    update_log();
-    if (!need_wait)
+    if (is_up) {
+        window.location.replace('/user/' + user_name);
+    } else {
+        update_log();
         var id = setInterval(update_log, 2000);
+    }
 });
 </script>
 {% endblock %}

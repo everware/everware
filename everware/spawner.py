@@ -32,6 +32,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
+        self._is_up = False
         self._is_building = False
         self._image_handler = ImageHandler()
         self._cur_waiter = None
@@ -157,6 +158,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     @property
     def is_empty(self):
         return self._is_empty
+
+    @property
+    def is_up(self):
+        return self._is_up
 
     @gen.coroutine
     def get_container(self):
@@ -291,6 +296,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def start(self, image=None):
         """start the single-user server in a docker container"""
         self._user_log = []
+        self._is_up = False
         self._is_failed = False
         self._is_building = True
         self._is_empty = False
@@ -343,6 +349,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             ip, port = yield from self.get_ip_and_port()
             self.user.server.ip = ip
             self.user.server.port = port
+            self._is_up = True
         except TimeoutError:
             self._is_failed = True
             self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
