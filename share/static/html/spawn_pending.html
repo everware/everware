@@ -9,15 +9,25 @@
 <div class="container">
     <div class="row" style="margin-top: 2%">
         <div class="text-center">
-            <p>Your server is starting up.<br>
-            This can take seconds or minutes, please be patient.<br>
-            You will be redirected automatically when it's ready for you.<br>
-            This page is updated automatically.</p>
-            <a id="refresh" class="btn btn-lg btn-primary" href="#">refresh</a>
-            <a id="resist" class="btn btn-lg btn-danger" href="{{base_url}}spawn" style="display: none">Return to spawn page</a>
+            <svg class="spinner" id="big_spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+               <circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+            </svg>
+            <div style="display: inline-block">
+                Your server is starting up.<br>
+                This can take seconds or minutes, please be patient.<br>
+                You will be redirected automatically when it's ready for you.<br>
+                This page is updated automatically.
+            </div>
+            <p style="margin-top: 1%">
+                <a id="refresh" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored " href="#">refresh</a>
+                <span id="log-lines-header" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Build log</span>
+                <a id="resist" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored " href="{{base_url}}spawn" style="display: none">Return to spawn page</a>
+            </p>
         </div>
     </div>
-    <div class="row" id='log-lines' style="margin-top: 2%; width: 85%"></div>
+    <div class="row" style="margin-top: 2%; width: 85%">
+        <div id="log-lines" style="display: none;"></div>
+    </div>
 </div>
 
 {% endblock %}
@@ -44,7 +54,10 @@ function make_list(log, is_failed) {
             cur_level = level;
         }
         is_done.push(true);
-        result.push('<li>' + escapeHTML(item.text) + '</li>');
+        var cur_line = item.text;
+        if (cur_line.lastIndexOf('Cloning repository', 0) !== 0)
+            cur_line = escapeHTML(cur_line);
+        result.push('<li>' + cur_line + '</li>');
     });
     for (var i = 1; i <= cur_level; ++i)
         result.push('</ul>');
@@ -79,6 +92,15 @@ function make_list(log, is_failed) {
     return [result.join(''), style];
 }
 require(["jquery"], function ($) {
+    var old_color = $('#log-lines-header').css('background');
+    $('#log-lines-header').click(function () {
+        var content = $('#log-lines');
+        if (!content.is(':visible'))
+            $(this).css('background', '#3f51b5');
+        else
+            $(this).css('background', old_color);
+        content.slideToggle(200);
+    });
     $("#refresh").click(function () {
         window.location.reload();
     });
@@ -87,10 +109,8 @@ require(["jquery"], function ($) {
         $('#log-lines').html(res[0]);
         $('head').append('<style type="text/css">' + res[1] + '</style>');
     }
-    var need_wait = {{need_wait}};
-    var user_name = "{{user.name}}";
     function reload_page() {
-        window.location.replace('/user/' + user_name);
+        window.location.reload();
     }
     function update_log() {
         $.getJSON('#', {
@@ -98,26 +118,23 @@ require(["jquery"], function ($) {
         }, function (data) {
             if ('done' in data) {
                 clearInterval(id);
-                if (need_wait) {
-                    write_log_lines(data.log, false);
-                    setTimeout(reload_page, 3000);
-                } else
-                    window.location.reload();
+                write_log_lines(data.log, false);
+                setTimeout(reload_page, 1000);
             } else {
                 var is_failed = false;
                 if ('failed' in data) {
                     clearInterval(id);
                     is_failed = true;
+                    $('#log-lines-header').trigger('click');
+                    $('#big_spinner').css('display', 'none');
                     $("#resist").show();
                 }
                 write_log_lines(data.log, is_failed);
             }
         });
     }
-    console.log(need_wait);
     update_log();
-    if (!need_wait)
-        var id = setInterval(update_log, 2000);
+    var id = setInterval(update_log, 2000);
 });
 </script>
 {% endblock %}

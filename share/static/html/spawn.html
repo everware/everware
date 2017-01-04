@@ -14,7 +14,7 @@ style="display: none;"
   Error: {{error_message}}
 {% endif %}
 </div>
-<form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form">
+<form enctype="multipart/form-data" id="spawn_form" action="{{base_url}}spawn" method="post" role="form" style="margin-bottom: 5px;">
   {{spawner_options_form | safe}}
   <br>
   <input type="submit" value="Launch notebook" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
@@ -23,8 +23,8 @@ style="display: none;"
 Paste the link to the git repository you want to try out. If you
 need some inspiration try one of the following repositories:
 <ul>
-  <li>https://github.com/everware/everware-dimuon-example</li>
-  <li>https://github.com/betatim/everware-demo</li>
+  <li><a href="https://github.com/everware/everware-dimuon-example">https://github.com/everware/everware-dimuon-example</a></li>
+  <li><a href="https://github.com/betatim/everware-demo">https://github.com/betatim/everware-demo</a></li>
 </ul>
 Read the documentation
 to <a href="https://github.com/everware/everware/wiki/Being-everware-compatible">learn

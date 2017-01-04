@@ -16,14 +16,13 @@ class UserSpawnHandler(BaseHandler):
             # logged in, work with spawner
             is_log_request = self.get_argument('get_logs', False)
             is_failed = False
-            is_done = False
+            is_up = False
             if current_user.spawner:
                 spawner = current_user.spawner
                 is_running = yield spawner.is_running()
                 log_lines = spawner.user_log
                 is_failed = spawner.is_failed
-                if not current_user.spawn_pending and not is_failed and is_running:
-                    is_done = True
+                is_up = spawner.is_up
                 if spawner.is_empty and not is_failed:
                     self.redirect(url_path_join(self.hub.server.base_url, 'home'))
                     return
@@ -40,21 +39,27 @@ class UserSpawnHandler(BaseHandler):
                     resp.update({
                         'failed': 1
                     })
-                elif is_done:
+                elif is_up:
                     resp.update({
                         'done': 1
                     })
                 self.finish(json_encode(resp))
             else:
-                if is_done:
+                if is_up:
                     self.set_login_cookie(current_user)
+                    target = '%s://%s/user/%s' % (
+                        self.request.protocol,
+                        self.request.host,
+                        current_user.name
+                    )
+                    self.log.info('redirecting to %s' % target)
+                    self.redirect(target)
+                    return
                 metrica = MetricaIdsMixin()
                 g_id = metrica.g_analitics_id
                 ya_id = metrica.ya_metrica_id
                 html = self.render_template(
                     "spawn_pending.html",
-                    user=current_user,
-                    need_wait=int(is_done),
                     version=__version__,
                     g_analitics_id=g_id,
                     ya_metrica_id=ya_id

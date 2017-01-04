@@ -38,6 +38,8 @@ def run_scenario(username, scenario):
     try:
         scenario(user)
     except Exception as e:
+        print(user.get_driver().get_log('har'), file=sys.stderr)
+        print(user.get_driver().get_log('browser'), file=sys.stderr)
         make_screenshot(user.driver, "{}-{}.png".format(username, scenario.__name__))
         raise
     finally:

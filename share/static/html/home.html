@@ -8,18 +8,18 @@
       <p>You are currently logged in through <strong>{{ login_service }}</strong>.</p>
       {% if user.running %}
         <p>
-          Currently checked out repository: {{ repourl }}<br>
+          Currently checked out repository: <a href="{{ repourl }}">{{ repourl }}</a><br>
           You are on branch <strong>{{ branch_name }}</strong>, commit <strong>{{ commit_sha }}</strong>
         </p>
         {% if fork_exists %}
           <p>You have a repository with the same name, which we can push to!</p>
           {% if repository_changed %}
-            <p>You have made changes. Do you want to <a id="fork" class="btn btn-sm btn-success" href="/hub/home?do_push=1">push</a>?</p>
+            <p>You have made changes. Do you want to <a id="fork" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_push=1">push</a>?</p>
           {% else %}
             <p>But you have to make changes to the checked out repository before you can push.</p>
           {% endif %}
         {% else %}
-          <p>You don't have a repository with the same name. Do you want to <a id="push" class="btn btn-sm btn-success" href="/hub/home?do_fork=1">fork</a> it?</p>
+          <p>You don't have a repository with the same name. Do you want to <a id="push" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_fork=1">fork</a> it?</p>
         {% endif %}
       {% endif %}
      </div>
@@ -45,7 +45,7 @@
         </a>
       {% endif %}
       {% if user.admin %}
-        <a id="admin" class="btn btn-lg btn-primary" href="{{base_url}}admin">Admin</a>
+        <a id="admin" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="{{base_url}}admin">Admin</a>
       {% endif %}
     </div>
   </div>
