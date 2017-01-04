@@ -6,7 +6,6 @@ from settings import *
 
 import time
 import re
-import sys
 
 def login(user):
     driver = user.get_driver()
@@ -69,8 +68,6 @@ class User:
                 break
             time.sleep(1)
         else:
-            print(self.driver.get_log('har'), file=sys.stderr)
-            print(self.driver.get_log('browser'), file=sys.stderr)
             assert False, "time out waiting for (%s, %s)" % (how, what)
 
     def wait_for_pattern_in_page(self, pattern, timeout=TIMEOUT):

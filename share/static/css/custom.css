@@ -69,6 +69,8 @@ a {
     display: none;
 }
 
+/* from https://codepen.io/mrrocks/pen/EiplA */
+
 @-webkit-keyframes rotator {
   0% {
     -webkit-transform: rotate(0deg);
