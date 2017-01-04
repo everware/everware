@@ -3,6 +3,7 @@ import git
 from concurrent.futures import ThreadPoolExecutor
 from tornado import gen
 import os
+import os.path
 
 
 class GitMixin:
@@ -104,11 +105,13 @@ class GitMixin:
         self._repo_sha = repo.rev_parse('HEAD').hexsha
         self._branch_name = repo.active_branch.name
 
-        dockerfile_path = os.join(self._repo_dir, 'Dockerfile')
+        dockerfile_path = os.path.join(self._repo_dir, 'Dockerfile')
         if not os.path.isfile(dockerfile_path):
+            if not os.environ.get('DEFAULT_DOCKER_IMAGE'):
+                raise Exception('No dockerfile in repository')
             with open(dockerfile_path, 'w') as fout:
                 fout.writelines([
-                    'FROM everware/datascience-jupyter:latest\n',
+                    'FROM %s\n' % os.environ['DEFAULT_DOCKER_IMAGE'],
                     'MAINTAINER Alexander Tiunov <astiunov@yandex-team.ru>'
                 ])
             return False

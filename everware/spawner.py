@@ -2,6 +2,7 @@ from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
 from shutil import rmtree
+from pprint import pformat
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -219,6 +220,33 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         })
 
     @gen.coroutine
+    def wait_up(self):
+        # copied from jupyterhub, because if user's server didn't appear, it
+        # means that spawn was unsuccessful, need to set is_failed
+        try:
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            ip, port = yield from self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
+            self._is_up = True
+        except TimeoutError:
+            self._is_failed = True
+            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
+            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
+                user=self.user.name,
+                timeout=self.http_timeout
+            ))
+            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
+            raise
+        except Exception as e:
+            self._is_failed = True
+            message = str(e)
+            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
+            yield self.notify_about_fail(message)
+            raise e
+
+
+    @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
         if self.form_repo_url.startswith('docker:'):
@@ -240,7 +268,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self.log.info('Cloning repo %s' % self.repo_url)
             dockerfile_exists = yield self.prepare_local_repo()
             if not dockerfile_exists:
-                self._add_to_log('No dockerfile. Use the default one')
+                self._add_to_log('No dockerfile. Use the default one %s' % os.environ['DEFAULT_DOCKER_IMAGE'])
 
             # use git repo URL and HEAD commit sha to derive
             # the image name
@@ -302,6 +330,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             ip, port = yield from self.get_ip_and_port()
             self.user.server.ip = ip
             self.user.server.port = port
+            self._is_up = True
         except TimeoutError:
             self._is_failed = True
             self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
@@ -361,37 +390,13 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             message = str(e)
             if message.startswith('Failed to get port'):
                 message = "Container doesn't have jupyter-singleuser inside"
-            elif 'Cannot locate specified Dockerfile' in message:
-                message = "Your repo doesn't include Dockerfile"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
         finally:
             self._is_building = False
 
-        # copied from jupyterhub, because if user's server didn't appear, it
-        # means that spawn was unsuccessful, need to set is_failed
-        try:
-            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
-            ip, port = yield from self.get_ip_and_port()
-            self.user.server.ip = ip
-            self.user.server.port = port
-            self._is_up = True
-        except TimeoutError:
-            self._is_failed = True
-            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
-            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
-                user=self.user.name,
-                timeout=self.http_timeout
-            ))
-            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
-            raise
-        except Exception as e:
-            self._is_failed = True
-            message = str(e)
-            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
-            yield self.notify_about_fail(message)
-            raise e
+        yield self.wait_up()
 
 
     @gen.coroutine
