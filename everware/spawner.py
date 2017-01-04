@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from docker.errors import APIError
 from smtplib import SMTPException
+from jupyterhub.utils import wait_for_http_server
 
 from dockerspawner import DockerSpawner
 from traitlets import (
@@ -444,6 +445,34 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             yield self.executor.submit(self.send_email, from_email, email, subject, message)
         except SMTPException as exc:
             self.log.warn("Can't send a email due to %s" % str(exc))
+
+    @gen.coroutine
+    def poll(self):
+        container = yield self.get_container()
+        if not container:
+            return ''
+
+        container_state = container['State']
+        self.log.debug(
+            "Container %s status: %s",
+            self.container_id[:7],
+            pformat(container_state),
+        )
+
+        if container_state["Running"]:
+            # check if something is listening inside container
+            try:
+                yield wait_for_http_server(self.user.server.url, timeout=1)
+            except TimeoutError:
+                self.log.warn("Can't reach running container by http")
+                return ''
+            return None
+        else:
+            return (
+                "ExitCode={ExitCode}, "
+                "Error='{Error}', "
+                "FinishedAt={FinishedAt}".format(**container_state)
+            )
 
     @gen.coroutine
     def is_running(self):
