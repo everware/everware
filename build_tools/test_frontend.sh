@@ -31,7 +31,7 @@ for run_type in "normal" "nonstop"; do
     for scenario in ${SCENARIOS}; do
         echo "Running scenario $scenario"
         if [ "$scenario" = "scenario_default_dockerfile" ]; then
-            export DEFAULT_DOCKER_IMAGE="yandexdataschool/neurohack-jupyter:2016.12"
+            export DEFAULT_DOCKER_IMAGE="anaderi/rep-jupyterhub:latest"
         fi
         everware-server $RUN_OPTIONS > $LOG 2>&1 &
         sleep $WAIT_FOR_START
