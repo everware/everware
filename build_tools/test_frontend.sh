@@ -16,8 +16,8 @@ function kill_everware {
 }
 
 if [ -z "$UPLOADDIR" ] ; then
-	echo "no UPLOADDIR defined"
-	exit 1
+    echo "no UPLOADDIR defined"
+    exit 1
 fi
 [ -d "$UPLOADDIR" ] && rm -rf "$UPLOADDIR"/*
 
@@ -30,6 +30,9 @@ for run_type in "normal" "nonstop"; do
 
     for scenario in ${SCENARIOS}; do
         echo "Running scenario $scenario"
+        if [ "$scenario" = "scenario_default_dockerfile" ]; then
+            export DEFAULT_DOCKER_IMAGE="yandexdataschool/neurohack-jupyter:2016.12"
+        fi
         everware-server $RUN_OPTIONS > $LOG 2>&1 &
         sleep $WAIT_FOR_START
         if [[ -z `pgrep -f everware-server` ]] ; then
@@ -40,6 +43,7 @@ for run_type in "normal" "nonstop"; do
 
         export EVERWARE_MODULE=$run_type
         export EVERWARE_SCENARIO=$scenario
+
         nose2 -v -N $NPROC --start-dir=$TESTS_DIR || FAIL=1
         if [[ $FAIL -eq 1 ]]; then
             kill_everware
