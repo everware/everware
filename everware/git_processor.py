@@ -2,6 +2,8 @@ import re
 import git
 from concurrent.futures import ThreadPoolExecutor
 from tornado import gen
+import os
+import os.path
 
 
 class GitMixin:
@@ -92,12 +94,30 @@ class GitMixin:
 
     @gen.coroutine
     def prepare_local_repo(self):
+        """Returns False if there is no Dockerfile in repo
+
+        True otherwise
+        """
         clone_url = self.repo_url_with_token
         yield self.git('clone', clone_url, self._repo_dir)
         repo = git.Repo(self._repo_dir)
         repo.git.reset('--hard', self._repo_pointer)
         self._repo_sha = repo.rev_parse('HEAD').hexsha
         self._branch_name = repo.active_branch.name
+
+        dockerfile_path = os.path.join(self._repo_dir, 'Dockerfile')
+        if not os.path.isfile(dockerfile_path):
+            if not os.environ.get('DEFAULT_DOCKER_IMAGE'):
+                raise Exception('No dockerfile in repository')
+            with open(dockerfile_path, 'w') as fout:
+                fout.writelines([
+                    'FROM %s\n' % os.environ['DEFAULT_DOCKER_IMAGE'],
+                    'MAINTAINER Alexander Tiunov <astiunov@yandex-team.ru>'
+                ])
+            return False
+        else:
+            return True
+
 
     @property
     def escaped_repo_url(self):
