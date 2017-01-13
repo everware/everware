@@ -2,11 +2,13 @@ from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
 from shutil import rmtree
+from pprint import pformat
 
 from concurrent.futures import ThreadPoolExecutor
 
 from docker.errors import APIError
 from smtplib import SMTPException
+from jupyterhub.utils import wait_for_http_server
 
 from dockerspawner import DockerSpawner
 from traitlets import (
@@ -145,7 +147,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
         return self.user_options.get('repo_url', '')
-        
+
     @property
     def container_name(self):
         return "{}-{}".format(self.container_prefix,
@@ -166,7 +168,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     @gen.coroutine
     def get_container(self):
 
-        self.log.debug("Getting container: %s", self.container_name)
+        # self.log.debug("Getting container: %s", self.container_name)
         try:
             container = yield self.docker(
                 'inspect_container', self.container_name
@@ -174,7 +176,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self.container_id = container['Id']
         except APIError as e:
             if e.response.status_code == 404:
-                self.log.info("Container '%s' is gone", self.container_name)
+                # self.log.info("Container '%s' is gone", self.container_name)
                 container = None
                 # my container is gone, forget my id
                 self.container_id = ''
@@ -219,6 +221,33 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         })
 
     @gen.coroutine
+    def wait_up(self):
+        # copied from jupyterhub, because if user's server didn't appear, it
+        # means that spawn was unsuccessful, need to set is_failed
+        try:
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            ip, port = yield from self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
+            self._is_up = True
+        except TimeoutError:
+            self._is_failed = True
+            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
+            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
+                user=self.user.name,
+                timeout=self.http_timeout
+            ))
+            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
+            raise
+        except Exception as e:
+            self._is_failed = True
+            message = str(e)
+            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
+            yield self.notify_about_fail(message)
+            raise e
+
+
+    @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
         if self.form_repo_url.startswith('docker:'):
@@ -238,7 +267,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 self.repo_url
             ))
             self.log.info('Cloning repo %s' % self.repo_url)
-            yield self.prepare_local_repo()
+            dockerfile_exists = yield self.prepare_local_repo()
+            if not dockerfile_exists:
+                self._add_to_log('No dockerfile. Use the default one %s' % os.environ['DEFAULT_DOCKER_IMAGE'])
 
             # use git repo URL and HEAD commit sha to derive
             # the image name
@@ -291,6 +322,32 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         except APIError as e:
             self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
 
+    @gen.coroutine
+    def wait_up(self):
+        # copied from jupyterhub, because if user's server didn't appear, it
+        # means that spawn was unsuccessful, need to set is_failed
+        try:
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            ip, port = yield self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
+            self._is_up = True
+        except TimeoutError:
+            self._is_failed = True
+            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
+            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
+                user=self.user.name,
+                timeout=self.http_timeout
+            ))
+            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
+            raise
+        except Exception as e:
+            self._is_failed = True
+            message = str(e)
+            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
+            yield self.notify_about_fail(message)
+            raise e
+
 
     @gen.coroutine
     def start(self, image=None):
@@ -334,38 +391,14 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             message = str(e)
             if message.startswith('Failed to get port'):
                 message = "Container doesn't have jupyter-singleuser inside"
-            elif 'Cannot locate specified Dockerfile' in message:
-                message = "Your repo doesn't include Dockerfile"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
             yield self.notify_about_fail(message)
             raise e
         finally:
             self._is_building = False
 
-        # copied from jupyterhub, because if user's server didn't appear, it
-        # means that spawn was unsuccessful, need to set is_failed
-        try:
-            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
-            ip, port = yield self.get_ip_and_port()
-            self.user.server.ip = ip
-            self.user.server.port = port
-            self._is_up = True
-            return ip, port  # jupyterhub 0.7 prefers returning ip, port
-        except TimeoutError:
-            self._is_failed = True
-            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
-            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
-                user=self.user.name,
-                timeout=self.http_timeout
-            ))
-            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
-            raise
-        except Exception as e:
-            self._is_failed = True
-            message = str(e)
-            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
-            yield self.notify_about_fail(message)
-            raise e
+        yield self.wait_up()
+        return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
 
 
     @gen.coroutine
@@ -413,6 +446,34 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             yield self.executor.submit(self.send_email, from_email, email, subject, message)
         except SMTPException as exc:
             self.log.warn("Can't send a email due to %s" % str(exc))
+
+    @gen.coroutine
+    def poll(self):
+        container = yield self.get_container()
+        if not container:
+            return ''
+
+        container_state = container['State']
+        self.log.debug(
+            "Container %s status: %s",
+            self.container_id[:7],
+            pformat(container_state),
+        )
+
+        if container_state["Running"]:
+            # check if something is listening inside container
+            try:
+                yield wait_for_http_server(self.user.server.url, timeout=1)
+            except TimeoutError:
+                self.log.warn("Can't reach running container by http")
+                return ''
+            return None
+        else:
+            return (
+                "ExitCode={ExitCode}, "
+                "Error='{Error}', "
+                "FinishedAt={FinishedAt}".format(**container_state)
+            )
 
     @gen.coroutine
     def is_running(self):
