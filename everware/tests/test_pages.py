@@ -1,7 +1,7 @@
 import requests
 
 from jupyterhub.utils import url_path_join as ujoin
-from jupyterhub.tests.mocking import public_url, public_host, user_url
+from jupyterhub.tests.mocking import public_url, public_host
 
 
 def test_github_login_no_auth(app, io_loop):

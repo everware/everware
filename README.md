@@ -41,7 +41,7 @@ started](https://github.com/everware/everware/wiki/Getting-Started).
 In order to deploy your own `everware` instance, you have to:
 
  - install `nodejs` and `npm` (platform-specific)
- - create and activate a `conda` environment with python 3.5
+ - create and activate a `conda` environment with python 3.5(or 3.6.0)
 ```
     conda create -n everware python=3.5
     source activate everware
@@ -64,9 +64,9 @@ In order to deploy your own `everware` instance, you have to:
 ```
     everware-server -f etc/local_dockermachine_config.py --debug --no-ssl
 ```
- - If you are on **Linux** make sure `dockerd` is running and your
-   environment contains the required information (`DOCKER_HOST` is set, etc).
-   Then start `everware` with
+ - If you are on **Linux** make sure `dockerd` is running, your user 
+   is in docker group and your environment contains the required 
+   information (`DOCKER_HOST` is set, etc). Then start `everware` with
 ```
     everware-server -f etc/local_config.py --debug --no-ssl
 ```
