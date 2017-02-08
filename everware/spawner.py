@@ -14,6 +14,7 @@ from dockerspawner import DockerSpawner
 from traitlets import (
     Integer,
     Unicode,
+    Int
 )
 from tornado import gen
 
@@ -31,6 +32,10 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
+    custom_service_port = Int(8081, config=True)
+    custom_service_url = Unicode('', config=True)
+    custom_service_command = Unicode('', config=True)
+
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -214,6 +219,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def is_building(self):
         return self._is_building
 
+    @property
+    def service_host(self):
+        return 'http://%s:%d' % (self.user.server.ip, 32001)
+
     def _add_to_log(self, message, level=1):
         self._user_log.append({
             'text': message,
@@ -344,8 +353,24 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 yield self.remove_old_container()
             self.log.info("Starting container from image: %s" % image_name)
             self._add_to_log('Creating container')
+
+            extra_create_kwargs = {}
+            extra_host_config = {}
+            if self.has_custom_service():
+                extra_host_config = {
+                    'port_bindings': {
+                        self.custom_service_port: (self.container_ip, 32001),
+                        self.container_port: (self.container_ip,)
+                    }
+                }
+                extra_create_kwargs = {
+                    'ports': [self.custom_service_port]
+                }
+
             yield super(CustomDockerSpawner, self).start(
-                image=image_name
+                image=image_name,
+                extra_host_config=extra_host_config,
+                extra_create_kwargs=extra_create_kwargs
             )
             self._add_to_log('Adding to proxy')
         except gen.TimeoutError:
@@ -453,6 +478,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         status = yield self.poll()
         return status is None
 
+    def has_custom_service(self):
+        return self.custom_service_command and self.custom_service_url
+
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
         env.update({
@@ -465,6 +493,12 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 'EVER_VERSION': __version__,
             })
             env.update(self.user_options)
+
+        if self.has_custom_service():
+            env.update({
+                'CUSTOM_SERVICE': self.custom_service_command,
+                'CUSTOM_SERVICE_PORT': self.custom_service_port
+            })
         return env
 
 

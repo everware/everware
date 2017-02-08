@@ -31,6 +31,7 @@ class SpawnHandler(default_handlers.SpawnHandler):
             # Or clones from a private repo
             if user.spawner.token:
                 user.token = user.spawner.token
+
         except Exception as e:
             self.log.error("Failed to spawn single-user server with form", exc_info=True)
 
