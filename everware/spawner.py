@@ -30,11 +30,10 @@ from . import __version__
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-
 class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     custom_service_port = Int(8081, config=True)
     custom_service_url = Unicode('', config=True)
-    custom_service_command = Unicode('', config=True)
+    custom_service_name = Unicode('', config=True)
 
     def __init__(self, **kwargs):
         self._user_log = []
@@ -219,9 +218,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
     def is_building(self):
         return self._is_building
 
-    @property
+    @gen.coroutine
     def service_host(self):
-        return 'http://%s:%d' % (self.user.server.ip, 32001)
+        ip, port = yield self.custom_service_ip_and_port()
+        return 'http://%s:%s' % (ip, port)
 
     def _add_to_log(self, message, level=1):
         self._user_log.append({
@@ -359,7 +359,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             if self.has_custom_service():
                 extra_host_config = {
                     'port_bindings': {
-                        self.custom_service_port: (self.container_ip, 32001),
+                        self.custom_service_port: (self.container_ip,),
                         self.container_port: (self.container_ip,)
                     }
                 }
@@ -398,7 +398,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         yield self.wait_up()
         return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
 
-
     @gen.coroutine
     def stop(self, now=False):
         """Stop the container
@@ -425,6 +424,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 yield self.docker('remove_container', self.container_id, v=True)
 
         self.clear_state()
+
+    @property
+    def username(self):
+        return self.user_options['username']
 
     @gen.coroutine
     def notify_about_fail(self, reason):
@@ -479,7 +482,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         return status is None
 
     def has_custom_service(self):
-        return self.custom_service_command and self.custom_service_url
+        return self.custom_service_url and self.custom_service_name
 
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
@@ -496,10 +499,18 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
 
         if self.has_custom_service():
             env.update({
-                'CUSTOM_SERVICE': self.custom_service_command,
                 'CUSTOM_SERVICE_PORT': self.custom_service_port
             })
         return env
+
+    @gen.coroutine
+    def custom_service_ip_and_port(self):
+        resp = yield self.docker('port', self.container_id, self.custom_service_port)
+        if resp is None:
+            raise RuntimeError("Failed to get custom service port info for %s" % self.container_id)
+        ip = resp[0]['HostIp']
+        port = resp[0]['HostPort']
+        return ip, port
 
 
 class CustomSwarmSpawner(CustomDockerSpawner):
