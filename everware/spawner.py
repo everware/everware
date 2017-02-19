@@ -425,10 +425,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
 
         self.clear_state()
 
-    @property
-    def username(self):
-        return self.user_options['username']
-
     @gen.coroutine
     def notify_about_fail(self, reason):
         email = os.environ.get('EMAIL_SUPPORT_ADDR')
