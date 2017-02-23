@@ -17,6 +17,16 @@ class Everware(app.JupyterHub):
 
     def init_handlers(self):
         super().init_handlers()
+        self.replace_handlers(handlers_map)
+
+    def replace_handlers(self, handlers_map):
+        """Replace default handler classes with new ones.
+
+        Parameters
+        ----------
+        handlers_map : dict
+            Contains a mapping old_handler_class:new_handler_class.
+        """
         for i, cur_handler in enumerate(self.handlers):
             new_handler = handlers_map.get(cur_handler[1])
             if new_handler:
@@ -24,6 +34,20 @@ class Everware(app.JupyterHub):
                 cur_handler[1] = new_handler
                 self.handlers[i] = tuple(cur_handler)
 
+    def add_handlers(self, handlers):
+        """Add new handlers.
+
+        Parameters
+        ----------
+        handlers : iterable
+            Contains tuples representing handlers: (url, handler[, init_args]).
+        """
+        if self.handlers[-1][0] == '(.*)':
+            for handler in handlers:
+                self.handlers.insert(-1, handler)
+        else:
+            for handler in handlers:
+                self.handlers.append(handler)
 
 main = Everware.launch_instance
 
