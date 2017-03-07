@@ -91,3 +91,10 @@ be satisfied if it is installed which might leave you with an old version.
 [jupyterhub]: https://github.com/jupyter/jupyterhub
 [dockerspawner]: https://github.com/jupyter/dockerspawner
 [firefox]: https://www.mozilla.org/en-US/firefox/
+
+## More information
+
+Speaker Deck slides (2016-10):
+<script async class="speakerdeck-embed" data-id="6c8a3555e35e471190e9b9c349fabf3d" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+Paper (2017-02): https://arxiv.org/abs/1703.01200
