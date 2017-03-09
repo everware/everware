@@ -4,6 +4,7 @@ import jupyterhub.handlers.base as base
 from jupyterhub import app
 from everware import SpawnHandler, UserSpawnHandler, HomeHandler
 import sys
+import warnings
 
 handlers_map = {
     pages.HomeHandler: HomeHandler,
@@ -27,12 +28,16 @@ class Everware(app.JupyterHub):
         handlers_map : dict
             Contains a mapping old_handler_class:new_handler_class.
         """
+        replacement_count = 0
         for i, cur_handler in enumerate(self.handlers):
             new_handler = handlers_map.get(cur_handler[1])
             if new_handler:
                 cur_handler = list(cur_handler)
                 cur_handler[1] = new_handler
                 self.handlers[i] = tuple(cur_handler)
+                replacement_count += 1
+        if replacement_count != len(handlers_map):
+            warnings.warn('Some handler replacements failed', RuntimeWarning)
 
     def add_handlers(self, handlers):
         """Add new handlers.
