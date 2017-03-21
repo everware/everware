@@ -6,11 +6,12 @@ from everware import SpawnHandler, UserSpawnHandler, HomeHandler
 import sys
 import warnings
 
-handlers_map = {
-    pages.HomeHandler: HomeHandler,
-    pages.SpawnHandler: SpawnHandler,
-    base.UserSpawnHandler: UserSpawnHandler
-}
+
+CUSTOM_HANDLERS = [
+    ('/hub/user/([^/]+)(/.*)?', UserSpawnHandler),
+    ('/hub/home', HomeHandler),
+    ('/hub/spawn', SpawnHandler)
+]
 
 
 class Everware(app.JupyterHub):
@@ -18,41 +19,32 @@ class Everware(app.JupyterHub):
 
     def init_handlers(self):
         super().init_handlers()
-        self.replace_handlers(handlers_map)
+        self.add_handlers(CUSTOM_HANDLERS)
 
-    def replace_handlers(self, handlers_map):
-        """Replace default handler classes with new ones.
-
-        Parameters
-        ----------
-        handlers_map : dict
-            Contains a mapping old_handler_class:new_handler_class.
-        """
-        replacement_count = 0
-        for i, cur_handler in enumerate(self.handlers):
-            new_handler = handlers_map.get(cur_handler[1])
-            if new_handler:
-                cur_handler = list(cur_handler)
-                cur_handler[1] = new_handler
-                self.handlers[i] = tuple(cur_handler)
-                replacement_count += 1
-        if replacement_count != len(handlers_map):
-            warnings.warn('Some handler replacements failed', RuntimeWarning)
-
-    def add_handlers(self, handlers):
+    def add_handlers(self, new_handlers, replace_existing=True):
         """Add new handlers.
 
         Parameters
         ----------
-        handlers : iterable
+        handlers : list-like
             Contains tuples representing handlers: (url, handler[, init_args]).
+        replace_existing : bool, optional(True)
+            If True, old handlers will be overwritten by new ones on overlapping urls.
         """
+        for index, handler in enumerate(self.handlers):
+            for new_index, new_handler in enumerate(new_handlers):
+                if handler[0] == new_handler[0]:
+                    if replace_existing:
+                        self.handlers[index] = new_handler
+                    new_handlers.pop(new_index)
+                    break
         if self.handlers[-1][0] == '(.*)':
-            for handler in handlers:
+            for handler in new_handlers:
                 self.handlers.insert(-1, handler)
         else:
-            for handler in handlers:
+            for handler in new_handlers:
                 self.handlers.append(handler)
+
 
 main = Everware.launch_instance
 
