@@ -60,9 +60,9 @@ class HomeHandler(BaseHandler):
             branch_name = user.spawner.branch_name
             commit_sha = user.spawner.commit_sha
             repo_url = user.spawner.repo_url
-            if user.spawner.has_custom_service():
-                custom_service_url = yield user.spawner.service_host()
-                custom_service_name = user.spawner.custom_service_name
+            if user.spawner.need_run_custom_service():
+                custom_service_url = user.spawner.custom_service_path
+                custom_service_name = 'Git Web UI'
         if user.running and getattr(user, 'login_service', '') == 'github':
             if do_fork:
                 self.log.info('Will fork %s' % user.spawner.repo_url)
