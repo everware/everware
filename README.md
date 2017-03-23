@@ -91,3 +91,9 @@ be satisfied if it is installed which might leave you with an old version.
 [jupyterhub]: https://github.com/jupyter/jupyterhub
 [dockerspawner]: https://github.com/jupyter/dockerspawner
 [firefox]: https://www.mozilla.org/en-US/firefox/
+
+## More information
+
+Slides (2016-10): https://speakerdeck.com/anaderi/everware-toolkit-supporting-reproducible-science-and-challenge-driven-education
+
+Paper (2017-02): https://arxiv.org/abs/1703.01200
