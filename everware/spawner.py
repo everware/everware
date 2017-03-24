@@ -140,14 +140,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                    checked />
             <span class="mdl-checkbox__label">Remove previous container if it exists</span>
           </label>
-          <label for="everware_based" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
-            <input type="checkbox"
-                   name="everware_based"
-                   class="mdl-checkbox__input"
-                   id="everware_based"
-                   checked />
-            <span class="mdl-checkbox__label">This repository is everware-compatible</span>
-          </label>
           <label for="custom_service" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
             <input type="checkbox"
                    name="custom_service"
@@ -163,10 +155,8 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         options.update(formdata)
         need_remove = formdata.get('need_remove', ['on'])[0].strip()
         need_custom_service = formdata.get('custom_service', ['off'])[0].strip()
-        compatible_repo = formdata.get('everware_based', ['on'])[0].strip()
         options['need_remove'] = need_remove == 'on'
         options['custom_service'] = need_custom_service == 'on'
-        options['everware_based'] = compatible_repo == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
         return options
@@ -259,8 +249,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             ip, port = yield self.get_ip_and_port()
             self.user.server.ip = ip
             self.user.server.port = port
-            self.log.info('have PORT {}'.format(port))
             yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
+            self.user.server.ip = ip
+            self.user.server.port = port
             self._is_up = True
         except TimeoutError:
             self._is_failed = True
@@ -319,7 +310,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                     'build',
                     path=tmp_dir,
                     tag=image_name,
-                    pull=False,
+                    pull=True,
                     rm=True,
                 )
                 self._user_log.extend(self._cur_waiter.building_log)
@@ -405,6 +396,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                 level=2
             )
             yield self.notify_about_fail("Timeout limit %.3f exceeded" % self.start_timeout)
+            self._is_building = False
             raise
         except Exception as e:
             self._is_failed = True
@@ -413,19 +405,29 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                 message = "Container doesn't have jupyter-singleuser inside"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
             yield self.notify_about_fail(message)
+            self._is_building = False
             raise e
+
+        try:
+            yield self.prepare_container(
+                self.need_run_custom_service()
+            )
+        except Exception as e:
+            self.log.warn('exception when preparing container: {}'.format(str(e)))
         finally:
             self._is_building = False
 
-        yield self.prepare_container(
-            self.user_options['everware_based'],
-            self.need_run_custom_service()
-        )
         self._add_to_log('Adding to proxy')
         yield self.wait_up()
         if self.need_run_custom_service():
+            target_host = yield self.service_host()
+            self.log.info('Adding service of %s to proxy %s => %s' % (
+                self.user.name,
+                self.custom_service_path,
+                target_host
+            ))
             yield self.proxy.api_request(self.custom_service_path, method='POST', body={
-                'target': self.container_proxy_host
+                'target': target_host
             })
         return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
 
@@ -497,6 +499,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         if container_state["Running"]:
             # check if something is listening inside container
             try:
+                # self.log.info('poll {}'.format(self.user.server.url))
                 yield wait_for_http_server(self.user.server.url, timeout=1)
             except TimeoutError:
                 self.log.warn("Can't reach running container by http")
