@@ -14,7 +14,7 @@ def test_github_login_no_auth(app, io_loop):
     print(url)
     r = requests.get(url)
     r.raise_for_status()
-    assert r.url == ujoin(url, app.hub.server.base_url, 'login')
+    assert r.url == ujoin(url, 'hub/login')
     assert "Sign in with GitHub" in r.text
 
 def test_authed_user_bypasses_login(app):
@@ -25,7 +25,7 @@ def test_authed_user_bypasses_login(app):
     url = public_url(app)
     print(url)
     print(app.hub.server.base_url)
-    assert r.url == ujoin(url, app.hub.server.base_url, 'home')
+    assert r.url == ujoin(url, 'hub/home')
 
 def test_username_case(app):
     # A logged in user should go straight to the control panel
@@ -37,7 +37,7 @@ def test_username_case(app):
 def test_whitelist(app):
     url = public_url(app)
     r = requests.post(
-        ujoin(url, app.hub.server.base_url, 'oauth_callback'),
+        ujoin(url, 'hub/oauth_callback'),
         data={
             'username': 'wrong',
             'password': 'wrong'
