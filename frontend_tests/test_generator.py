@@ -16,6 +16,7 @@ SCENARIOS = [
     normal_scenarios.scenario_no_jupyter,
     normal_scenarios.scenario_no_dockerfile,
     normal_scenarios.scenario_default_dockerfile, # should go after no_dockerfile
+    normal_scenarios.scenario_default_private_repos,
     nonstop_scenarios.scenario_simple
 ]
 
@@ -30,6 +31,10 @@ def test_generator():
     module_name = '%s_scenarios' % os.environ['EVERWARE_MODULE']
     method_name = os.environ['EVERWARE_SCENARIO']
     scenario = getattr(sys.modules[module_name], method_name)
+
+    if scenario == normal_scenarios.scenario_default_private_repos:
+        return run_scenario("everware-test", scenario)
+
     for username in USERS:
         yield run_scenario, username, scenario
 

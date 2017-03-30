@@ -7,14 +7,14 @@ from settings import *
 import time
 import re
 
-def login(user):
+def login(user, password=""):
     driver = user.get_driver()
     driver.get(user.base_url + "/hub/login")
     user.log("login")
     driver.find_element_by_id("username_input").clear()
     driver.find_element_by_id("username_input").send_keys(user.login)
     driver.find_element_by_id("password_input").clear()
-    driver.find_element_by_id("password_input").send_keys(user.password)
+    driver.find_element_by_id("password_input").send_keys(password)
     driver.find_element_by_id("login_submit").click()
     return driver
 
@@ -30,7 +30,6 @@ class User:
     def __init__(self, login=None, repo=DEFAULT_REPO, driver_type=DRIVER):
         self.login = login
         self.repo = repo
-        self.password = ""
         self.log("init")
 
         self.driver_type = driver_type

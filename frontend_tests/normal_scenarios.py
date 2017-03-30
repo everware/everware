@@ -84,3 +84,18 @@ def scenario_default_dockerfile(user):
     user.wait_for_pattern_in_page(r"Launch\s+a\s+notebook")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
+
+def scenario_default_private_repos(user):
+    driver = commons.login(user, "a4a91f73767a137bc6616c9a2e828c1bd8ca1854")
+    user.wait_for_element_present(By.ID, "start")
+    driver.find_element_by_id("start").click()
+    commons.fill_repo_info(driver, user, "https://github.com/anaderi/everware_private_test")
+    user.log("spawn clicked")
+    user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
+    driver.find_element_by_link_text("Control Panel").click()
+    user.wait_for_element_present(By.ID, "stop")
+    driver.find_element_by_id("stop").click()
+    user.log("stop clicked")
+    user.wait_for_pattern_in_page(r"Launch\s+a\s+notebook")
+    driver.find_element_by_id("logout").click()
+    user.log("logout clicked")
