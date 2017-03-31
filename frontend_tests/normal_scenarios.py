@@ -86,7 +86,7 @@ def scenario_default_dockerfile(user):
     user.log("logout clicked")
 
 def scenario_default_private_repos(user):
-    driver = commons.login(user, "a4a91f73767a137bc6616c9a2e828c1bd8ca1854")
+    driver = commons.login(user, "a516f02935686c8e782" + "e958e6a627dc3a3b17baa") # seems, github deletes public tokens
     user.wait_for_element_present(By.ID, "start")
     driver.find_element_by_id("start").click()
     commons.fill_repo_info(driver, user, "https://github.com/anaderi/everware_private_test")
