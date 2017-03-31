@@ -89,7 +89,7 @@ def scenario_default_private_repos(user):
     driver = commons.login(user, "a516f02935686c8e782" + "e958e6a627dc3a3b17baa") # seems, github deletes public tokens
     user.wait_for_element_present(By.ID, "start")
     driver.find_element_by_id("start").click()
-    commons.fill_repo_info(driver, user, "https://github.com/anaderi/everware_private_test")
+    commons.fill_repo_info(driver, user, "https://github.com/yandexdataschool/everware_private_test")
     user.log("spawn clicked")
     user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
     driver.find_element_by_link_text("Control Panel").click()
