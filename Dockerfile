@@ -1,4 +1,5 @@
-FROM jupyter/jupyterhub:0.5.0
+FROM jupyterhub/jupyterhub:0.7.2
+RUN apt-get update && apt-get install make
 
 COPY . /srv/everware
 WORKDIR /srv/everware/
