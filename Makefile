@@ -90,7 +90,7 @@ logs: ${LOG} ## watch log file
 
 test: ## run all tests
 	export UPLOADDIR=${UPLOADDIR}; \
-		py.test everware/ ; \
+		py.test everware/ && \
 		build_tools/test_frontend.sh --Spawner.container_ip=${SPAWNER_IP}
 
 gistup: ## install gistup
