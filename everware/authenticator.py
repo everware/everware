@@ -348,3 +348,13 @@ class LocalBitbucketOAuthenticator(LocalAuthenticator,
                                    BitbucketOAuthenticator):
     """A version that mixes in local system user creation"""
     pass
+
+class DummyTokenAuthenticator(Authenticator):
+    def __init__(self, *args, **kwargs):
+        super(self.__class__, self).__init__(*args, **kwargs)
+        self.test_token = None
+
+    @gen.coroutine
+    def authenticate(self, handler, data):
+        self.test_token = data['password']
+        return data['username']
