@@ -7,43 +7,31 @@ import sys
 import warnings
 
 
-CUSTOM_HANDLERS = [
-    ('/hub/user/([^/]+)(/.*)?', UserSpawnHandler),
-    ('/hub/home', HomeHandler),
-    ('/hub/spawn', SpawnHandler)
-]
-
-
 class Everware(app.JupyterHub):
     name = 'everware'
 
+    custom_handlers = [
+        ('/hub/user/([^/]+)(/.*)?', UserSpawnHandler),
+        ('/hub/home', HomeHandler),
+        ('/hub/spawn', SpawnHandler)
+    ]
+
     def init_handlers(self):
         super().init_handlers()
-        self.add_handlers(CUSTOM_HANDLERS)
+        self.add_handlers(Everware.custom_handlers)
 
-    def add_handlers(self, new_handlers, replace_existing=True):
-        """Add new handlers.
-
-        Parameters
-        ----------
-        handlers : list-like
-            Contains tuples representing handlers: (url, handler[, init_args]).
-        replace_existing : bool, optional(True)
-            If True, old handlers will be overwritten by new ones on overlapping urls.
-        """
-        for index, handler in enumerate(self.handlers):
-            for new_index, new_handler in enumerate(new_handlers):
-                if handler[0] == new_handler[0]:
-                    if replace_existing:
-                        self.handlers[index] = new_handler
-                    new_handlers.pop(new_index)
-                    break
-        if self.handlers[-1][0] == '(.*)':
-            for handler in new_handlers:
+    def add_handlers(self, handlers, replace_existing=True):
+        existing_handler_indices = {handler[0]: i for i, handler in enumerate(self.handlers)}
+        for handler in handlers:
+            existing_handler_index = existing_handler_indices.get(handler[0])
+            if existing_handler_index is None:
+                # must be inserted before the pattern '(.*)', which is the last one
                 self.handlers.insert(-1, handler)
-        else:
-            for handler in new_handlers:
-                self.handlers.append(handler)
+            elif replace_existing:
+                self.handlers[existing_handler_index] = handler
+            else:
+                warnings.warn('Custom handler for url {} was not added'.format(handler[0]),
+                              RuntimeWarning)
 
 
 main = Everware.launch_instance
