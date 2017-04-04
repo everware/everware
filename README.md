@@ -40,9 +40,11 @@ started](https://github.com/everware/everware/wiki/Getting-Started).
 
 In order to deploy your own `everware` instance, you have to:
 
- - create and activate a `conda` environment with python 3.5
+ - install `nodejs` and `npm` (platform-specific)
+ - create and activate a `conda` environment with python 3.5(or 3.6.0)
 ```
     conda create -n everware python=3.5
+    source activate everware
 ```
  - Clone this repo and install `everware`
 ```
@@ -62,9 +64,9 @@ In order to deploy your own `everware` instance, you have to:
 ```
     everware-server -f etc/local_dockermachine_config.py --debug --no-ssl
 ```
- - If you are on **Linux** make sure `dockerd` is running and your
-   environment contains the required information (`DOCKER_HOST` is set, etc).
-   Then start `everware` with
+ - If you are on **Linux** make sure `dockerd` is running, your user 
+   is in docker group and your environment contains the required 
+   information (`DOCKER_HOST` is set, etc). Then start `everware` with
 ```
     everware-server -f etc/local_config.py --debug --no-ssl
 ```
@@ -91,3 +93,9 @@ be satisfied if it is installed which might leave you with an old version.
 [jupyterhub]: https://github.com/jupyter/jupyterhub
 [dockerspawner]: https://github.com/jupyter/dockerspawner
 [firefox]: https://www.mozilla.org/en-US/firefox/
+
+## More information
+
+Slides (2016-10): https://speakerdeck.com/anaderi/everware-toolkit-supporting-reproducible-science-and-challenge-driven-education
+
+Paper (2017-02): https://arxiv.org/abs/1703.01200

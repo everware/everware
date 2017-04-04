@@ -8,18 +8,18 @@
       <p>You are currently logged in through <strong>{{ login_service }}</strong>.</p>
       {% if user.running %}
         <p>
-          Currently checked out repository: {{ repourl }}<br>
+          Currently checked out repository: <a href="{{ repourl }}">{{ repourl }}</a><br>
           You are on branch <strong>{{ branch_name }}</strong>, commit <strong>{{ commit_sha }}</strong>
         </p>
         {% if fork_exists %}
           <p>You have a repository with the same name, which we can push to!</p>
           {% if repository_changed %}
-            <p>You have made changes. Do you want to <a id="fork" class="btn btn-sm btn-success" href="/hub/home?do_push=1">push</a>?</p>
+            <p>You have made changes. Do you want to <a id="fork" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_push=1">push</a>?</p>
           {% else %}
             <p>But you have to make changes to the checked out repository before you can push.</p>
           {% endif %}
         {% else %}
-          <p>You don't have a repository with the same name. Do you want to <a id="push" class="btn btn-sm btn-success" href="/hub/home?do_fork=1">fork</a> it?</p>
+          <p>You don't have a repository with the same name. Do you want to <a id="push" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_fork=1">fork</a> it?</p>
         {% endif %}
       {% endif %}
      </div>
@@ -27,10 +27,10 @@
   <div class="row">
     <div class="text-center">
       {% if user.running %}
-        <a id="stop" class="btn btn-lg btn-danger">Stop My Server</a>
+        <a id="stop" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Stop My Server</a>
       {% endif %}
       {% if not user.stop_pending %}
-        <a id="start" class="btn btn-lg btn-success"
+        <a id="start" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
          {% if user.running %}
          href="/user/{{user.name}}/"
          {% else %}
@@ -38,28 +38,38 @@
          {% endif %}
         >
         {% if not user.running %}
-          Start
+          Launch a notebook
+        {% else %}
+          Return to notebook
         {% endif %}
-        My Server
         </a>
       {% endif %}
       {% if user.admin %}
-        <a id="admin" class="btn btn-lg btn-primary" href="{{base_url}}admin">Admin</a>
+        <a id="admin" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="{{base_url}}admin">Admin</a>
       {% endif %}
     </div>
   </div>
   {% if user.running or user.stop_pending %}
-    <div class="row" id="wait" style="margin-top: 2%; font-size: larger"
+    <div class="row" id="wait" style="margin-top: 2%; font-size: larger;
       {% if not user.stop_pending %}
-        hidden
+        display: none;
       {% endif %}
-      >
+      ">
       <div class="text-center">
         <img src="{{ static_url("images/loading.gif") }}">
         Stopping server... Please, wait.
       </div>
     </div>
   {% endif %}
+  <div id="notif" style="margin-top: 1%; color:
+    {% if not 'Successfully' in notify_message %}
+    red"
+    {% else %}
+    green"
+    {% endif %}
+  >
+    {{notify_message}}
+  </div>
 </div>
 
 {% endblock %}

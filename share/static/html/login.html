@@ -10,11 +10,25 @@
 {% if custom_html %}
 {{ custom_html }}
 {% elif login_service %}
+
+<div class="mdl-cell">
+  <a href="https://github.com/everware">Everware</a> allows you to launch
+  interactive Jupyter notebooks right here in your browser. You can check out
+  someone else's research code, run it, make changes, and contribute them back.
+  You can customize the environment that your notebooks runs in by creating a
+  Dockerfile.
+</div>
+<div class="mdl-cell">
+  Currently Everware is in private beta, if you are interested in
+  trying it out:
+  <a href="http://goo.gl/forms/vbZXgYgj3N">join the waiting list</a>.
+</div>
+
 <div class="service-login">
   {% if repo_url %}
-  <a class='btn btn-github btn-lg' href='oauth_login?repo_url={{repo_url}}'>
+  <a class='mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored' href='oauth_login?repo_url={{repo_url}}'>
   {% else %}
-  <a class='btn btn-github btn-lg' href='oauth_login'>
+  <a class='mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored' href='oauth_login'>
   {% endif %}
     Sign in with {{login_service}}
   </a>
@@ -66,31 +80,10 @@
 </form>
 {% endif %}
 
-<div class="container">
-  <div class="row row-centered">
-    <div class="col-sm-6" style="float:none; margin:0 auto">
-      <a href="https://github.com/everware">Everware</a> is a
-      project that allows you to edit and run someone else's code with one
-      click. Even if that code has complicated setup instructions. The main
-      aim of the project is to encourage reuse of software between
-      researchers.
-    </div>
-    <div class="col-sm-6" style="float:none; margin:0 auto">
-      Currently Everware is in private beta, if you are interested in
-      trying it out:
-      <a href="http://goo.gl/forms/vbZXgYgj3N">join the waiting list</a>.
-      
-    </div>
-  </div>
-</div>
-
 </div>
 </div>
 {% endblock login %}
 
-{% endblock %}
-
-{% block footer %}
 {% endblock %}
 
 {% block script %}

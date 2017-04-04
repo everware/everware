@@ -53,9 +53,12 @@ install:  ## install everware
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
 
+ogs: ${LOG} ## watch log file
+	tail -f ${LOG}
+
 test: ## run all tests
 	export UPLOADDIR=${UPLOADDIR}; \
-		py.test everware/ ; \
+		py.test everware/ && \
 		build_tools/test_frontend.sh --Spawner.container_ip=${SPAWNER_IP}
 
 gistup: ## install gistup
