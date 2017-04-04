@@ -11,8 +11,7 @@ load_subconfig('etc/github_auth.py')
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.proxy_api_ip = '0.0.0.0'
 
-# Change these two next settings:
-# IP of the machine where the Everware can be contacted
-c.DockerSpawner.hub_ip_connect = 'xxx.xxx.xxx.xxx'
-# IP of the machine running Docker service
-c.DockerSpawner.container_ip = 'xxx.xxx.xxx.xxx'
+# IP of the machine where the Everware (run as docker container) can be contacted
+c.DockerSpawner.hub_ip_connect = os.environ['DOCKER_PUBLIC_IP']
+# IP of the machine running Docker service, normally the same as above
+c.DockerSpawner.container_ip = c.DockerSpawner.hub_ip_connect

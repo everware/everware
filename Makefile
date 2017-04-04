@@ -9,8 +9,6 @@
 SHELL := /bin/bash
 TEST_OPTIONS := -s tests -N 2
 TESTS := test_happy_mp
-LOG := everware.log
-PIDFILE := everware.pid
 IP = $(shell python -c 'from IPython.utils.localinterfaces import public_ips; print (public_ips()[0])' 2>/dev/null)
 OPTIONS = --debug --port 8000 --no-ssl --JupyterHub.hub_ip=${IP}
 UPLOADDIR ?= ~/upload_screens
@@ -27,14 +25,13 @@ else
 	$(error Unable to find python)
 endif
 
-EXECUTOR = everware-server
-
 ifeq ($(shell uname -s),Linux)
 	SPAWNER_IP = "127.0.0.1"
 else
 	SPAWNER_IP = "192.168.99.100"
 endif
 
+include run.makefile
 
 .PHONY: install reload clean run run-daemon stop test tail
 
@@ -55,37 +52,6 @@ install:  ## install everware
 	${PYTHON} setup.py js
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
-
-reload:  ## reload everware whitelist
-	PID=`pgrep '${EXECUTOR}'` ;\
-		if [ -z "$${PID}" ] ; then echo "Cannot find running ${EXECUTOR}" ; exit 1 ; fi
-	pkill -1 '${EXECUTOR}'
-
-clean:  ## clean user base
-	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
-	rm -f jupyterhub.sqlite
-
-run-linux: clean  ## run everware server on linux
-	source ./env.sh && \
-		${EXECUTOR} -f etc/local_config.py --no-ssl 2>&1 | tee ${LOG}
-
-run-dockermachine: clean  ## run everware server on MacOS
-	source ./env.sh && \
-		${EXECUTOR} -f etc/local_dockermachine_config.py --no-ssl 2>&1 | tee ${LOG}
-
-run-daemon: clean ## run everware in daemon mode, linux only, SSL required
-	source ./env.sh && \
-		${EXECUTOR} -f etc/local_config.py >> ${LOG}  2>&1 &
-	pgrep ${EXECUTOR} > ${PIDFILE} || ( tail ${LOG} && exit 1 )
-	echo "Started. Log saved to ${LOG}"
-
-stop:
-	-rm ${PIDFILE}
-	-pkill -9 ${EXECUTOR}
-	-pkill -9 node
-
-logs: ${LOG} ## watch log file
-	tail -f ${LOG}
 
 test: ## run all tests
 	export UPLOADDIR=${UPLOADDIR}; \

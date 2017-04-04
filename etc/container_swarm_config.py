@@ -18,4 +18,4 @@ c.DockerSpawner.tls = True
 
 # Change this setting:
 # IP of the machine where the Everware can be contacted
-c.DockerSpawner.hub_ip_connect = 'xxx.xxx.xxx.xxx'
+c.DockerSpawner.hub_ip_connect = os.environ['DOCKER_PUBLIC_IP']

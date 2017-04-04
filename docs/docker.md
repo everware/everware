@@ -11,8 +11,6 @@ This section explains how to run Everware in a container, and the different poss
   docker build -t everware .
 ```
 
-JupyterHub Dockerfile needs a ["jupyterhub_config.py"](jupyterhub_config.py) file to be present at the root of the project.
-
 ## Create user containers on same machine as the Everware one
 
 Fill the file which will contains environment variables for Everware.
