@@ -7,4 +7,3 @@ selenium==2.52.0
 jupyterhub==0.7.2
 docker-py==1.10.6
 -e git+https://github.com/jupyter/dockerspawner.git@fdf5577ca2b4087a064507cca8b250e4ad792e02#egg=dockerspawner
--e git+https://github.com/yuvipanda/jupyterhub-dummy-authenticator.git#egg=dummyauthenticator
