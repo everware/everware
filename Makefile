@@ -53,8 +53,8 @@ install:  ## install everware
 
 	if [ ! -f env.sh ] ; then cp env.sh.orig env.sh ; fi
 
-ogs: ${LOG} ## watch log file
-	tail -f ${LOG}
+docker-build: ## build docker image
+	docker build --no-cache -t everware/everware:0.10.0 .
 
 test: ## run all tests
 	export UPLOADDIR=${UPLOADDIR}; \
