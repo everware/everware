@@ -47,9 +47,7 @@ class UserSpawnHandler(BaseHandler):
             else:
                 if is_up:
                     self.set_login_cookie(current_user)
-                    target = '%s://%s/user/%s' % (
-                        self.request.protocol,
-                        self.request.host,
+                    target = '/user/%s' % (
                         current_user.name
                     )
                     self.log.info('redirecting to %s' % target)
