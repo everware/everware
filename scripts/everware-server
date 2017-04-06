@@ -4,25 +4,34 @@ import jupyterhub.handlers.base as base
 from jupyterhub import app
 from everware import SpawnHandler, UserSpawnHandler, HomeHandler
 import sys
-
-handlers_map = {
-    pages.HomeHandler: HomeHandler,
-    pages.SpawnHandler: SpawnHandler,
-    base.UserSpawnHandler: UserSpawnHandler
-}
+import warnings
 
 
 class Everware(app.JupyterHub):
     name = 'everware'
 
+    custom_handlers = [
+        ('/hub/user/([^/]+)(/.*)?', UserSpawnHandler),
+        ('/hub/home', HomeHandler),
+        ('/hub/spawn', SpawnHandler)
+    ]
+
     def init_handlers(self):
         super().init_handlers()
-        for i, cur_handler in enumerate(self.handlers):
-            new_handler = handlers_map.get(cur_handler[1])
-            if new_handler:
-                cur_handler = list(cur_handler)
-                cur_handler[1] = new_handler
-                self.handlers[i] = tuple(cur_handler)
+        self.add_handlers(Everware.custom_handlers)
+
+    def add_handlers(self, handlers, replace_existing=True):
+        existing_handler_indices = {handler[0]: i for i, handler in enumerate(self.handlers)}
+        for handler in handlers:
+            existing_handler_index = existing_handler_indices.get(handler[0])
+            if existing_handler_index is None:
+                # must be inserted before the pattern '(.*)', which is the last one
+                self.handlers.insert(-1, handler)
+            elif replace_existing:
+                self.handlers[existing_handler_index] = handler
+            else:
+                warnings.warn('Custom handler for url {} was not added'.format(handler[0]),
+                              RuntimeWarning)
 
 
 main = Everware.launch_instance
