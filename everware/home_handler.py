@@ -54,15 +54,10 @@ class HomeHandler(BaseHandler):
         repo_url = ''
         fork_exists = False
         repository_changed = False
-        custom_service_url = None
-        custom_service_name = None
         if user.running:
             branch_name = user.spawner.branch_name
             commit_sha = user.spawner.commit_sha
             repo_url = user.spawner.repo_url
-            if user.spawner.need_run_custom_service():
-                custom_service_url = user.spawner.custom_service_path
-                custom_service_name = 'Git Web UI'
         if user.running and getattr(user, 'login_service', '') == 'github':
             if do_fork:
                 self.log.info('Will fork %s' % user.spawner.repo_url)
@@ -112,8 +107,6 @@ class HomeHandler(BaseHandler):
             version=__version__,
             g_analitics_id=g_id,
             ya_metrica_id=ya_id,
-            custom_service_url=custom_service_url,
-            custom_service_name=custom_service_name
         )
 
         self.finish(html)

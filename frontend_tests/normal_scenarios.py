@@ -96,3 +96,22 @@ def scenario_default_private_repos(user):
     user.wait_for_pattern_in_page(r"Launch\s+a\s+notebook")
     driver.find_element_by_id("logout").click()
     user.log("logout clicked")
+
+def scenario_r_shiny(user):
+    driver = commons.login(user)
+    user.wait_for_element_present(By.ID, "start")
+    driver.find_element_by_id("start").click()
+    commons.fill_repo_info(driver, user, "https://github.com/everware/r-shiny-example")
+    user.log("spawn clicked")
+    user.wait_for_pattern_in_page("Iris\s+k-means\s+clustering")
+
+def scenario_jupyter_only(user):
+    driver = commons.login(user)
+    user.wait_for_element_present(By.ID, "start")
+    driver.find_element_by_id("start").click()
+    commons.fill_repo_info(driver, user, "https://github.com/astiunov/qutip-lectures")
+    user.log("spawn clicked")
+    user.wait_for_element_present(By.LINK_TEXT, "Control Panel")
+    driver.find_element_by_link_text("Control Panel").click()
+
+

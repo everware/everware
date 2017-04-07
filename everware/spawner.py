@@ -33,9 +33,6 @@ from . import __version__
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
-    container_proxy_port = Int(8080, config=True)
-    custom_service_port = Int(8081, config=True)
-
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -44,7 +41,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        DockerSpawner.__init__(self, **kwargs)
+        ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
 
 
@@ -87,10 +84,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             return lister(m(*args, **kwargs))
         else:
             return m(*args, **kwargs)
-
-    @property
-    def proxy(self):
-        return self.user_options['proxy']
 
     def clear_state(self):
         state = super(CustomDockerSpawner, self).clear_state()
@@ -140,13 +133,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                    checked />
             <span class="mdl-checkbox__label">Remove previous container if it exists</span>
           </label>
-          <label for="custom_service" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
-            <input type="checkbox"
-                   name="custom_service"
-                   class="mdl-checkbox__input"
-                   id="custom_service" />
-            <span class="mdl-checkbox__label">Enable Git Web UI</span>
-          </label>
         """
 
     def options_from_form(self, formdata):
@@ -154,9 +140,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
         options.update(formdata)
         need_remove = formdata.get('need_remove', ['on'])[0].strip()
-        need_custom_service = formdata.get('custom_service', ['off'])[0].strip()
         options['need_remove'] = need_remove == 'on'
-        options['custom_service'] = need_custom_service == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
         return options
@@ -229,11 +213,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     @property
     def is_building(self):
         return self._is_building
-
-    @gen.coroutine
-    def service_host(self):
-        ip, port = yield self.custom_service_ip_and_port()
-        return 'http://%s:%s' % (ip, port)
 
     def _add_to_log(self, message, level=1):
         self._user_log.append({
@@ -321,8 +300,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                     raise Exception(full_output)
         except:
             raise
-        finally:
-            rmtree(tmp_dir, ignore_errors=True)
 
         return image_name
 
@@ -368,23 +345,8 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             self.log.info("Starting container from image: %s" % image_name)
             self._add_to_log('Creating container')
 
-            extra_create_kwargs = {}
-            extra_host_config = {}
-            if self.need_run_custom_service():
-                extra_host_config = {
-                    'port_bindings': {
-                        self.container_port: (self.container_ip,),
-                        self.container_proxy_port: (self.container_ip,)
-                    }
-                }
-                extra_create_kwargs = {
-                    'ports': [self.container_proxy_port]
-                }
-
             yield super(CustomDockerSpawner, self).start(
                 image=image_name,
-                extra_host_config=extra_host_config,
-                extra_create_kwargs=extra_create_kwargs
             )
         except gen.TimeoutError:
             self._is_failed = True
@@ -407,28 +369,16 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             yield self.notify_about_fail(message)
             self._is_building = False
             raise e
+        finally:
+            rmtree(self._repo_dir, ignore_errors=True)
 
         try:
-            yield self.prepare_container(
-                self.need_run_custom_service()
-            )
+            yield self.prepare_container()
         except Exception as e:
-            self.log.warn('exception when preparing container: {}'.format(str(e)))
-        finally:
-            self._is_building = False
+            self.log.warn('Fail to prepare the container: {}'.format(e))
 
         self._add_to_log('Adding to proxy')
         yield self.wait_up()
-        if self.need_run_custom_service():
-            target_host = yield self.service_host()
-            self.log.info('Adding service of %s to proxy %s => %s' % (
-                self.user.name,
-                self.custom_service_path,
-                target_host
-            ))
-            yield self.proxy.api_request(self.custom_service_path, method='POST', body={
-                'target': target_host
-            })
         return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
 
     @gen.coroutine
@@ -455,12 +405,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                     self.container_name, self.container_id[:7])
                 # remove the container, as well as any associated volumes
                 yield self.docker('remove_container', self.container_id, v=True)
-        finally:
-            if self.need_run_custom_service():
-                try:
-                    yield self.proxy.api_request(self.custom_service_path, method='DELETE')
-                except HTTPError:
-                    self.log.info('failed to erase custom service of %s from proxy' % self.user.name)
 
         self.clear_state()
 
@@ -517,9 +461,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         status = yield self.poll()
         return status is None
 
-    def need_run_custom_service(self):
-        return self.user_options.get('custom_service', False)
-
     def get_env(self):
         env = super(CustomDockerSpawner, self).get_env()
         env.update({
@@ -533,15 +474,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             })
             env.update(self.user_options)
         return env
-
-    @gen.coroutine
-    def custom_service_ip_and_port(self):
-        resp = yield self.docker('port', self.container_id, self.container_proxy_port)
-        if resp is None:
-            raise RuntimeError("Failed to get custom service port info for %s" % self.container_id)
-        ip = resp[0]['HostIp']
-        port = resp[0]['HostPort']
-        return ip, port
 
 
 class CustomSwarmSpawner(CustomDockerSpawner):

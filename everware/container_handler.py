@@ -1,112 +1,138 @@
 from dockerspawner import DockerSpawner
 from tornado import gen
 import re
+import os.path
+import sys
+import yaml
+
+class ShellCommand:
+    def __init__(self, commands=[]):
+        self.commands = commands
+
+    def add_commands(self, commands_list):
+        self.commands.extend(commands_list)
+
+    def extend(self, command):
+        self.add_commands(command.commands)
+
+    def get_single_command(self):
+        return 'bash -c "{}"' .format(' && '.join(self.commands))
+
+def make_git_command(repourl, commit_sha):
+    return ShellCommand([
+        'apt-get install -y git',
+        'git clone {} /notebooks'.format(repourl),
+        'cd /notebooks',
+        'git reset --hard {}'.format(commit_sha)
+    ])
+
+def make_nginx_start_command(nginx_config):
+    return ShellCommand([
+        'apt-get install -y nginx',
+        "python -c 'print(\\\"{}\\\")' >/etc/nginx/nginx.conf".format(nginx_config),
+        'service nginx restart',
+        'cat /etc/nginx/nginx.conf'
+    ])
+
+def make_default_start_command(env):
+    return ShellCommand([
+        'jupyterhub-singleuser --port=8888 --ip=0.0.0.0 --allow-root --user={} --cookie-name={} --base-url={} '.format(
+            env['JPY_USER'],
+            env['JPY_COOKIE_NAME'],
+            env['JPY_BASE_URL']
+        ) + '--hub-prefix={} --hub-api-url={} --notebook-dir=/notebooks'.format(
+            env['JPY_HUB_PREFIX'],
+            env['JPY_HUB_API_URL']
+        )
+    ])
+
+def make_custom_start_command(command):
+    return ShellCommand([command])
+
 
 class ContainerHandler(DockerSpawner):
+    def parse_config(self, directory):
+        self.everware_config = {
+            'everware_based': True
+        }
+        try:
+            with open(os.path.join(directory, 'everware.yml')) as fin:
+                try:
+                    self.everware_config = yaml.load(fin)
+                except yaml.YAMLError as exc:
+                    self.log.warn('Fail reading everware.yml: {}'.format(exc))
+        except IOError:
+            self.log.info('No everware.yaml in repo')
+
     @gen.coroutine
-    def prepare_container(self, need_service):
+    def prepare_container(self):
+        if self.everware_config.get('everware_based', True):
+            return
         container = yield self.get_container()
-        everware_based = yield self._is_everware_compatible(container)
-        if not everware_based or need_service:
-            yield self._init_container(container, everware_based)
-        if need_service:
-            nginx_started = yield self._start_nginx(
-                container,
-                self.custom_service_token(),
-                self.user.name
+        was_cloned = yield self._check_for_git_compatibility(container)
+        if not was_cloned:
+            command = make_git_command(self.repo_url_with_token, self.commit_sha)
+            setup = yield self.docker(
+                'exec_create',
+                container=container,
+                cmd=command.get_single_command()
             )
-            git_webui_started = False
-            if nginx_started:
-                self.log.info('nginx has started in %s' % self.container_id)
-                git_webui_started = yield self._start_service(container)
-                if git_webui_started:
-                    self.log.info('git webui has started in %s' % self.container_id)
-                    self._add_to_log('Git Web UI has started')
+            output = yield self.docker('exec_start', exec_id=setup['Id'])
+
+
+    @gen.coroutine
+    def start(self, image=None):
+        self.parse_config(self._repo_dir)
+        start_command = None
+        extra_create_kwargs = {
+            'ports': [self.container_port]
+        }
+        if not self.everware_config.get('everware_based', True):
+            start_command = make_git_command(self.repo_url_with_token, self.commit_sha)
+            if 'start_command' in self.everware_config:
+                nginx_config = self._get_nginx_config(
+                    8888,
+                    self.custom_service_token(),
+                    self.user.name
+                )
+                start_command.extend(make_nginx_start_command(nginx_config))
+                start_command.extend(make_custom_start_command(self.everware_config['start_command']))
             else:
-                self.log.info('failed to start nginx in %s' % self.container_id)
-            if not git_webui_started:
-                self._add_to_log('Failed to start git web ui')
-                self.user_options['custom_service'] = False
+                start_command.extend(make_default_start_command(self.get_env()))
+            extra_create_kwargs.update({
+                'command': start_command.get_single_command()
+            })
+
+        extra_host_config = {
+            'port_bindings': {
+                self.container_port: (self.container_ip,)
+            }
+        }
+        ip, port = yield DockerSpawner.start(self, image,
+                            extra_create_kwargs=extra_create_kwargs,
+                            extra_host_config=extra_host_config)
+        return ip, port
 
     def _encode_conf(self, s):
         return ''.join('\\x' + hex(ord(x))[2:].zfill(2) for x in s)
 
-    @gen.coroutine
-    def _start_nginx(self, container, token, username):
+    def _get_nginx_config(self, port, token, username):
         try:
             result = ''
             with open('etc/nginx_config.conf') as fin:
                 for line in fin:
                     result += self._encode_conf(
-                        line.replace('%TOKEN%', token).replace('%USERNAME%', username)
+                        line.replace('%TOKEN%', token)
+                        .replace('%USERNAME%', username)
+                        .replace('%PORT%', str(port))
                     )
-            setup = yield self.docker(
-                'exec_create',
-                container=container,
-                cmd="bash -c \"apt-get install nginx -y && " +\
-                    "python -c 'print(\\\"%s\\\")' >/etc/nginx/nginx.conf && " % result +\
-                    "service nginx restart && cat /etc/nginx/nginx.conf\""
-            )
-            output = yield self.docker('exec_start', exec_id=setup['Id'])
-            # print(output, file=self.debug_log)
-            # print(str(output), file=sys.stderr)
-            return re.search(
-                r'Restarting nginx.+?\.\.\.done\.',
-                str(output),
-                flags=re.DOTALL
-            )
+            return result
         except OSError:
-            self.log.info('No nginx config')
-            return False
+            self.log.warn('No nginx config')
+            raise
 
     @gen.coroutine
-    def _start_service(self, container):
-        setup = yield self.docker(
-            'exec_create',
-            container=container,
-            cmd="bash -c '"+\
-                "curl https://raw.githubusercontent.com/everware/git-webui/master/install/installer.sh >installer.sh" +\
-                " && bash installer.sh && cd /notebooks; "+\
-                "git webui --port=8081 --host=0.0.0.0 --no-browser >/dev/null 2>&1 &'"
-        )
-        output = yield self.docker('exec_start', exec_id=setup['Id'])
-        return True
-
-    @gen.coroutine
-    def _init_container(self, container, everware_based):
-        cmd = "bash -c 'apt-get update && apt-get install git curl net-tools -y"
-        if everware_based:
-            cmd += "'"
-        else:
-            notebook_dir = '/notebooks'
-            cmd += " && git clone {} {} && cd {} && git reset --hard {}'".format(
-                self.repo_url_with_token,
-                notebook_dir,
-                notebook_dir,
-                self.commit_sha
-            )
-
-        setup = yield self.docker(
-            'exec_create',
-            container=container,
-            cmd=cmd
-        )
-        output = yield self.docker('exec_start', exec_id=setup['Id'])
-
-    #@gen.coroutine
-    #def _run_jupyter(self, container):
-    #    setup = yield self.docker(
-    #        'exec_create',
-    #        container=container,
-    #        cmd="bash -c 'apt-get install jupyter -y && "+\
-    #            "curl https://raw.githubusercontent.com/jupyterhub/jupyterhub/master/jupyterhub/singleuser.py >singleuser.py" +\
-    #            " && chmod +x singleuser.py && ./singleuser.py --port=8888 --ip=0.0.0.0 --no-browser &'"
-    #    )
-    #    output = yield self.docker('exec_start', exec_id=setup['Id'])
-    #    print(output, file=self.debug_log)
-
-    @gen.coroutine
-    def _is_everware_compatible(self, container):
+    def _check_for_git_compatibility(self, container):
         setup = yield self.docker(
             'exec_create',
             container=container,
@@ -114,14 +140,3 @@ class ContainerHandler(DockerSpawner):
         )
         output = yield self.docker('exec_start', exec_id=setup['Id'])
         return output != ""
-
-    #@gen.coroutine
-    #def _is_jupyter_inside(self, container):
-    #    setup = yield self.docker(
-    #        'exec_create',
-    #        container=container,
-    #        cmd="bash -c 'netstat -peant | grep \":8888 \"'"
-    #    )
-    #    output = yield self.docker('exec_start', exec_id=setup['Id'])
-    #    print('jupyter check:', output, file=sys.stderr)
-    #    return output != ""

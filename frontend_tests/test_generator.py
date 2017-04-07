@@ -17,6 +17,8 @@ SCENARIOS = [
     normal_scenarios.scenario_no_dockerfile,
     normal_scenarios.scenario_default_dockerfile, # should go after no_dockerfile
     normal_scenarios.scenario_default_private_repos,
+    normal_scenarios.scenario_r_shiny,
+    normal_scenarios.scenario_jupyter_only,
     nonstop_scenarios.scenario_simple
 ]
 

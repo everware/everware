@@ -12,7 +12,6 @@ require(["jquery", "jhapi"], function ($, JHAPI) {
         $("#wait").show();
         $("#start").hide();
         $("#stop").hide();
-        $("#custom_service").hide();
         api.stop_server(user, {
             success: function () {
                 setTimeout(function() {

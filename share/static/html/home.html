@@ -28,9 +28,6 @@
     <div class="text-center">
       {% if user.running %}
         <a id="stop" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Stop My Server</a>
-        {% if custom_service_url %}
-          <a id="custom_service" href="{{custom_service_url}}" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">{{custom_service_name}}</a>
-        {% endif %}
       {% endif %}
       {% if not user.stop_pending %}
         <a id="start" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"

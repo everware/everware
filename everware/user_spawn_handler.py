@@ -29,7 +29,6 @@ class SpawnHandler(default_handlers.SpawnHandler):
         try:
             options = user.spawner.options_from_form(form_options)
             options.update({
-                'proxy': self.proxy,
                 'service_token': token
             })
             yield self.spawn_single_user(user, options=options)
