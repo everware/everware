@@ -345,8 +345,8 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             self.log.info("Starting container from image: %s" % image_name)
             self._add_to_log('Creating container')
 
-            yield super(CustomDockerSpawner, self).start(
-                image=image_name,
+            yield super(ContainerHandler, self).start(
+                image=image_name
             )
         except gen.TimeoutError:
             self._is_failed = True

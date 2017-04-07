@@ -106,7 +106,7 @@ class HomeHandler(BaseHandler):
             notify_message=notify_message,
             version=__version__,
             g_analitics_id=g_id,
-            ya_metrica_id=ya_id,
+            ya_metrica_id=ya_id
         )
 
         self.finish(html)
