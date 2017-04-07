@@ -5,6 +5,8 @@
 # but don't forget to set Docker Swarm environment
 # variables in the env file
 
+import os
+
 c = get_config()
 load_subconfig('etc/base_config.py')
 load_subconfig('etc/github_auth.py')

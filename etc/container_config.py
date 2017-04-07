@@ -4,6 +4,8 @@
 # In case of local, don't forget to mount /var/run/docker.sock
 # In case of remote, don't forget the DOCKER_HOST environment variable
 
+import os
+
 c = get_config()
 load_subconfig('etc/base_config.py')
 load_subconfig('etc/github_auth.py')
