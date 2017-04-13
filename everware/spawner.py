@@ -226,7 +226,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         # means that spawn was unsuccessful, need to set is_failed
         try:
             yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
-            ip, port = yield from self.get_ip_and_port()
+            ip, port = yield self.get_ip_and_port()
             self.user.server.ip = ip
             self.user.server.port = port
             self._is_up = True
