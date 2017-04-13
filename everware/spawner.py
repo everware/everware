@@ -145,6 +145,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             raise Exception('You have to provide the URL to a git repository.')
         return options
 
+    def custom_service_token(self):
+        return self.user_options['service_token']
+
     @property
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
@@ -345,7 +348,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             self.log.info("Starting container from image: %s" % image_name)
             self._add_to_log('Creating container')
 
-            yield super(ContainerHandler, self).start(
+            yield ContainerHandler.start(self,
                 image=image_name
             )
         except gen.TimeoutError:
