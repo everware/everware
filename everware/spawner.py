@@ -323,33 +323,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
 
     @gen.coroutine
-    def wait_up(self):
-        # copied from jupyterhub, because if user's server didn't appear, it
-        # means that spawn was unsuccessful, need to set is_failed
-        try:
-            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
-            ip, port = yield self.get_ip_and_port()
-            self.user.server.ip = ip
-            self.user.server.port = port
-            self._is_up = True
-        except TimeoutError:
-            self._is_failed = True
-            self._add_to_log('Server never showed up after {} seconds'.format(self.http_timeout))
-            self.log.info("{user}'s server never showed up after {timeout} seconds".format(
-                user=self.user.name,
-                timeout=self.http_timeout
-            ))
-            yield self.notify_about_fail("Http timeout limit %.3f exceeded" % self.http_timeout)
-            raise
-        except Exception as e:
-            self._is_failed = True
-            message = str(e)
-            self._add_to_log('Something went wrong during waiting for server. Error: %s' % message)
-            yield self.notify_about_fail(message)
-            raise e
-
-
-    @gen.coroutine
     def start(self, image=None):
         """start the single-user server in a docker container"""
         self._user_log = []
@@ -534,3 +507,4 @@ class CustomSwarmSpawner(CustomDockerSpawner):
             self.db.commit()
             self.log.info("{} was started on {} ({}:{})".format(
                 self.container_name, node_name, self.user.server.ip, self.user.server.port))
+            return self.user.server.ip, self.user.server.port

@@ -55,9 +55,6 @@ def scenario_timeout(user):
     user.log('correct, timeout happened')
     driver.find_element_by_id("resist").click()
     user.log("resist clicked")
-    commons.fill_repo_info(driver, user, 'https://github.com/everware/test_long_creation')
-    user.log("spawn clicked (second try)")
-    user.wait_for_element_present(By.ID, "resist")
 
 
 def scenario_no_dockerfile(user):
