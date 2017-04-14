@@ -7,12 +7,17 @@ LOG="/tmp/frontend_test_hub.log"
 NPROC=2
 TESTS_DIR="frontend_tests"
 WAIT_FOR_START=3
-WAIT_FOR_STOP=25
+WAIT_FOR_STOP=20
 
 function kill_everware {
     echo "Stopping everware"
     pkill -TERM -f everware-server
     sleep $WAIT_FOR_STOP
+    if [[ ! -z `pgrep -f everware-server` ]] ; then
+        echo "Fail to stop with sigterm, killing"
+        pkill -KILL -f everware-server
+        sleep $WAIT_FOR_STOP
+    fi
 }
 
 if [ -z "$UPLOADDIR" ] ; then

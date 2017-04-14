@@ -42,8 +42,8 @@ class ImageMutex():
         return value
 
     def __enter__(self):
-        if self._exception is not None:
-            raise self._exception
+        # if self._exception is not None:
+        #     raise self._exception
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
