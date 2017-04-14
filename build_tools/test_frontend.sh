@@ -13,6 +13,10 @@ function kill_everware {
     echo "Stopping everware"
     pkill -TERM -f everware-server
     sleep $WAIT_FOR_STOP
+    if [[ ! -z `pgrep -f everware-server` ]] ; then
+        echo "Fail to stop with sigterm, killing"
+        pkill -KILL -f everware-server
+    fi
 }
 
 if [ -z "$UPLOADDIR" ] ; then
