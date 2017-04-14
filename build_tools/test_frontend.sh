@@ -18,6 +18,7 @@ function kill_everware {
         pkill -KILL -f everware-server
         sleep $WAIT_FOR_STOP
     fi
+    pkill -KILL node || true
 }
 
 if [ -z "$UPLOADDIR" ] ; then
