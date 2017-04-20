@@ -1,6 +1,7 @@
 from tornado import web, gen
 import jupyterhub.handlers.pages as default_handlers
 import sys
+import uuid
 from . import __version__
 from .metrica import MetricaIdsMixin
 
@@ -22,9 +23,14 @@ class SpawnHandler(default_handlers.SpawnHandler):
 
     @gen.coroutine
     def _spawn(self, user, form_options):
+        token = uuid.uuid1().hex
+        self.set_cookie('everware_custom_service_token', token)
         self.redirect('/user/%s' % user.name)
         try:
             options = user.spawner.options_from_form(form_options)
+            options.update({
+                'service_token': token
+            })
             yield self.spawn_single_user(user, options=options)
             # if user set another access token (for example he logged with github
             # and clones from bitbucket)

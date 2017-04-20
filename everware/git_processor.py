@@ -107,17 +107,27 @@ class GitMixin:
 
         dockerfile_path = os.path.join(self._repo_dir, 'Dockerfile')
         if not os.path.isfile(dockerfile_path):
-            if not os.environ.get('DEFAULT_DOCKER_IMAGE'):
+            if self.config_files_exist():
+                parent_image = 'everware/base:latest'
+            elif not os.environ.get('DEFAULT_DOCKER_IMAGE'):
                 raise Exception('No dockerfile in repository')
+            else:
+                parent_image = os.environ['DEFAULT_DOCKER_IMAGE']
             with open(dockerfile_path, 'w') as fout:
                 fout.writelines([
-                    'FROM %s\n' % os.environ['DEFAULT_DOCKER_IMAGE'],
-                    'MAINTAINER Alexander Tiunov <astiunov@yandex-team.ru>'
+                    'FROM %s\n' % parent_image
                 ])
             return False
         else:
             return True
 
+    def config_files_exist(self):
+        # uncomment when this functionality will be implemented
+        # for conf in ('everware.yml', 'requirements.txt', 'environment.yml'):
+        #    cur_path = os.path.join(self._repo_dir, conf)
+        #    if os.path.isfile(cur_path):
+        #        return True
+        return False
 
     @property
     def escaped_repo_url(self):

@@ -14,8 +14,10 @@ from dockerspawner import DockerSpawner
 from traitlets import (
     Integer,
     Unicode,
+    Int
 )
 from tornado import gen
+from tornado.httpclient import HTTPError
 
 import ssl
 import json
@@ -24,13 +26,13 @@ import os
 from .image_handler import ImageHandler
 from .git_processor import GitMixin
 from .email_notificator import EmailNotificator
+from .container_handler import ContainerHandler
 from . import __version__
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-
-class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
+class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -39,7 +41,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        DockerSpawner.__init__(self, **kwargs)
+        ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
 
 
@@ -143,6 +145,9 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
             raise Exception('You have to provide the URL to a git repository.')
         return options
 
+    def custom_service_token(self):
+        return self.user_options['service_token']
+
     @property
     def form_repo_url(self):
         """Repository URL as submitted by the user."""
@@ -167,8 +172,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
 
     @gen.coroutine
     def get_container(self):
-
-        # self.log.debug("Getting container: %s", self.container_name)
         try:
             container = yield self.docker(
                 'inspect_container', self.container_name
@@ -225,8 +228,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         # copied from jupyterhub, because if user's server didn't appear, it
         # means that spawn was unsuccessful, need to set is_failed
         try:
-            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
             ip, port = yield self.get_ip_and_port()
+            self.user.server.ip = ip
+            self.user.server.port = port
+            yield self.user.server.wait_up(http=True, timeout=self.http_timeout)
             self.user.server.ip = ip
             self.user.server.port = port
             self._is_up = True
@@ -298,8 +303,6 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                     raise Exception(full_output)
         except:
             raise
-        finally:
-            rmtree(tmp_dir, ignore_errors=True)
 
         return image_name
 
@@ -344,10 +347,10 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 yield self.remove_old_container()
             self.log.info("Starting container from image: %s" % image_name)
             self._add_to_log('Creating container')
-            yield super(CustomDockerSpawner, self).start(
+
+            yield ContainerHandler.start(self,
                 image=image_name
             )
-            self._add_to_log('Adding to proxy')
         except gen.TimeoutError:
             self._is_failed = True
             if self._cur_waiter:
@@ -358,6 +361,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 level=2
             )
             yield self.notify_about_fail("Timeout limit %.3f exceeded" % self.start_timeout)
+            self._is_building = False
             raise
         except Exception as e:
             self._is_failed = True
@@ -366,13 +370,19 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
                 message = "Container doesn't have jupyter-singleuser inside"
             self._add_to_log('Something went wrong during building. Error: %s' % message)
             yield self.notify_about_fail(message)
+            self._is_building = False
             raise e
         finally:
-            self._is_building = False
+            rmtree(self._repo_dir, ignore_errors=True)
 
+        try:
+            yield self.prepare_container()
+        except Exception as e:
+            self.log.warn('Fail to prepare the container: {}'.format(e))
+
+        self._add_to_log('Adding to proxy')
         yield self.wait_up()
         return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
-
 
     @gen.coroutine
     def stop(self, now=False):
@@ -436,6 +446,7 @@ class CustomDockerSpawner(DockerSpawner, GitMixin, EmailNotificator):
         if container_state["Running"]:
             # check if something is listening inside container
             try:
+                # self.log.info('poll {}'.format(self.user.server.url))
                 yield wait_for_http_server(self.user.server.url, timeout=1)
             except TimeoutError:
                 self.log.warn("Can't reach running container by http")

@@ -56,6 +56,14 @@ install:  ## install everware
 docker-build: ## build docker image
 	docker build --no-cache -t everware/everware:0.10.0 .
 
+clean:  ## clean user base
+	if [ -f ${PIDFILE} ] ; then echo "${PIDFILE} exists, cannot continute" ; exit 1; fi
+	rm -f jupyterhub.sqlite
+
+run-linux: clean  ## run everware server on linux
+	source ./env.sh && \
+		${EXECUTOR} -f etc/local_config.py --no-ssl 2>&1 | tee ${LOG}
+
 test: ## run all tests
 	export UPLOADDIR=${UPLOADDIR}; \
 		py.test everware/ && \

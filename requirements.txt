@@ -1,6 +1,7 @@
 ipython[notebook]
 coveralls
 nose2
+pyyaml
 pytest>=2.8
 GitPython==2.1.1
 selenium==2.52.0
