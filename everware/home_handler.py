@@ -8,6 +8,7 @@ from tornado.httputil import url_concat
 from . import __version__
 from .github_agent import *
 from .metrica import MetricaIdsMixin
+from datetime import datetime
 
 @gen.coroutine
 def is_repository_changed(user):
@@ -43,7 +44,9 @@ class HomeHandler(BaseHandler):
 
         do_fork = self.get_argument('do_fork', False)
         do_push = self.get_argument('do_push', False)
+        do_commit = self.get_argument('do_commit', False)
         notify_message = self.get_argument('message', '')
+        notify_url_to_image = self.get_argument('url_with_image', '')
         if repourl:
             self.redirect(url_concat(
                 url_path_join(self.hub.server.base_url, 'spawn'), all_arguments
@@ -58,6 +61,27 @@ class HomeHandler(BaseHandler):
             branch_name = user.spawner.branch_name
             commit_sha = user.spawner.commit_sha
             repo_url = user.spawner.repo_url
+
+        if user.running and do_commit:
+            spawner = user.spawner
+            image_tag = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            image_name = 'everware_image/' + spawner.escaped_name + '/' + spawner.escaped_repo_url + '_' + spawner.container_id
+            host_with_protocol = self.request.protocol + '://' + self.request.host
+            url_with_image = url_concat(host_with_protocol + '/hub/spawn', dict(repourl='docker:' + image_name + ':' + image_tag))
+
+            self.log.info('Will commit %s' % url_with_image)
+
+            spawner.client.commit(
+                container=spawner.container_id,
+                repository=image_name,
+                tag=image_tag,
+                message='Commit from control panel',
+                author=spawner.escaped_name
+            )
+
+            self.redirect(url_concat('/hub/home', dict(url_with_image=url_with_image)))
+            return
+
         if user.running and getattr(user, 'login_service', '') == 'github':
             if do_fork:
                 self.log.info('Will fork %s' % user.spawner.repo_url)
@@ -104,6 +128,7 @@ class HomeHandler(BaseHandler):
             branch_name=branch_name,
             commit_sha=commit_sha,
             notify_message=notify_message,
+            notify_url_to_image=notify_url_to_image,
             version=__version__,
             g_analitics_id=g_id,
             ya_metrica_id=ya_id

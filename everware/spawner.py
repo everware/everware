@@ -14,7 +14,8 @@ from dockerspawner import DockerSpawner
 from traitlets import (
     Integer,
     Unicode,
-    Int
+    Int,
+    Bool
 )
 from tornado import gen
 from tornado.httpclient import HTTPError
@@ -251,12 +252,19 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             yield self.notify_about_fail(message)
             raise e
 
+    user_images_check = Bool(default_value=True, config=True, help="If True, users will be able restore only own images")
 
     @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
         if self.form_repo_url.startswith('docker:'):
             image_name = self.form_repo_url.replace('docker:', '')
+
+            if image_name.startswith('everware_image') and not self.user.admin and self.user_images_check:
+                images_user = image_name.split('/')[1]
+                if self.escaped_name != images_user:
+                    raise Exception('Access denied. Image %s is not yours.' % image_name)
+
             image = yield self.get_image(image_name)
             if image is None:
                 raise Exception('Image %s doesn\'t exist' % image_name)
