@@ -32,8 +32,7 @@ def is_repository_changed(user):
         return False
 
 @gen.coroutine
-def commit_container(request, user, log):
-    spawner = user.spawner
+def commit_container(request, spawner, log):
     image_tag = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     image_name = 'everware_image/' + spawner.escaped_name + '/' + spawner.escaped_repo_url + '_' + spawner.container_id
     host_with_protocol = request.protocol + '://' + request.host
@@ -90,7 +89,7 @@ class HomeHandler(BaseHandler):
             repo_url = user.spawner.repo_url
 
         if user.running and do_commit_container:
-            output_data = yield commit_container(self.request, user, self.log)
+            output_data = yield commit_container(self.request, user.spawner, self.log)
             self.redirect(url_concat('/hub/home', output_data))
 
         if user.running and getattr(user, 'login_service', '') == 'github':
