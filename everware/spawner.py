@@ -252,7 +252,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             yield self.notify_about_fail(message)
             raise e
 
-    user_images_check = Bool(default_value=True, config=True, help="If True, users will be able restore only own images")
+    share_user_images = Bool(default_value=True, config=True, help="If True, users will be able restore only own images")
 
     @gen.coroutine
     def build_image(self):
@@ -260,7 +260,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         if self.form_repo_url.startswith('docker:'):
             image_name = self.form_repo_url.replace('docker:', '')
 
-            if image_name.startswith('everware_image') and not self.user.admin and self.user_images_check:
+            if image_name.startswith('everware_image') and not self.user.admin and self.share_user_images:
                 images_user = image_name.split('/')[1]
                 if self.escaped_name != images_user:
                     raise Exception('Access denied. Image %s is not yours.' % image_name)

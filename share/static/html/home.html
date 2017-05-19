@@ -21,7 +21,7 @@
         {% else %}
           <p>You don't have a repository with the same name. Do you want to <a id="push" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_fork=1">fork</a> it?</p>
         {% endif %}
-          <p>Also you can save current state. You will be able easily restore your work later. Just <a id="commit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_commit=1">commit</a> it!</p>
+          <p>Also you can <a id="commit-container" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored small-button" href="/hub/home?do_commit_container=1">save container</a> to easily restore your work later.</p>
       {% endif %}
      </div>
   </div>
@@ -76,7 +76,7 @@
         <input class="mdl-textfield__input" type="text" id="notify-url" value="{{notify_url_to_image}}" readonly>
         <label class="mdl-textfield__label" for="notify-url">Your link to restore state</label>
     </div>
-    <button class="mdl-button mdl-js-button mdl-button--icon notify-url--button notify-url__button" data-clipboard-target="#notify-url" title="Copy to clipboard">
+    <button class="mdl-button mdl-js-button mdl-button--icon notify-url--button" data-clipboard-target="#notify-url" title="Copy to clipboard">
       <i class="material-icons">content_copy</i>
     </button>
   {% endif %}
@@ -87,7 +87,7 @@
 {% block script %}
 <script type="text/javascript">
   require(["home", "clipboard"], function (home, Clipboard) {
-    new Clipboard('.notify-url__button');
+    new Clipboard('.notify-url--button');
   });
 </script>
 {% endblock %}
