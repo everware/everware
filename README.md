@@ -71,7 +71,7 @@ In order to deploy your own `everware` instance, you have to:
     everware-server -f etc/local_config.py --debug --no-ssl
 ```
 
-Everware can also be deployed in a Docker container. See [Everware in Docker container](docker.md)
+Everware can also be deployed in a Docker container. See [Everware in Docker container](docs/docker.md)
 
 
 ## Development

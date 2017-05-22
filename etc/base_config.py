@@ -14,6 +14,9 @@ c.Spawner.poll_interval = 5
 c.Spawner.remove_containers = True
 c.Spawner.tls_assert_hostname = False
 c.Spawner.use_docker_client_env = True
+# give users an opportunity to restore any images via docker or not. Default: True
+# c.Spawner.share_user_images = False
+
 # c.Authenticator.admin_users = {'anaderi', 'astiunov'}
 
 # The docker containers need access to the Hub API, so the default

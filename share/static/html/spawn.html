@@ -23,8 +23,18 @@ style="display: none;"
 Paste the link to the git repository you want to try out. If you
 need some inspiration try one of the following repositories:
 <ul>
-  <li><a href="https://github.com/everware/everware-dimuon-example">https://github.com/everware/everware-dimuon-example</a></li>
-  <li><a href="https://github.com/betatim/everware-demo">https://github.com/betatim/everware-demo</a></li>
+  <li>
+    <a id="clipboard-example-1" href="https://github.com/everware/everware-dimuon-example">https://github.com/everware/everware-dimuon-example</a>
+    <button class="mdl-button mdl-js-button mdl-button--icon clipboard-example--button" data-text-source="clipboard-example-1" title="Copy to form">
+      <i class="material-icons">content_copy</i>
+    </button>
+  </li>
+  <li>
+    <a id="clipboard-example-2" href="https://github.com/betatim/everware-demo">https://github.com/betatim/everware-demo</a>
+    <button class="mdl-button mdl-js-button mdl-button--icon clipboard-example--button" data-text-source="clipboard-example-2" title="Copy to form">
+      <i class="material-icons">content_copy</i>
+    </button>
+  </li>
 </ul>
 Read the documentation
 to <a href="https://github.com/everware/everware/wiki/Being-everware-compatible">learn
@@ -48,6 +58,13 @@ require(["jquery"], function ($) {
       showError("git protocol isn't supported yet. Please use the HTTPS URL scheme");
       return false;
     }
+  });
+
+  $('.clipboard-example--button').click(function (e) {
+      var input = $('#repository_input');
+      var linkId = $(e.currentTarget).attr('data-text-source');
+      var href = $('#' + linkId).attr('href');
+      input.val(href).parent().addClass('is-focused');
   });
 });
 </script>
