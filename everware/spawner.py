@@ -86,11 +86,15 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._client = value
 
     @gen.coroutine
-    def _make_byor_client(self):
-        """Prepare a client for the user. For a non-BYOR user just use the global client."""
-        byor_docker_url = self.user_options['byor_docker_url']
-        self.container_ip = byor_docker_url.split(':')[0]
-        self.client = docker.Client(base_url=byor_docker_url, tls=None, version='auto')
+    def self._set_client(self):
+        """Prepare a client for the user. For a non-BYOR user just set the global client."""
+        if self._byor_is_used:
+            byor_docker_url = self.user_options['byor_docker_url']
+            self.container_ip = byor_docker_url.split(':')[0]
+            self.client = docker.Client(base_url=byor_docker_url, tls=None, version='auto')
+        else:
+            self.container_ip = self.__class__.container_ip
+            self.client = self._global_client
 
     # We override the executor here to increase the number of threads
     @property
@@ -405,10 +409,8 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._is_failed = False
         self._is_building = True
         self._is_empty = False
-
-        self.byor_is_used = (self.user_options['byor_docker_url'] != '')
-        if self.byor_is_used:
-            yield self._make_byor_client()
+        self._byor_is_used = (self.user_options['byor_docker_url'] != '')
+        self._set_client()
 
         try:
             f = self.build_image()
