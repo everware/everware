@@ -86,7 +86,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._client = value
 
     @gen.coroutine
-    def self._set_client(self):
+    def _set_client(self):
         """Prepare a client for the user. For a non-BYOR user just set the global client."""
         if self._byor_is_used:
             byor_docker_url = self.user_options['byor_docker_url']
