@@ -6,6 +6,7 @@ from pprint import pformat
 
 from concurrent.futures import ThreadPoolExecutor
 
+import docker
 from docker.errors import APIError
 from smtplib import SMTPException
 from jupyterhub.utils import wait_for_http_server
@@ -42,9 +43,54 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
+        self._initialize_global_client()
+        # self.client may change if a BYOR-user will come
+        # However, it has to be set since it's used when the application starts 
+        self.client = self._global_client
         ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
 
+    _global_client = None
+    def _initialize_global_client(self):
+        """Build single global client instance for non-BYOR users."""
+        cls = self.__class__
+        if cls._global_client is not None:
+            return
+        if self.use_docker_client_env:
+            kwargs = kwargs_from_env(
+                assert_hostname=self.tls_assert_hostname
+            )
+            client = docker.Client(version='auto', **kwargs)
+        else:
+            if self.tls:
+                tls_config = True
+            elif self.tls_verify or self.tls_ca or self.tls_client:
+                tls_config = docker.tls.TLSConfig(
+                    client_cert=self.tls_client,
+                    ca_cert=self.tls_ca,
+                    verify=self.tls_verify,
+                    assert_hostname=self.tls_assert_hostname)
+            else:
+                tls_config = None
+
+            docker_host = os.environ.get('DOCKER_HOST', 'unix://var/run/docker.sock')
+            client = docker.Client(base_url=docker_host, tls=tls_config, version='auto')
+        cls._global_client = client
+
+    @property
+    def client(self):
+        return self._client
+
+    @client.setter
+    def client(self, value):
+        self._client = value
+
+    @gen.coroutine
+    def _make_byor_client(self):
+        """Prepare a client for the user. For a non-BYOR user just use the global client."""
+        byor_docker_url = self.user_options['byor_docker_url']
+        self.container_ip = byor_docker_url.split(':')[0]
+        self.client = docker.Client(base_url=byor_docker_url, tls=None, version='auto')
 
     # We override the executor here to increase the number of threads
     @property
@@ -126,6 +172,24 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             style="margin-bottom: 3px;" />
             <label class="mdl-textfield__label" for="repository_input">Git repository</label>
           </div>
+
+          <p></p>
+          (optionally) If you want to launch a container on your own machine, enter ip and port of the docker-host
+          running on it<br>(e.g. 11.22.33.44:2375)<br>
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%">
+            <input
+              id="docker_url"
+              type="text"
+              autocapitalize="off"
+              autocorrect="off"
+              name="byor_docker_url"
+              tabindex="1"
+              autofocus="autofocus"
+              class="mdl-textfield__input"
+            style="margin-bottom: 3px;" />
+            <label class="mdl-textfield__label" for="docker_url">docker_ip:docker_port</label>
+          </div>
+
           <label for="need_remove" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
             <input type="checkbox"
                    name="need_remove"
@@ -139,6 +203,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
+        options['byor_docker_url'] = formdata.pop('byor_docker_url')[0].strip()
         options.update(formdata)
         need_remove = formdata.get('need_remove', ['on'])[0].strip()
         options['need_remove'] = need_remove == 'on'
@@ -320,7 +385,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             self.commit_sha
         )
 
-
     @gen.coroutine
     def remove_old_container(self):
         try:
@@ -331,7 +395,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                 force=True
             )
         except APIError as e:
-            self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
+            self.log.info("Can't erase container %s due to %s" % (self.container_name, e)) 
 
     @gen.coroutine
     def start(self, image=None):
@@ -341,6 +405,11 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._is_failed = False
         self._is_building = True
         self._is_empty = False
+
+        self.byor_is_used = (self.user_options['byor_docker_url'] != '')
+        if self.byor_is_used:
+            yield self._make_byor_client()
+
         try:
             f = self.build_image()
             image_name = yield gen.with_timeout(
