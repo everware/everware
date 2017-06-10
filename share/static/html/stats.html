@@ -1,0 +1,10 @@
+{% extends "page.html" %}
+
+{% block main %}
+      <p>
+        Currently running containers: {{ running_container_count }}
+      </p>
+      <p>
+        Total number of launches: {{ total_launch_count }}
+      </p>
+{% endblock %}

@@ -5,7 +5,21 @@ import uuid
 from . import __version__
 from .metrica import MetricaIdsMixin
 
+
 class SpawnHandler(default_handlers.SpawnHandler):
+
+    def initialize(self, stats):
+        """Initialize the handler.
+
+        Collect reference to the everware instance stats for incrementing
+        the field 'total_launch_count'.
+
+        Parameters
+        ----------
+        stats : dict
+            A dict containing the key 'total_launch_count'.
+        """
+        self.stats = stats
 
     def _render_form(self, message=''):
         user = self.get_current_user()
@@ -39,6 +53,8 @@ class SpawnHandler(default_handlers.SpawnHandler):
                 user.token = user.spawner.token
         except Exception as e:
             self.log.error("Failed to spawn single-user server with form", exc_info=True)
+        else:
+            self.stats['total_launch_count'] += 1
 
     @web.authenticated
     def get(self):
