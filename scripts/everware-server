@@ -2,7 +2,7 @@
 import jupyterhub.handlers.pages as pages
 import jupyterhub.handlers.base as base
 from jupyterhub import app
-from everware import SpawnHandler, UserSpawnHandler, HomeHandler
+from everware import SpawnHandler, UserSpawnHandler, HomeHandler, StatsHandler
 import sys
 import warnings
 
@@ -10,17 +10,31 @@ import warnings
 class Everware(app.JupyterHub):
     name = 'everware'
 
-    custom_handlers = [
-        ('/hub/user/([^/]+)(/.*)?', UserSpawnHandler),
-        ('/hub/home', HomeHandler),
-        ('/hub/spawn', SpawnHandler)
-    ]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.stats = {
+            'total_launch_count': 0
+        }
 
     def init_handlers(self):
         super().init_handlers()
-        self.add_handlers(Everware.custom_handlers)
+        self.add_handlers([
+            ('/hub/user/([^/]+)(/.*)?', UserSpawnHandler),
+            ('/hub/home', HomeHandler),
+            ('/hub/spawn', SpawnHandler, {'stats': self.stats}),
+            ('/hub/stats', StatsHandler, {'stats': self.stats})
+        ])
 
     def add_handlers(self, handlers, replace_existing=True):
+        """Add new handlers.
+
+        Parameters
+        ----------
+        handlers : list-like
+            Contains tuples representing handlers: (url, handler[, init_args]).
+        replace_existing : bool, optional(True)
+            If True, old handlers will be overwritten by new ones on overlapping urls.
+        """
         existing_handler_indices = {handler[0]: i for i, handler in enumerate(self.handlers)}
         for handler in handlers:
             existing_handler_index = existing_handler_indices.get(handler[0])
