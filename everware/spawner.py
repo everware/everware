@@ -43,58 +43,27 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        self._initialize_global_client()
-        # self.client may change if a BYOR-user will come
-        # However, it has to be set since it's used when the application starts 
-        self.client = self._global_client
+        # User may have custom client (e.g. when BYOR is used)
+        self._custom_client = None
         ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
 
-    _global_client = None
-    def _initialize_global_client(self):
-        """Build single global client instance for non-BYOR users."""
-        cls = self.__class__
-        if cls._global_client is not None:
-            return
-        if self.use_docker_client_env:
-            kwargs = kwargs_from_env(
-                assert_hostname=self.tls_assert_hostname
-            )
-            client = docker.Client(version='auto', **kwargs)
-        else:
-            if self.tls:
-                tls_config = True
-            elif self.tls_verify or self.tls_ca or self.tls_client:
-                tls_config = docker.tls.TLSConfig(
-                    client_cert=self.tls_client,
-                    ca_cert=self.tls_ca,
-                    verify=self.tls_verify,
-                    assert_hostname=self.tls_assert_hostname)
-            else:
-                tls_config = None
-
-            docker_host = os.environ.get('DOCKER_HOST', 'unix://var/run/docker.sock')
-            client = docker.Client(base_url=docker_host, tls=tls_config, version='auto')
-        cls._global_client = client
-
     @property
     def client(self):
-        return self._client
-
-    @client.setter
-    def client(self, value):
-        self._client = value
+        if self._custom_client is not None:
+            return self._custom_client
+        return super(CustomDockerSpawner, self).client
 
     @gen.coroutine
     def _set_client(self):
-        """Prepare a client for the user. For a non-BYOR user just set the global client."""
+        """Prepare a client for the user."""
         if self._byor_is_used:
             byor_docker_url = self.user_options['byor_docker_url']
             self.container_ip = byor_docker_url.split(':')[0]
-            self.client = docker.Client(base_url=byor_docker_url, tls=None, version='auto')
+            self._custom_client = docker.Client(base_url=byor_docker_url, tls=None, version='auto')
         else:
             self.container_ip = self.__class__.container_ip
-            self.client = self._global_client
+            self._custom_client = None
 
     # We override the executor here to increase the number of threads
     @property
@@ -104,7 +73,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         if cls._executor is None:
             cls._executor = ThreadPoolExecutor(20)
         return cls._executor
-
 
     def _docker(self, method, *args, **kwargs):
         """wrapper for calling docker methods
