@@ -38,5 +38,8 @@ class StatsHandler(BaseHandler):
     @gen.coroutine
     def get_running_container_count(self):
         """Get the number of currently running containers."""
-        return len(Client().containers(
-            filters={'status': self.container_statuses['running']}))
+        client = self.spawner_class.get_global_client()
+        if client is None:
+            # None means that there were no launches
+            return 0
+        return len(client.containers(filters={'status': self.container_statuses['running']}))
