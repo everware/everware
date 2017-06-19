@@ -1,0 +1,87 @@
+SPAWNER_OPTIONS_FROM = """
+<div style="margin-bottom: 0px;">
+<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%;">
+<input
+    id="repository_input"
+    type="text"
+    autocapitalize="off"
+    autocorrect="off"
+    name="repository_url"
+    tabindex="1"
+    autofocus="autofocus"
+    class="mdl-textfield__input"
+style="margin-bottom: 3px;" />
+<label class="mdl-textfield__label" for="repository_input">Git repository</label>
+</div>
+
+<label for="need_remove" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
+<input type="checkbox"
+        name="need_remove"
+        class="mdl-checkbox__input"
+        id="need_remove"
+        checked />
+<span class="mdl-checkbox__label">Remove previous container if it exists</span>
+</label>
+
+<label for="byor_is_needed" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
+<input type="checkbox"
+        name="byor_is_needed"
+        class="mdl-checkbox__input"
+        id="byor_is_needed"
+        unchecked />
+<span class="mdl-checkbox__label">I want to run the repository on my own server</span>
+</label>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+window.onload = function () {
+    byor_is_needed = document.getElementById("byor_is_needed");
+    byor_input = document.getElementById("byor_input");
+    if (byor_is_needed.checked) {
+        byor_input.style.display = "inline";
+    } else {
+        byor_input.style.display = "none";
+    }
+}
+$('#byor_is_needed').on('change', function() {
+    $('#byor_input').toggle(speed='normal');
+});
+</script>
+
+<div id='byor_input' style="display: none;">
+<p style="margin-bottom: 0px;">
+    For a successful run <a href="https://www.docker.com/" target="_black">Docker</a>
+    must be installed on your server.<br />
+    Enter ip and port of the Docker daemon running on your server.<br />
+    (Click <a href="https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-socket-option"
+            target="_blank">
+    here</a> to learn how to run Docker daemon on a particular port)
+</p>
+<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"
+        style="width: 9%; margin-right: 20px;">
+    <input
+    id="byor_docker_ip"
+    type="text"
+    autocapitalize="off"
+    autocorrect="off"
+    name="byor_docker_ip"
+    tabindex="1"
+    autofocus="autofocus"
+    class="mdl-textfield__input"/>
+    <label class="mdl-textfield__label" for="byor_docker_ip">ip</label>
+</div>
+<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"
+        style="width: 9%;">
+    <input
+    id="byor_docker_port"
+    type="text"
+    autocapitalize="off"
+    autocorrect="off"
+    name="byor_docker_port"
+    tabindex="1"
+    autofocus="autofocus"
+    class="mdl-textfield__input"/>
+    <label class="mdl-textfield__label" for="byor_docker_port">port</label>
+</div>
+</div>
+</div>
+"""

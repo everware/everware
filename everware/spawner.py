@@ -30,6 +30,7 @@ from .git_processor import GitMixin
 from .email_notificator import EmailNotificator
 from .container_handler import ContainerHandler
 from . import __version__
+from ._spawner_options_form import SPAWNER_OPTIONS_FROM
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -54,23 +55,31 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             return self._byor_client
         return super(CustomDockerSpawner, self).client
 
+    @property
+    def byor_is_used(self):
+        return self.user_options.get('byor_is_needed', False)
+
     def _reset_byor(self):
         self.container_ip = str(self.__class__.container_ip)
         self._byor_client = None
 
-    byor_timeout = Int(20, min=1, config=True, help='Timeout for connection to BYOR Docker daemon')
+    byor_timeout = Int(20, min=1, config=True,
+                       help='Timeout for connection to BYOR Docker daemon')
+
     @gen.coroutine
     def _set_client(self):
         """Prepare a client for the user."""
         if not self.byor_is_used:
             self._reset_byor()
             return
-        byor_docker_url = self.user_options['byor_docker_url']
-        # version='auto' causes a connection to the daemon
-        self._byor_client = docker.Client(byor_docker_url,
-                                            version='auto',
-                                            timeout=self.byor_timeout)
-        self.container_ip = byor_docker_url.split(':')[0]
+        byor_ip = self.user_options['byor_docker_ip'],
+        byor_port = self.user_options['byor_docker_port']
+        # version='auto' causes a connection to the daemon.
+        # That's why the method must be a coroutine.
+        self._byor_client = docker.Client('{}:{}'.format(byor_ip, byor_port),
+                                          version='auto',
+                                          timeout=self.byor_timeout)
+        self.container_ip = byor_ip
 
     # We override the executor here to increase the number of threads
     @property
@@ -138,105 +147,16 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self.user.spawn_pending = False
 
     def _options_form_default(self):
-        return """
-          <div style="margin-bottom: 0px;">
-          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%;">
-            <input
-              id="repository_input"
-              type="text"
-              autocapitalize="off"
-              autocorrect="off"
-              name="repository_url"
-              tabindex="1"
-              autofocus="autofocus"
-              class="mdl-textfield__input"
-            style="margin-bottom: 3px;" />
-            <label class="mdl-textfield__label" for="repository_input">Git repository</label>
-          </div>
-
-          <label for="need_remove" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
-            <input type="checkbox"
-                   name="need_remove"
-                   class="mdl-checkbox__input"
-                   id="need_remove"
-                   checked />
-            <span class="mdl-checkbox__label">Remove previous container if it exists</span>
-          </label>
-
-          <label for="byor_is_needed" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
-            <input type="checkbox"
-                   name="byor_is_needed"
-                   class="mdl-checkbox__input"
-                   id="byor_is_needed"
-                   unchecked />
-            <span class="mdl-checkbox__label">I want to run the repository on my own server</span>
-          </label>
-          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-          <script>
-            window.onload = function () {
-                byor_is_needed = document.getElementById("byor_is_needed");
-                byor_input = document.getElementById("byor_input");
-                if (byor_is_needed.checked) {
-                    byor_input.style.display = "inline";
-                } else {
-                    byor_input.style.display = "none";
-                }
-            }
-            $('#byor_is_needed').on('change', function() {
-                $('#byor_input').toggle(speed='normal');
-            });
-          </script>
-
-          <div id='byor_input' style="display: none;">
-            <p style="margin-bottom: 0px;">
-              For a successful run <a href="https://www.docker.com/" target="_black">Docker</a>
-              must be installed on your server.<br />
-              Enter ip and port of the Docker daemon running on your server.<br />
-              (Click <a href="https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-socket-option"
-                        target="_blank">
-               here</a> to learn how to run Docker daemon on a particular port)
-            </p>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"
-                 style="width: 9%; margin-right: 20px;">
-              <input
-                id="byor_docker_ip"
-                type="text"
-                autocapitalize="off"
-                autocorrect="off"
-                name="byor_docker_ip"
-                tabindex="1"
-                autofocus="autofocus"
-                class="mdl-textfield__input"/>
-                <label class="mdl-textfield__label" for="byor_docker_ip">ip</label>
-            </div>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label"
-                 style="width: 9%;">
-              <input
-                id="byor_docker_port"
-                type="text"
-                autocapitalize="off"
-                autocorrect="off"
-                name="byor_docker_port"
-                tabindex="1"
-                autofocus="autofocus"
-                class="mdl-textfield__input"/>
-                <label class="mdl-textfield__label" for="byor_docker_port">port</label>
-            </div>
-          </div>
-          </div>
-        """
+        return SPAWNER_OPTIONS_FROM
 
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
         options['byor_is_needed'] = formdata.get('byor_is_needed', [''])[0].strip() == 'on'
-        options['byor_docker_url'] = '{}:{}'.format(
-            formdata.pop('byor_docker_ip', [''])[0].strip(),
-            formdata.pop('byor_docker_port', [''])[0].strip()
-        )
+        for field in ('byor_docker_ip', 'byor_docker_port'):
+            options[field] = formdata.pop(field, [''])[0].strip()
         options.update(formdata)
-        need_remove = formdata.get('need_remove', ['on'])[0].strip()
-        options['need_remove'] = need_remove == 'on'
+        options['need_remove'] = formdata.get('need_remove', ['on'])[0].strip() == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
         return options
@@ -257,10 +177,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     @property
     def need_remove(self):
         return self.user_options.get('need_remove', True)
-
-    @property
-    def byor_is_used(self):
-        return self.user_options.get('byor_is_needed', False)
 
     @property
     def is_empty(self):
