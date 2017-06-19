@@ -55,7 +55,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         return super(CustomDockerSpawner, self).client
 
     def _reset_byor(self):
-        self.container_ip = self.__class__.container_ip
+        self.container_ip = str(self.__class__.container_ip)
         self._byor_client = None
 
     byor_timeout = Int(20, min=1, config=True, help='Timeout for connection to BYOR Docker daemon')
