@@ -44,7 +44,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        # User may have custom client (e.g. when BYOR is used)
         self._byor_client = None
         ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
