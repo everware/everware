@@ -54,20 +54,23 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             return self._byor_client
         return super(CustomDockerSpawner, self).client
 
+    def _reset_byor(self):
+        self.container_ip = self.__class__.container_ip
+        self._byor_client = None
+
     byor_timeout = Int(20, min=1, config=True, help='Timeout for connection to BYOR Docker daemon')
     @gen.coroutine
     def _set_client(self):
         """Prepare a client for the user."""
-        if self.byor_is_used:
-            byor_docker_url = self.user_options['byor_docker_url']
-            # version='auto' causes a connection to the daemon
-            self._byor_client = docker.Client(byor_docker_url,
-                                              version='auto',
-                                              timeout=self.byor_timeout)
-            self.container_ip = byor_docker_url.split(':')[0]
-        else:
-            self.container_ip == self.__class__.container_ip
-            self._byor_client = None
+        if not self.byor_is_used:
+            self._reset_byor()
+            return
+        byor_docker_url = self.user_options['byor_docker_url']
+        # version='auto' causes a connection to the daemon
+        self._byor_client = docker.Client(byor_docker_url,
+                                            version='auto',
+                                            timeout=self.byor_timeout)
+        self.container_ip = byor_docker_url.split(':')[0]
 
     # We override the executor here to increase the number of threads
     @property
@@ -111,6 +114,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     def clear_state(self):
         state = super(CustomDockerSpawner, self).clear_state()
         self.container_id = ''
+        self._reset_byor()
 
     def get_state(self):
         state = DockerSpawner.get_state(self)
