@@ -71,7 +71,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         if not self.byor_is_used:
             self._reset_byor()
             return
-        byor_ip = self.user_options['byor_docker_ip'],
+        byor_ip = self.user_options['byor_docker_ip']
         byor_port = self.user_options['byor_docker_port']
         # version='auto' causes a connection to the daemon.
         # That's why the method must be a coroutine.
