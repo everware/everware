@@ -30,7 +30,7 @@ from .git_processor import GitMixin
 from .email_notificator import EmailNotificator
 from .container_handler import ContainerHandler
 from . import __version__
-from ._spawner_options_form import SPAWNER_OPTIONS_FROM
+from ._spawner_options_form import SPAWNER_OPTIONS_FORM
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -146,7 +146,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self.user.spawn_pending = False
 
     def _options_form_default(self):
-        return SPAWNER_OPTIONS_FROM
+        return SPAWNER_OPTIONS_FORM
 
     def options_from_form(self, formdata):
         options = {}

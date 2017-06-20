@@ -1,4 +1,4 @@
-SPAWNER_OPTIONS_FROM = """
+SPAWNER_OPTIONS_FORM = """
 <div style="margin-bottom: 0px;">
 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%;">
 <input
