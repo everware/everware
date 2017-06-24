@@ -365,7 +365,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                 force=True
             )
         except APIError as e:
-            self.log.info("Can't erase container %s due to %s" % (self.container_name, e)) 
+            self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
 
     @gen.coroutine
     def start(self, image=None):
