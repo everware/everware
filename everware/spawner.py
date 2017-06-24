@@ -30,7 +30,6 @@ from .git_processor import GitMixin
 from .email_notificator import EmailNotificator
 from .container_handler import ContainerHandler
 from . import __version__
-from ._spawner_options_form import SPAWNER_OPTIONS_FORM
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -146,7 +145,29 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self.user.spawn_pending = False
 
     def _options_form_default(self):
-        return SPAWNER_OPTIONS_FORM
+        return """
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 50%">
+            <input
+              id="repository_input"
+              type="text"
+              autocapitalize="off"
+              autocorrect="off"
+              name="repository_url"
+              tabindex="1"
+              autofocus="autofocus"
+              class="mdl-textfield__input"
+            style="margin-bottom: 3px;" />
+            <label class="mdl-textfield__label" for="repository_input">Git repository</label>
+          </div>
+          <label for="need_remove" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" >
+            <input type="checkbox"
+                   name="need_remove"
+                   class="mdl-checkbox__input"
+                   id="need_remove"
+                   checked />
+            <span class="mdl-checkbox__label">Remove previous container if it exists</span>
+          </label>
+        """
 
     def options_from_form(self, formdata):
         options = {}
