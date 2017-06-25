@@ -6,8 +6,7 @@ from pprint import pformat
 
 from concurrent.futures import ThreadPoolExecutor
 
-import docker
-from docker.errors import APIError, DockerException
+from docker.errors import APIError
 from smtplib import SMTPException
 from jupyterhub.utils import wait_for_http_server
 
@@ -43,41 +42,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         self._image_handler = ImageHandler()
         self._cur_waiter = None
         self._is_empty = False
-        self._byor_client = None
         ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
 
-    @property
-    def client(self):
-        if self._byor_client is not None:
-            return self._byor_client
-        return super(CustomDockerSpawner, self).client
-
-    @property
-    def byor_is_used(self):
-        return self.user_options.get('byor_is_needed', False)
-
-    def _reset_byor(self):
-        self.container_ip = str(self.__class__.container_ip)
-        self._byor_client = None
-
-    byor_timeout = Int(20, min=1, config=True,
-                       help='Timeout for connection to BYOR Docker daemon')
-
-    @gen.coroutine
-    def _set_client(self):
-        """Prepare a client for the user."""
-        if not self.byor_is_used:
-            self._reset_byor()
-            return
-        byor_ip = self.user_options['byor_docker_ip']
-        byor_port = self.user_options['byor_docker_port']
-        # version='auto' causes a connection to the daemon.
-        # That's why the method must be a coroutine.
-        self._byor_client = docker.Client('{}:{}'.format(byor_ip, byor_port),
-                                          version='auto',
-                                          timeout=self.byor_timeout)
-        self.container_ip = byor_ip
 
     # We override the executor here to increase the number of threads
     @property
@@ -88,9 +55,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             cls._executor = ThreadPoolExecutor(20)
         return cls._executor
 
+
     def _docker(self, method, *args, **kwargs):
         """wrapper for calling docker methods
-
         to be passed to ThreadPoolExecutor
         """
         # methods that return a generator object return instantly
@@ -121,7 +88,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     def clear_state(self):
         state = super(CustomDockerSpawner, self).clear_state()
         self.container_id = ''
-        self._reset_byor()
 
     def get_state(self):
         state = DockerSpawner.get_state(self)
@@ -172,11 +138,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     def options_from_form(self, formdata):
         options = {}
         options['repo_url'] = formdata.get('repository_url', [''])[0].strip()
-        options['byor_is_needed'] = formdata.get('byor_is_needed', [''])[0].strip() == 'on'
-        for field in ('byor_docker_ip', 'byor_docker_port'):
-            options[field] = formdata.pop(field, [''])[0].strip()
         options.update(formdata)
-        options['need_remove'] = formdata.get('need_remove', ['on'])[0].strip() == 'on'
+        need_remove = formdata.get('need_remove', ['on'])[0].strip()
+        options['need_remove'] = need_remove == 'on'
         if not options['repo_url']:
             raise Exception('You have to provide the URL to a git repository.')
         return options
@@ -367,17 +331,17 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         except APIError as e:
             self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
 
-    @gen.coroutine
-    def start(self, image=None):
-        """start the single-user server in a docker container"""
+    def _prepare_for_start(self):
         self._user_log = []
         self._is_up = False
         self._is_failed = False
         self._is_building = True
         self._is_empty = False
 
+    @gen.coroutine
+    def _start(self, image):
+        """start the single-user server in a docker container"""
         try:
-            yield self._set_client()
             f = self.build_image()
             image_name = yield gen.with_timeout(
                 timedelta(seconds=self.start_timeout),
@@ -395,21 +359,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             yield ContainerHandler.start(self,
                 image=image_name
             )
-        except DockerException as e:
-            self._is_failed = True
-            message = str(e)
-            if 'ConnectTimeoutError' in message:
-                log_message = 'Connection to the Docker daemon took too long (> {} secs)'.format(
-                    self.byor_timeout
-                )
-                notification_message = 'BYOR timeout limit {} exceeded'.format(self.byor_timeout)
-            else:
-                log_message = "Failed to establish connection with the Docker daemon"
-                notification_message = log_message
-            self._add_to_log(log_message, level=2)
-            yield self.notify_about_fail(notification_message)
-            self._is_building = False
-            raise
         except gen.TimeoutError:
             self._is_failed = True
             if self._cur_waiter:
@@ -444,9 +393,14 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
 
     @gen.coroutine
+    def start(self, image=None):
+        self._prepare_for_start()
+        ip_port = yield self._start(image)
+        return ip_port
+
+    @gen.coroutine
     def stop(self, now=False):
         """Stop the container
-
         Consider using pause/unpause when docker-py adds support
         """
         self._is_empty = True
