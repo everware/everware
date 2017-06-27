@@ -9,16 +9,13 @@ from .spawner import CustomDockerSpawner
 
 
 class ByorDockerSpawner(CustomDockerSpawner):
-
-    _options_form_is_initialized = False
     def __init__(self, **kwargs):
         CustomDockerSpawner.__init__(self, **kwargs)
         self._byor_client = None
-        if not self._options_form_is_initialized:
+        if self.options_form == self._options_form_default():
             with open(pjoin(self.config['JupyterHub']['template_paths'][0],
                             '_byor_options_form.html')) as form:
                 ByorDockerSpawner.options_form = form.read()
-                ByorDockerSpawner._options_form_is_initialized = True
 
     @property
     def client(self):
