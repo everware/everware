@@ -45,7 +45,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         ContainerHandler.__init__(self, **kwargs)
         EmailNotificator.__init__(self)
 
-
     # We override the executor here to increase the number of threads
     @property
     def executor(self):
@@ -55,6 +54,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             cls._executor = ThreadPoolExecutor(20)
         return cls._executor
 
+    @staticmethod
+    def get_global_client():
+        return CustomDockerSpawner._client
 
     def _docker(self, method, *args, **kwargs):
         """wrapper for calling docker methods
