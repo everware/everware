@@ -60,7 +60,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
 
     def _docker(self, method, *args, **kwargs):
         """wrapper for calling docker methods
-
         to be passed to ThreadPoolExecutor
         """
         # methods that return a generator object return instantly
@@ -322,7 +321,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             self.commit_sha
         )
 
-
     @gen.coroutine
     def remove_old_container(self):
         try:
@@ -335,14 +333,16 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         except APIError as e:
             self.log.info("Can't erase container %s due to %s" % (self.container_name, e))
 
-    @gen.coroutine
-    def start(self, image=None):
-        """start the single-user server in a docker container"""
+    def _prepare_for_start(self):
         self._user_log = []
         self._is_up = False
         self._is_failed = False
         self._is_building = True
         self._is_empty = False
+
+    @gen.coroutine
+    def _start(self, image):
+        """start the single-user server in a docker container"""
         try:
             f = self.build_image()
             image_name = yield gen.with_timeout(
@@ -395,9 +395,14 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         return self.user.server.ip, self.user.server.port  # jupyterhub 0.7 prefers returning ip, port
 
     @gen.coroutine
+    def start(self, image=None):
+        self._prepare_for_start()
+        ip_port = yield self._start(image)
+        return ip_port
+
+    @gen.coroutine
     def stop(self, now=False):
         """Stop the container
-
         Consider using pause/unpause when docker-py adds support
         """
         self._is_empty = True
