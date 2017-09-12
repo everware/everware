@@ -488,6 +488,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             env.update({
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
+                'NB_USER': self.user.name,
                 'EVER_VERSION': __version__,
             })
             env.update(self.user_options)
