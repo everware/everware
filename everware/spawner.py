@@ -1,7 +1,7 @@
 from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
-from shutil import rmtree
+from shutil import rmtree, copyfile
 from pprint import pformat
 
 from concurrent.futures import ThreadPoolExecutor
@@ -15,7 +15,8 @@ from traitlets import (
     Integer,
     Unicode,
     Int,
-    Bool
+    Bool,
+    List
 )
 from tornado import gen
 from tornado.httpclient import HTTPError
@@ -34,6 +35,28 @@ from . import __version__
 ssl._create_default_https_context = ssl._create_unverified_context
 
 class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
+    student_images = List(
+        config=True,
+        help="Mount student images for those",
+    )
+
+    student_host_exchange_dir = Unicode(
+        "/nfs/exchange",
+        config=True,
+        help="Path to the exchange folder on host"
+    )
+
+    student_host_homedir = Unicode(
+        "/nfs/users/{username}",
+        config=True,
+        help="Path to the each student's home dir on host"
+    )
+
+    student_initial_files = List(
+        config=True,
+        help="Files to copy into student's folder",
+    )
+
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -255,6 +278,26 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
 
     share_user_images = Bool(default_value=True, config=True, help="If True, users will be able restore only own images")
 
+    def handle_student_case(self):
+        if self.volumes is None:
+            self.volumes = {}
+
+        host_dir = self.student_host_homedir.format(username=self.user.name)
+        if not os.path.isdir(host_dir):
+            os.mkdir(host_dir)
+            os.chmod(host_dir, 0o777)
+
+        for src_path in self.student_initial_files:
+            filename = src_path.split("/")[-1]
+            dst_path = pjoin(host_dir, filename)
+            copyfile(src_path, dst_path)
+
+
+        self.volumes.update({
+            self.student_host_exchange_dir: "/exchange",
+            host_dir: "/home/{}".format(self.user.name),
+        })
+
     @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
@@ -272,6 +315,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             else:
                 self._add_to_log('Image %s is found' % image_name)
                 return image_name
+
+        if self.form_repo_url in self.student_images:
+            self.handle_student_case()
 
         tmp_dir = mkdtemp(suffix='-everware')
         try:
