@@ -16,7 +16,8 @@ from traitlets import (
     Unicode,
     Int,
     Bool,
-    List
+    List,
+    Dict
 )
 from tornado import gen
 from tornado.httpclient import HTTPError
@@ -40,10 +41,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         help="Mount student images for those",
     )
 
-    student_host_exchange_dir = Unicode(
-        "/nfs/exchange",
+    student_volumes = Dict(
         config=True,
-        help="Path to the exchange folder on host"
+        help="Volumes to mount for student containers. In format of {host_path: container_path}. You can use {username} if needed."
     )
 
     student_host_homedir = Unicode(
@@ -282,7 +282,8 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
         if self.volumes is None:
             self.volumes = {}
 
-        host_dir = self.student_host_homedir.format(username=self.user.name)
+        user_fmt = lambda s: s.format(username=self.user.name)
+        host_dir = user_fmt(self.student_host_homedir)
         if not os.path.isdir(host_dir):
             os.mkdir(host_dir)
             os.chmod(host_dir, 0o777)
@@ -292,11 +293,11 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             dst_path = pjoin(host_dir, filename)
             copyfile(src_path, dst_path)
 
-
-        self.volumes.update({
-            self.student_host_exchange_dir: "/exchange",
-            host_dir: "/home/{}".format(self.user.name),
-        })
+        formatted_student_volumes = {
+            user_fmt(k) : user_fmt(v) for k,v in self.student_volumes.items()
+        }
+        formatted_student_volumes[host_dir] = user_fmt("/home/{username}")
+        self.volumes.update(formatted_student_volumes)
 
     @gen.coroutine
     def build_image(self):
