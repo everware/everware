@@ -35,6 +35,7 @@ from . import __version__
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
 class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
     student_images = List(
         config=True,
