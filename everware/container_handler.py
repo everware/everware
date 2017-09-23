@@ -5,6 +5,7 @@ import os.path
 import sys
 import yaml
 
+
 class ShellCommand:
     def __init__(self, commands=[]):
         self.commands = commands

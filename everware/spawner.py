@@ -1,7 +1,7 @@
 from tempfile import mkdtemp
 from datetime import timedelta
 from os.path import join as pjoin
-from shutil import rmtree
+from shutil import rmtree, copyfile
 from pprint import pformat
 
 from concurrent.futures import ThreadPoolExecutor
@@ -15,7 +15,9 @@ from traitlets import (
     Integer,
     Unicode,
     Int,
-    Bool
+    Bool,
+    List,
+    Dict
 )
 from tornado import gen
 from tornado.httpclient import HTTPError
@@ -33,7 +35,29 @@ from . import __version__
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
 class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
+    student_images = List(
+        config=True,
+        help="Mount student images for those",
+    )
+
+    student_volumes = Dict(
+        config=True,
+        help="Volumes to mount for student containers. In format of {host_path: container_path}. You can use {username} if needed."
+    )
+
+    student_host_homedir = Unicode(
+        "/nfs/users/{username}",
+        config=True,
+        help="Path to the each student's home dir on host"
+    )
+
+    student_initial_files = List(
+        config=True,
+        help="Files to copy into student's folder",
+    )
+
     def __init__(self, **kwargs):
         self._user_log = []
         self._is_failed = False
@@ -80,7 +104,6 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
                                 self.log.warn("Error decoding string to json: %s" % lj)
                             else:
                                 if 'stream' in j and not j['stream'].startswith(' --->'):
-                                # self._add_to_log(l['stream'], 2)
                                     self._cur_waiter.add_to_log(j['stream'], 2)
                 return ret
             return lister(m(*args, **kwargs))
@@ -255,6 +278,27 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
 
     share_user_images = Bool(default_value=True, config=True, help="If True, users will be able restore only own images")
 
+    def handle_student_case(self):
+        if self.volumes is None:
+            self.volumes = {}
+
+        user_fmt = lambda s: s.format(username=self.user.name)
+        host_dir = user_fmt(self.student_host_homedir)
+        if not os.path.isdir(host_dir):
+            os.mkdir(host_dir)
+            os.chmod(host_dir, 0o777)
+
+        for src_path in self.student_initial_files:
+            filename = src_path.split("/")[-1]
+            dst_path = pjoin(host_dir, filename)
+            copyfile(src_path, dst_path)
+
+        formatted_student_volumes = {
+            user_fmt(k) : user_fmt(v) for k,v in self.student_volumes.items()
+        }
+        formatted_student_volumes[host_dir] = user_fmt("/home/{username}")
+        self.volumes.update(formatted_student_volumes)
+
     @gen.coroutine
     def build_image(self):
         """download the repo and build a docker image if needed"""
@@ -272,6 +316,9 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             else:
                 self._add_to_log('Image %s is found' % image_name)
                 return image_name
+
+        if self.form_repo_url in self.student_images:
+            self.handle_student_case()
 
         tmp_dir = mkdtemp(suffix='-everware')
         try:
@@ -488,6 +535,7 @@ class CustomDockerSpawner(GitMixin, EmailNotificator, ContainerHandler):
             env.update({
                 'JPY_GITHUBURL': self.repo_url_with_token,
                 'JPY_REPOPOINTER': self.commit_sha,
+                'NB_USER': self.user.name,
                 'EVER_VERSION': __version__,
             })
             env.update(self.user_options)
